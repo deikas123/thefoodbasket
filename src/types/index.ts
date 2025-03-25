@@ -1,4 +1,5 @@
 
+
 export interface Product {
   id: string;
   name: string;
@@ -67,7 +68,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterFormData) => Promise<void>;
   logout: () => void;
-  updateProfile: (userData: Partial<User>) => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<User>;
 }
 
 export interface RegisterFormData {
@@ -82,3 +83,4 @@ export interface LoginFormData {
   email: string;
   password: string;
 }
+
