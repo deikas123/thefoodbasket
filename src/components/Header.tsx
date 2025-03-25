@@ -3,11 +3,21 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { Menu, ShoppingCart, Search, X } from "lucide-react";
+import { Menu, ShoppingCart, Search, X, User } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const { openCart, itemCount } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -73,6 +83,59 @@ const Header = () => {
               <Search size={20} />
             </button>
 
+            {/* Authentication */}
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="relative flex items-center gap-2 h-10 px-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+                  >
+                    <User size={20} />
+                    <span className="hidden sm:inline-block">
+                      {user?.firstName}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/orders">My Orders</Link>
+                  </DropdownMenuItem>
+                  {user?.role === "admin" && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin">Admin Dashboard</Link>
+                    </DropdownMenuItem>
+                  )}
+                  {user?.role === "delivery" && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/delivery">Delivery Dashboard</Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={logout}
+                    className="text-red-500 cursor-pointer"
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="hidden md:flex items-center space-x-2">
+                <Button variant="ghost" asChild>
+                  <Link to="/login">Sign In</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/register">Sign Up</Link>
+                </Button>
+              </div>
+            )}
+
             {/* Cart Button */}
             <button
               onClick={openCart}
@@ -118,7 +181,7 @@ const Header = () => {
       {/* Mobile Navigation Menu */}
       <div 
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          isMobileMenuOpen ? "max-h-64 opacity-100 border-t border-gray-100 dark:border-gray-800" : "max-h-0 opacity-0"
+          isMobileMenuOpen ? "max-h-screen opacity-100 border-t border-gray-100 dark:border-gray-800" : "max-h-0 opacity-0"
         }`}
       >
         <div className="container mx-auto px-4 py-3 space-y-2">
@@ -132,6 +195,18 @@ const Header = () => {
               {link.name}
             </Link>
           ))}
+          
+          {/* Authentication (Mobile) */}
+          {!isAuthenticated && (
+            <div className="pt-2 pb-4 flex flex-col space-y-2">
+              <Button asChild>
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>Sign In</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</Link>
+              </Button>
+            </div>
+          )}
           
           {/* Search Bar (Mobile) */}
           <div className="pt-2 pb-4">
