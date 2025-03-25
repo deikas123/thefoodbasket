@@ -1,5 +1,3 @@
-
-
 export interface Product {
   id: string;
   name: string;
@@ -22,6 +20,20 @@ export interface Category {
 export interface CartItem {
   product: Product;
   quantity: number;
+}
+
+export interface WishlistItem {
+  product: Product;
+  addedAt: string;
+}
+
+export interface WishlistContextType {
+  items: WishlistItem[];
+  addItem: (product: Product) => void;
+  removeItem: (productId: string) => void;
+  isInWishlist: (productId: string) => boolean;
+  clearWishlist: () => void;
+  itemCount: number;
 }
 
 export interface CartContextType {
@@ -84,3 +96,33 @@ export interface LoginFormData {
   password: string;
 }
 
+export interface OrderStatus {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export type DeliverySpeed = "standard" | "express";
+
+export interface DeliveryTimeSlot {
+  id: string;
+  start: string;
+  end: string;
+  available: boolean;
+}
+
+export interface DeliveryOption {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  estimatedDelivery: string;
+  speed: DeliverySpeed;
+}
+
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+}

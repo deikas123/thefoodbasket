@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { Menu, ShoppingCart, Search, X, User } from "lucide-react";
+import { Menu, ShoppingCart, Search, X, User, Heart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +20,7 @@ import {
 const Header = () => {
   const { openCart, itemCount } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
+  const { itemCount: wishlistCount } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -45,7 +48,7 @@ const Header = () => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white/95 backdrop-blur-md shadow-sm dark:bg-black/90" : "bg-transparent"
+        isScrolled ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-sm" : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -73,7 +76,10 @@ const Header = () => {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* Search Button (Desktop) */}
             <button 
               onClick={toggleSearch}
@@ -82,6 +88,16 @@ const Header = () => {
             >
               <Search size={20} />
             </button>
+            
+            {/* Wishlist Button */}
+            <Link to="/wishlist" className="relative flex items-center justify-center w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
+              <Heart size={20} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-primary text-white text-xs font-medium rounded-full">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             {/* Authentication */}
             {isAuthenticated ? (
@@ -105,6 +121,9 @@ const Header = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/orders">My Orders</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/wishlist">My Wishlist</Link>
                   </DropdownMenuItem>
                   {user?.role === "admin" && (
                     <DropdownMenuItem asChild>
@@ -195,6 +214,14 @@ const Header = () => {
               {link.name}
             </Link>
           ))}
+          
+          <Link
+            to="/wishlist"
+            className="block py-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors font-medium"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Wishlist
+          </Link>
           
           {/* Authentication (Mobile) */}
           {!isAuthenticated && (

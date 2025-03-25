@@ -5,6 +5,8 @@ import { ShoppingCart, Heart } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +14,7 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const { addItem } = useCart();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
@@ -19,6 +22,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     addItem(product, 1);
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -34,7 +48,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     >
       <div className="product-card group-hover:border-primary/20 h-full flex flex-col">
         {/* Image container */}
-        <div className="product-image-container">
+        <div className="product-image-container relative">
           {!isImageLoaded && (
             <div className="absolute inset-0 bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
           )}
@@ -46,6 +60,23 @@ const ProductCard = ({ product }: ProductCardProps) => {
             } ${isImageLoaded ? "opacity-100" : "opacity-0"}`}
             onLoad={() => setIsImageLoaded(true)}
           />
+          
+          {/* Wishlist button */}
+          <button
+            onClick={handleToggleWishlist}
+            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-md hover:bg-white dark:hover:bg-black/70 transition-colors"
+            aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart 
+              size={18} 
+              className={cn(
+                "transition-colors",
+                isInWishlist(product.id) 
+                  ? "fill-red-500 text-red-500" 
+                  : "text-gray-600 dark:text-gray-400"
+              )} 
+            />
+          </button>
           
           {/* Discount badge */}
           {product.discountPercentage && (

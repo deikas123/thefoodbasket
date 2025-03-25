@@ -6,11 +6,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { WishlistProvider } from "@/context/WishlistContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import Wishlist from "./pages/Wishlist";
 import { useAuth } from "@/context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -69,6 +72,15 @@ const AppRoutes = () => (
         } 
       />
       
+      <Route 
+        path="/wishlist" 
+        element={
+          <ProtectedRoute>
+            <Wishlist />
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Admin routes */}
       <Route 
         path="/admin/*" 
@@ -98,13 +110,17 @@ const AppRoutes = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Toaster />
-          <Sonner />
-          <AppRoutes />
-        </CartProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <Toaster />
+              <Sonner />
+              <AppRoutes />
+            </CartProvider>
+          </WishlistProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
