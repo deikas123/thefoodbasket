@@ -61,6 +61,7 @@ const RoleRoute = ({
 // App component with routes
 const AppRoutes = () => (
   <BrowserRouter>
+    <Cart />
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
@@ -121,7 +122,6 @@ const App = () => (
         <AuthProvider>
           <WishlistProvider>
             <CartProvider>
-              <Cart />
               <Toaster />
               <Sonner />
               <AppRoutes />
