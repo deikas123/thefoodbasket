@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -8,6 +9,8 @@ export interface Product {
   featured: boolean;
   rating: number;
   numReviews: number;
+  stock: number;
+  discountPercentage?: number;
 }
 
 export interface Category {
@@ -24,6 +27,7 @@ export interface CartItem {
 
 export interface WishlistItem {
   product: Product;
+  addedAt?: string;
 }
 
 export interface Address {
@@ -40,6 +44,8 @@ export interface DeliveryOption {
   name: string;
   price: number;
   estimatedDelivery: string;
+  description?: string;
+  speed?: string;
 }
 
 export interface PaymentMethod {
@@ -67,6 +73,53 @@ export type CartContextType = {
   ) => Promise<Order>;
   itemCount: number;
   total: number;
+};
+
+export type WishlistContextType = {
+  items: WishlistItem[];
+  addItem: (product: Product) => void;
+  removeItem: (productId: string) => void;
+  isInWishlist: (productId: string) => boolean;
+  clearWishlist: () => void;
+  itemCount: number;
+};
+
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  addresses: Address[];
+  phone?: string;
+  dietaryPreferences?: string[];
+  loyaltyPoints: number;
+  createdAt: string;
+}
+
+export type UserRole = "admin" | "customer" | "delivery";
+
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export interface RegisterFormData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role?: UserRole;
+}
+
+export type AuthContextType = {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: RegisterFormData) => Promise<void>;
+  logout: () => void;
+  updateProfile: (userData: Partial<User>) => Promise<User>;
 };
 
 // Order related types

@@ -39,9 +39,11 @@ const Orders = () => {
   }, [user, isAuthenticated, authLoading]);
 
   // Redirect to login if not authenticated
-  if (!authLoading && !isAuthenticated) {
-    return navigate("/login", { state: { from: "/orders" } });
-  }
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate("/login", { state: { from: "/orders" } });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   // Helper function to get status badge color
   const getStatusColor = (status: Order["status"]) => {
