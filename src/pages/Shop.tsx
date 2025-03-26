@@ -134,7 +134,7 @@ const Shop = () => {
             <Label htmlFor="all-categories">All Categories</Label>
           </div>
           
-          {categoriesQuery.data?.map(category => (
+          {categoriesQuery.data && categoriesQuery.data.map(category => (
             <div key={category.id} className="flex items-center gap-2">
               <Checkbox 
                 id={`category-${category.id}`}

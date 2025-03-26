@@ -1,6 +1,53 @@
 import { Product, Category } from "@/types";
 
-// Simulate fetching products from an API
+// Rename functions to match the imports in Shop.tsx
+export const getProducts = async (
+  category?: string,
+  search?: string,
+  minPrice: number = 0,
+  maxPrice: number = 100,
+  inStockOnly: boolean = false
+): Promise<Product[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Get all products
+  let filteredProducts = [...fruitProducts, ...vegetableProducts, ...dairyProducts];
+  
+  // Apply category filter
+  if (category) {
+    filteredProducts = filteredProducts.filter(p => p.category === category);
+  }
+  
+  // Apply search filter
+  if (search) {
+    const searchLower = search.toLowerCase();
+    filteredProducts = filteredProducts.filter(p => 
+      p.name.toLowerCase().includes(searchLower) || 
+      p.description.toLowerCase().includes(searchLower)
+    );
+  }
+  
+  // Apply price filter
+  filteredProducts = filteredProducts.filter(p => 
+    p.price >= minPrice && p.price <= maxPrice
+  );
+  
+  // Apply stock filter
+  if (inStockOnly) {
+    filteredProducts = filteredProducts.filter(p => p.stock > 0);
+  }
+  
+  return filteredProducts;
+};
+
+// Renamed these functions to match the imports in Shop.tsx
+export const getCategories = async (): Promise<Category[]> => {
+  // Maintain the original implementation but rename the function
+  return getAllCategories();
+};
+
+// Keep the original functions for backward compatibility
 export const getAllProducts = async (): Promise<Product[]> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
