@@ -1,3 +1,4 @@
+
 import { Product, Category } from "@/types";
 
 // Rename functions to match the imports in Shop.tsx
@@ -88,7 +89,7 @@ export const getCategoryById = async (id: string): Promise<Category | undefined>
 };
 
 // Sample product lists for different categories
-const fruitProducts = [
+const fruitProducts: Product[] = [
   {
     id: "fruit1",
     name: "Organic Bananas",
@@ -140,7 +141,7 @@ const fruitProducts = [
   }
 ];
 
-const vegetableProducts = [
+const vegetableProducts: Product[] = [
   {
     id: "veg1",
     name: "Roma Tomatoes",
@@ -160,6 +161,7 @@ const vegetableProducts = [
     price: 1.79,
     image: "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
+    featured: false,
     discountPercentage: 15,
     rating: 4.0,
     numReviews: 14,
@@ -191,7 +193,7 @@ const vegetableProducts = [
   }
 ];
 
-const dairyProducts = [
+const dairyProducts: Product[] = [
   {
     id: "dairy1",
     name: "Organic Whole Milk",
@@ -199,6 +201,7 @@ const dairyProducts = [
     price: 3.99,
     image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "dairy",
+    featured: false,
     discountPercentage: 5,
     rating: 4.8,
     numReviews: 42,

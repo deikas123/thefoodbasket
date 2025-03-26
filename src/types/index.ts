@@ -1,4 +1,7 @@
 
+// Import Order types first so we can reference them
+import { Order } from './order';
+
 export interface Product {
   id: string;
   name: string;
@@ -6,7 +9,7 @@ export interface Product {
   price: number;
   image: string;
   category: string;
-  featured: boolean;
+  featured?: boolean; // Make this optional
   rating: number;
   numReviews: number;
   stock: number;
@@ -54,9 +57,6 @@ export interface PaymentMethod {
   icon?: string;
   description?: string;
 }
-
-// Import Order types first so we can reference them
-import { Order } from './order';
 
 export type CartContextType = {
   items: CartItem[];
