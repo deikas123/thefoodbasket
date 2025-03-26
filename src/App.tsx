@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Wishlist from "./pages/Wishlist";
 import Shop from "./pages/Shop";
 import ProductDetails from "./pages/ProductDetails";
+import Checkout from "./pages/Checkout";
 import Cart from "./components/Cart";
 import { useAuth } from "@/context/AuthContext";
 
@@ -66,6 +67,7 @@ const AppRoutes = () => (
       <Route path="/register" element={<Register />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/product/:productId" element={<ProductDetails />} />
+      <Route path="/checkout" element={<Checkout />} />
       
       {/* Protected routes */}
       <Route 

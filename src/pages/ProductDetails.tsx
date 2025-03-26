@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -24,7 +23,8 @@ import {
   ShieldCheck,
   ArrowLeft,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Zap
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -81,6 +81,13 @@ const ProductDetails = () => {
   const handleAddToCart = () => {
     if (product) {
       addItem(product, quantity);
+    }
+  };
+  
+  const handleBuyNow = () => {
+    if (product) {
+      addItem(product, quantity);
+      navigate('/checkout');
     }
   };
   
@@ -290,9 +297,20 @@ const ProductDetails = () => {
                   size="lg"
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
+                  variant="outline"
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
                   Add to Cart
+                </Button>
+                
+                <Button 
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  size="lg"
+                  onClick={handleBuyNow}
+                  disabled={product.stock === 0}
+                >
+                  <Zap className="mr-2 h-5 w-5" />
+                  Buy Now
                 </Button>
                 
                 <Button

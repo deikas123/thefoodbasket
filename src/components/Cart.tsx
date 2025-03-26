@@ -4,9 +4,11 @@ import { X, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Cart = () => {
   const { items, isOpen, closeCart, removeItem, updateQuantity, total, itemCount } = useCart();
+  const navigate = useNavigate();
 
   // Close cart on ESC key
   useEffect(() => {
@@ -31,6 +33,11 @@ const Cart = () => {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+  
+  const handleCheckout = () => {
+    closeCart();
+    navigate("/checkout");
+  };
 
   if (!isOpen) return null;
 
@@ -156,7 +163,7 @@ const Cart = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Button className="w-full button-animation" size="lg">
+                  <Button className="w-full button-animation" size="lg" onClick={handleCheckout}>
                     Checkout
                   </Button>
                   <Button variant="outline" className="w-full" onClick={closeCart}>

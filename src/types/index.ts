@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -125,4 +126,20 @@ export interface PaymentMethod {
   name: string;
   icon: string;
   description: string;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  items: CartItem[];
+  status: string;
+  deliveryAddress: Address;
+  deliveryOption: DeliveryOption;
+  paymentMethod: PaymentMethod;
+  subtotal: number;
+  deliveryFee: number;
+  discount: number;
+  total: number;
+  createdAt: string;
+  updatedAt: string;
 }
