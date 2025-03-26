@@ -7,7 +7,9 @@ import {
   CreditCard, 
   Smartphone, 
   CircleDollarSign, 
-  ShieldCheck 
+  ShieldCheck,
+  Wallet,
+  BanknoteIcon
 } from "lucide-react";
 
 interface PaymentMethodsProps {
@@ -15,7 +17,7 @@ interface PaymentMethodsProps {
   setSelectedPayment: (method: PaymentMethod) => void;
 }
 
-// Mock payment methods
+// Enhanced payment methods
 const paymentMethods: PaymentMethod[] = [
   {
     id: "card",
@@ -28,6 +30,12 @@ const paymentMethods: PaymentMethod[] = [
     name: "M-Pesa",
     icon: "smartphone",
     description: "Pay using your M-Pesa mobile money account"
+  },
+  {
+    id: "wallet",
+    name: "E-Wallet",
+    icon: "wallet",
+    description: "Pay using your store wallet balance"
   },
   {
     id: "cod",
@@ -43,8 +51,10 @@ const PaymentMethodIcon = ({ icon }: { icon: string }) => {
       return <CreditCard className="h-5 w-5 text-primary" />;
     case "smartphone":
       return <Smartphone className="h-5 w-5 text-green-600" />;
+    case "wallet":
+      return <Wallet className="h-5 w-5 text-purple-600" />;
     case "cash":
-      return <CircleDollarSign className="h-5 w-5 text-amber-500" />;
+      return <BanknoteIcon className="h-5 w-5 text-amber-500" />;
     default:
       return null;
   }
@@ -78,6 +88,10 @@ const PaymentMethods = ({
               >
                 <PaymentMethodIcon icon={method.icon} />
                 <span className="font-medium ml-2">{method.name}</span>
+                
+                {method.id === "mpesa" && (
+                  <Badge variant="outline" className="ml-2">Popular</Badge>
+                )}
               </Label>
               
               <p className="text-sm text-muted-foreground mt-1 ml-7">

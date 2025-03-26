@@ -214,6 +214,7 @@ const Checkout = () => {
                     <DeliveryOptions 
                       selectedDelivery={selectedDelivery}
                       setSelectedDelivery={setSelectedDelivery}
+                      postalCode={selectedAddress?.zipCode || "00100"}
                     />
                   </CardContent>
                 </Card>

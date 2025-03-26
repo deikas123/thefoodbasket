@@ -125,5 +125,21 @@ export type AuthContextType = {
   updateProfile: (userData: Partial<User>) => Promise<User>;
 };
 
+// Create a type for discount codes
+export interface DiscountCode {
+  id: string;
+  code: string;
+  description: string;
+  discountType: "percentage" | "fixed";
+  discountAmount: number;
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  validFrom: string;
+  validTo: string;
+  usageLimit?: number;
+  usedCount: number;
+  isActive: boolean;
+}
+
 // Order related types
 export * from './order';

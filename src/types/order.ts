@@ -38,11 +38,19 @@ export interface Order {
   };
   subtotal: number;
   deliveryFee: number;
+  discount?: number;
+  loyaltyPointsUsed?: number;
+  loyaltyPointsEarned?: number;
+  promoCode?: string;
   total: number;
   notes?: string;
   createdAt: string;
   updatedAt: string;
   estimatedDelivery: string;
+  scheduledDelivery?: {
+    date: string;
+    timeSlot: string;
+  };
   tracking?: {
     events: {
       status: OrderStatus;
@@ -57,4 +65,13 @@ export interface Order {
       photo: string;
     };
   };
+}
+
+export interface OrderSummary {
+  id: string;
+  status: OrderStatus;
+  total: number;
+  itemCount: number;
+  createdAt: string;
+  estimatedDelivery: string;
 }
