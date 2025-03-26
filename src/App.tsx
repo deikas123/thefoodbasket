@@ -17,6 +17,8 @@ import Wishlist from "./pages/Wishlist";
 import Shop from "./pages/Shop";
 import ProductDetails from "./pages/ProductDetails";
 import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
 import Cart from "./components/Cart";
 import { useAuth } from "@/context/AuthContext";
 
@@ -85,6 +87,24 @@ const AppRoutes = () => (
         element={
           <ProtectedRoute>
             <Wishlist />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route 
+        path="/orders" 
+        element={
+          <ProtectedRoute>
+            <Orders />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route 
+        path="/orders/:orderId" 
+        element={
+          <ProtectedRoute>
+            <OrderDetails />
           </ProtectedRoute>
         }
       />

@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState } from "react";
-import { CartContextType, Product, CartItem } from "../types";
+import { CartContextType, Product, CartItem, Order, OrderItem } from "../types";
 import { toast } from "@/components/ui/use-toast";
+import { createOrder } from "@/services/orderService";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -57,6 +58,60 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems([]);
   };
 
+  // Create an order from the cart
+  const checkout = async (
+    userId: string,
+    deliveryAddress: Order["deliveryAddress"],
+    deliveryMethod: Order["deliveryMethod"],
+    paymentMethod: Order["paymentMethod"],
+    notes?: string
+  ) => {
+    if (items.length === 0) {
+      throw new Error("Cannot checkout with an empty cart");
+    }
+
+    const orderItems: OrderItem[] = items.map(item => ({
+      productId: item.product.id,
+      name: item.product.name,
+      price: item.product.price,
+      quantity: item.quantity,
+      image: item.product.image
+    }));
+
+    const subtotal = total;
+    const deliveryFee = deliveryMethod.price;
+    const orderTotal = subtotal + deliveryFee;
+
+    const estimatedDelivery = deliveryMethod.estimatedDelivery;
+
+    const orderData = {
+      userId,
+      items: orderItems,
+      status: "pending" as const,
+      deliveryAddress,
+      deliveryMethod,
+      paymentMethod,
+      subtotal,
+      deliveryFee,
+      total: orderTotal,
+      notes,
+      estimatedDelivery,
+      tracking: {
+        events: [
+          {
+            status: "pending" as const,
+            timestamp: new Date().toISOString(),
+            description: "Order placed"
+          }
+        ]
+      }
+    };
+
+    const order = await createOrder(orderData);
+    clearCart();
+    return order;
+  };
+
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   
   const total = items.reduce(
@@ -75,6 +130,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         removeItem,
         updateQuantity,
         clearCart,
+        checkout,
         itemCount,
         total
       }}

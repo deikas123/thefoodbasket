@@ -22,7 +22,7 @@ import DeliveryAddressForm from "@/components/checkout/DeliveryAddressForm";
 import PaymentMethods from "@/components/checkout/PaymentMethods";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import CheckoutStepper from "@/components/checkout/CheckoutStepper";
-import { Address, DeliveryOption, PaymentMethod } from "@/types";
+import { Address, DeliveryOption, PaymentMethod, Order } from "@/types";
 
 const steps = [
   { id: "cart", title: "Cart", icon: ShoppingCart },
@@ -33,7 +33,7 @@ const steps = [
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, total, clearCart } = useCart();
+  const { items, total, checkout } = useCart();
   const { user, isAuthenticated } = useAuth();
   
   const [currentStep, setCurrentStep] = useState("delivery");
@@ -43,9 +43,10 @@ const Checkout = () => {
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
   
   // Redirect if cart is empty
-  if (items.length === 0) {
+  if (items.length === 0 && currentStep !== "confirmation") {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -68,6 +69,12 @@ const Checkout = () => {
         <Footer />
       </div>
     );
+  }
+  
+  // Redirect to login if not authenticated
+  if (!isAuthenticated && currentStep !== "confirmation") {
+    navigate("/login", { state: { from: "/checkout" } });
+    return null;
   }
   
   // Go to next step
@@ -117,7 +124,7 @@ const Checkout = () => {
   
   // Handle order placement
   const placeOrder = async () => {
-    if (!selectedAddress || !selectedDelivery || !selectedPayment) {
+    if (!user || !selectedAddress || !selectedDelivery || !selectedPayment) {
       toast({
         title: "Incomplete information",
         description: "Please fill in all required information.",
@@ -128,19 +135,24 @@ const Checkout = () => {
     
     setIsProcessing(true);
     
-    // Simulate order placement
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const order = await checkout(
+        user.id,
+        selectedAddress,
+        selectedDelivery,
+        selectedPayment
+      );
       
       // Success - move to confirmation step
+      setCompletedOrder(order);
       setCurrentStep("confirmation");
-      clearCart();
       
       toast({
         title: "Order placed successfully!",
         description: "Thank you for your order. We'll process it right away.",
       });
     } catch (error) {
+      console.error("Error placing order:", error);
       toast({
         title: "Failed to place order",
         description: "There was an error processing your order. Please try again.",
@@ -276,7 +288,7 @@ const Checkout = () => {
             </div>
           )}
           
-          {currentStep === "confirmation" && (
+          {currentStep === "confirmation" && completedOrder && (
             <div className="max-w-2xl mx-auto text-center">
               <div className="mb-8">
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -285,15 +297,15 @@ const Checkout = () => {
                 
                 <h2 className="text-2xl font-bold mb-2">Order Confirmed!</h2>
                 <p className="text-muted-foreground mb-6">
-                  Your order has been placed and is being processed. You will receive a confirmation email shortly.
+                  Your order #{completedOrder.id} has been placed and is being processed. You will receive a confirmation email shortly.
                 </p>
                 
                 <div className="p-6 border rounded-md mb-8 text-left">
                   <div className="mb-4">
                     <h3 className="font-medium mb-2">Delivery Address:</h3>
                     <p>
-                      {selectedAddress?.street}, {selectedAddress?.city}<br />
-                      {selectedAddress?.state}, {selectedAddress?.zipCode}
+                      {completedOrder.deliveryAddress.street}, {completedOrder.deliveryAddress.city}<br />
+                      {completedOrder.deliveryAddress.state}, {completedOrder.deliveryAddress.zipCode}
                     </p>
                   </div>
                   
@@ -301,9 +313,9 @@ const Checkout = () => {
                   
                   <div className="mb-4">
                     <h3 className="font-medium mb-2">Delivery Method:</h3>
-                    <p>{selectedDelivery?.name}</p>
+                    <p>{completedOrder.deliveryMethod.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      Estimated delivery: {selectedDelivery?.estimatedDelivery}
+                      Estimated delivery: {completedOrder.estimatedDelivery}
                     </p>
                   </div>
                   
@@ -311,13 +323,14 @@ const Checkout = () => {
                   
                   <div>
                     <h3 className="font-medium mb-2">Payment Method:</h3>
-                    <p>{selectedPayment?.name}</p>
+                    <p>{completedOrder.paymentMethod.name}</p>
                   </div>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button onClick={() => navigate("/")}>
-                    Return to Home
+                  <Button onClick={() => navigate(`/orders/${completedOrder.id}`)}>
+                    <Truck className="mr-2 h-4 w-4" />
+                    Track Order
                   </Button>
                   
                   <Button variant="outline" onClick={() => navigate("/shop")}>

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { Menu, ShoppingCart, Search, X, User, Heart } from "lucide-react";
+import { Menu, ShoppingCart, Search, X, User, Heart, Package } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -120,10 +120,16 @@ const Header = () => {
                     <Link to="/profile">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/orders">My Orders</Link>
+                    <Link to="/orders">
+                      <Package className="mr-2 h-4 w-4" />
+                      My Orders
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/wishlist">My Wishlist</Link>
+                    <Link to="/wishlist">
+                      <Heart className="mr-2 h-4 w-4" />
+                      My Wishlist
+                    </Link>
                   </DropdownMenuItem>
                   {user?.role === "admin" && (
                     <DropdownMenuItem asChild>
@@ -222,6 +228,17 @@ const Header = () => {
           >
             Wishlist
           </Link>
+          
+          {/* Orders link in mobile menu */}
+          {isAuthenticated && (
+            <Link
+              to="/orders"
+              className="block py-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors font-medium"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              My Orders
+            </Link>
+          )}
           
           {/* Authentication (Mobile) */}
           {!isAuthenticated && (
