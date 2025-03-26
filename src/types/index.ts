@@ -55,6 +55,9 @@ export interface PaymentMethod {
   description?: string;
 }
 
+// Import Order types first so we can reference them
+import { Order } from './order';
+
 export type CartContextType = {
   items: CartItem[];
   isOpen: boolean;

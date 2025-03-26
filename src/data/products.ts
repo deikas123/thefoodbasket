@@ -10,6 +10,8 @@ export const products: Product[] = [
     image: "https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "fruits",
     featured: true,
+    rating: 4.5,
+    numReviews: 28,
     stock: 50
   },
   {
@@ -20,6 +22,8 @@ export const products: Product[] = [
     image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "fruits",
     featured: true,
+    rating: 4.7,
+    numReviews: 42,
     stock: 40
   },
   {
@@ -30,6 +34,8 @@ export const products: Product[] = [
     image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
     featured: true,
+    rating: 4.3,
+    numReviews: 19,
     stock: 30
   },
   {
@@ -40,6 +46,8 @@ export const products: Product[] = [
     image: "https://images.unsplash.com/photo-1506976785307-8732e854ad03?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "dairy",
     featured: true,
+    rating: 4.8,
+    numReviews: 35,
     stock: 60
   },
   {
@@ -50,6 +58,8 @@ export const products: Product[] = [
     image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "bakery",
     featured: true,
+    rating: 4.6,
+    numReviews: 24,
     stock: 25
   },
   {
@@ -60,6 +70,8 @@ export const products: Product[] = [
     image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "fruits",
     featured: false,
+    rating: 4.4,
+    numReviews: 32,
     stock: 35
   },
   {
@@ -70,6 +82,8 @@ export const products: Product[] = [
     image: "https://images.unsplash.com/photo-1588347618760-79099292ef0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "meat",
     featured: false,
+    rating: 4.9,
+    numReviews: 48,
     stock: 20
   },
   {
@@ -80,6 +94,8 @@ export const products: Product[] = [
     image: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
     featured: false,
+    rating: 4.2,
+    numReviews: 15,
     stock: 45
   }
 ];
