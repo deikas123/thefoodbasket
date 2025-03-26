@@ -14,6 +14,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Wishlist from "./pages/Wishlist";
+import Shop from "./pages/Shop";
+import ProductDetails from "./pages/ProductDetails";
+import Cart from "./components/Cart";
 import { useAuth } from "@/context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -61,6 +64,8 @@ const AppRoutes = () => (
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/shop" element={<Shop />} />
+      <Route path="/product/:productId" element={<ProductDetails />} />
       
       {/* Protected routes */}
       <Route 
@@ -114,6 +119,7 @@ const App = () => (
         <AuthProvider>
           <WishlistProvider>
             <CartProvider>
+              <Cart />
               <Toaster />
               <Sonner />
               <AppRoutes />
