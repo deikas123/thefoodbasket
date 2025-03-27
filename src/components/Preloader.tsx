@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, Apple, Carrot, Milk, Bread, Egg } from 'lucide-react';
+import { ShoppingCart, Apple, Carrot, Milk, Banana, Egg } from 'lucide-react';
 
 interface GroceryItemProps {
   Icon: React.ElementType;
@@ -53,7 +53,7 @@ const Preloader = () => {
         <GroceryItem Icon={Apple} delay={0.5} top={-10} left={30} />
         <GroceryItem Icon={Carrot} delay={1.2} top={-10} left={50} />
         <GroceryItem Icon={Milk} delay={1.8} top={-10} left={70} />
-        <GroceryItem Icon={Bread} delay={2.5} top={-10} left={20} />
+        <GroceryItem Icon={Banana} delay={2.5} top={-10} left={20} />
         <GroceryItem Icon={Egg} delay={3.0} top={-10} left={60} />
         
         {/* Logo */}
