@@ -6,6 +6,8 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { useState, useEffect } from "react";
+import Preloader from "@/components/Preloader";
 
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
@@ -23,12 +25,24 @@ import AdminDashboard from "./pages/admin/Dashboard";
 const queryClient = new QueryClient();
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading time - in a real app this would be based on actual data loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000); // 5 seconds to show the preloader
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
+              {isLoading && <Preloader />}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/shop" element={<Shop />} />
