@@ -63,6 +63,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw profileError;
     }
     
+    // Get email and role from auth.users
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+    
+    if (userError) {
+      console.error("Error fetching user data:", userError);
+      throw userError;
+    }
+    
     // Fetch addresses
     const { data: addressesData, error: addressesError } = await supabase
       .from('addresses')
@@ -75,21 +83,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     // Convert from database format to app format
-    const addresses: Address[] = addressesData.map(addr => ({
+    const addresses: Address[] = addressesData ? addressesData.map(addr => ({
       id: addr.id,
       street: addr.street,
       city: addr.city,
       state: addr.state,
       zipCode: addr.zip_code,
       isDefault: addr.is_default
-    }));
+    })) : [];
+    
+    // Determine user role from metadata or default to "customer"
+    const userRole = (userData?.user?.app_metadata?.role as UserRole) || "customer";
     
     return {
       id: userId,
-      email: profile?.email || "",
+      email: userData?.user?.email || "",
       firstName: profile?.first_name || "",
       lastName: profile?.last_name || "",
-      role: profile?.role || "customer",
+      role: userRole,
       addresses: addresses,
       phone: profile?.phone || undefined,
       dietaryPreferences: profile?.dietary_preferences || undefined,

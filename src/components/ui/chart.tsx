@@ -1,5 +1,21 @@
+
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
+import { 
+  ResponsiveContainer, 
+  LineChart as RechartsLineChart, 
+  Line, 
+  BarChart as RechartsBarChart, 
+  Bar, 
+  PieChart as RechartsPieChart, 
+  Pie, 
+  Cell,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend 
+} from "recharts"
 
 import { cn } from "@/lib/utils"
 
@@ -352,6 +368,106 @@ function getPayloadConfigFromPayload(
     ? config[configLabelKey]
     : config[key as keyof typeof config]
 }
+
+// Add new chart components
+interface LineChartProps {
+  data: any[];
+  xAxisKey: string;
+  yAxisKey: string;
+  height?: number;
+}
+
+export const LineChart: React.FC<LineChartProps> = ({ 
+  data, 
+  xAxisKey, 
+  yAxisKey, 
+  height = 300 
+}) => {
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <RechartsLineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey={xAxisKey} />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Line 
+          type="monotone" 
+          dataKey={yAxisKey} 
+          stroke="#8884d8" 
+          activeDot={{ r: 8 }} 
+        />
+      </RechartsLineChart>
+    </ResponsiveContainer>
+  );
+};
+
+interface BarChartProps {
+  data: any[];
+  xAxisKey: string;
+  yAxisKey: string;
+  height?: number;
+}
+
+export const BarChart: React.FC<BarChartProps> = ({ 
+  data, 
+  xAxisKey, 
+  yAxisKey, 
+  height = 300 
+}) => {
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <RechartsBarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey={xAxisKey} />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Bar dataKey={yAxisKey} fill="#8884d8" />
+      </RechartsBarChart>
+    </ResponsiveContainer>
+  );
+};
+
+interface PieChartProps {
+  data: any[];
+  nameKey: string;
+  dataKey: string;
+  height?: number;
+}
+
+export const PieChart: React.FC<PieChartProps> = ({ 
+  data, 
+  nameKey, 
+  dataKey, 
+  height = 300 
+}) => {
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <RechartsPieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          labelLine={false}
+          outerRadius={80}
+          fill="#8884d8"
+          dataKey={dataKey}
+          nameKey={nameKey}
+          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </RechartsPieChart>
+    </ResponsiveContainer>
+  );
+};
 
 export {
   ChartContainer,
