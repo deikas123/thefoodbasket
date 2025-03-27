@@ -10,6 +10,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useQuery } from "@tanstack/react-query";
 import { getCategoryById } from "@/services/productService";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface ProductCardProps {
   product: Product;
@@ -47,7 +48,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   
   // Calculate sale price if there's a discount
   const salePrice = product.discountPercentage
-    ? (product.price * (1 - product.discountPercentage / 100)).toFixed(2)
+    ? (product.price * (1 - product.discountPercentage / 100)).toFixed(0)
     : null;
   
   return (
@@ -127,13 +128,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="flex flex-col">
           {salePrice ? (
             <>
-              <span className="font-bold text-lg">${salePrice}</span>
+              <span className="font-bold text-lg">{formatCurrency(Number(salePrice))}</span>
               <span className="text-sm text-muted-foreground line-through">
-                ${product.price.toFixed(2)}
+                {formatCurrency(product.price)}
               </span>
             </>
           ) : (
-            <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
+            <span className="font-bold text-lg">{formatCurrency(product.price)}</span>
           )}
         </div>
         

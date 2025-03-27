@@ -17,19 +17,19 @@ interface PaymentMethodsProps {
   setSelectedPayment: (method: PaymentMethod) => void;
 }
 
-// Enhanced payment methods
+// Enhanced payment methods for Kenya
 const paymentMethods: PaymentMethod[] = [
-  {
-    id: "card",
-    name: "Credit/Debit Card",
-    icon: "credit-card",
-    description: "Pay with Visa, Mastercard, or American Express"
-  },
   {
     id: "mpesa",
     name: "M-Pesa",
     icon: "smartphone",
     description: "Pay using your M-Pesa mobile money account"
+  },
+  {
+    id: "card",
+    name: "Credit/Debit Card",
+    icon: "credit-card",
+    description: "Pay with Visa, Mastercard, or American Express"
   },
   {
     id: "wallet",

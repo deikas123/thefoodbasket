@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingBag, CreditCard } from "lucide-react";
 import PromoCodeInput from "./PromoCodeInput";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -25,8 +26,8 @@ const OrderSummary = ({
   const [discount, setDiscount] = useState(0);
   const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
   
-  // Calculate loyalty points discount (1 point = $0.10)
-  const loyaltyDiscount = useLoyaltyPoints ? Math.min(loyaltyPointsAvailable * 0.1, subtotal * 0.2) : 0;
+  // Calculate loyalty points discount (1 point = KSh 10)
+  const loyaltyDiscount = useLoyaltyPoints ? Math.min(loyaltyPointsAvailable * 10, subtotal * 0.2) : 0;
   
   // Calculate final price
   const total = Math.max(0, subtotal + deliveryFee - discount - loyaltyDiscount);
@@ -74,7 +75,7 @@ const OrderSummary = ({
                     <span className="text-muted-foreground ml-1">× {item.quantity}</span>
                   </div>
                   <div className="font-medium">
-                    ${(item.product.price * item.quantity).toFixed(2)}
+                    {formatCurrency(item.product.price * item.quantity)}
                   </div>
                 </div>
               ))}
@@ -86,25 +87,25 @@ const OrderSummary = ({
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{formatCurrency(subtotal)}</span>
             </div>
             
             <div className="flex justify-between">
               <span className="text-muted-foreground">Delivery Fee</span>
-              <span>${deliveryFee.toFixed(2)}</span>
+              <span>{formatCurrency(deliveryFee)}</span>
             </div>
             
             {discount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Promo Discount</span>
-                <span>-${discount.toFixed(2)}</span>
+                <span>-{formatCurrency(discount)}</span>
               </div>
             )}
             
             {loyaltyDiscount > 0 && (
               <div className="flex justify-between text-purple-600">
                 <span>Loyalty Points</span>
-                <span>-${loyaltyDiscount.toFixed(2)}</span>
+                <span>-{formatCurrency(loyaltyDiscount)}</span>
               </div>
             )}
           </div>
@@ -113,7 +114,7 @@ const OrderSummary = ({
           
           <div className="flex justify-between font-medium text-lg">
             <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+            <span>{formatCurrency(total)}</span>
           </div>
           
           <Separator />
@@ -141,8 +142,8 @@ const OrderSummary = ({
               </div>
               <div className="mt-1 text-xs text-muted-foreground">
                 {useLoyaltyPoints 
-                  ? `Using ${Math.ceil(loyaltyDiscount / 0.1)} points to save $${loyaltyDiscount.toFixed(2)}`
-                  : `You have ${loyaltyPointsAvailable} points available (worth up to $${(loyaltyPointsAvailable * 0.1).toFixed(2)})`
+                  ? `Using ${Math.ceil(loyaltyDiscount / 10)} points to save ${formatCurrency(loyaltyDiscount)}`
+                  : `You have ${loyaltyPointsAvailable} points available (worth up to ${formatCurrency(loyaltyPointsAvailable * 10)})`
                 }
               </div>
             </div>
