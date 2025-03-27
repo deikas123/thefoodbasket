@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,24 @@ interface AddressFormDialogProps {
   address: Address | null;
 }
 
+// Kenyan Counties
+const kenyaCounties = [
+  "Nairobi", "Mombasa", "Kisumu", "Nakuru", "Uasin Gishu", "Kiambu", "Machakos", 
+  "Kajiado", "Nyeri", "Kilifi", "Laikipia", "Meru", "Kisii", "Kakamega", "Bungoma"
+];
+
+// Nairobi Postal Codes
+const nairobiPostalCodes = [
+  { code: "00100", area: "Nairobi GPO" },
+  { code: "00200", area: "City Square" },
+  { code: "00300", area: "Nairobi Central" },
+  { code: "00400", area: "Westlands" },
+  { code: "00500", area: "Ngara" },
+  { code: "00600", area: "Sarit Centre" },
+  { code: "00700", area: "Karen" },
+  { code: "00800", area: "Buruburu" }
+];
+
 const AddressFormDialog = ({ 
   open, 
   onOpenChange, 
@@ -34,13 +53,17 @@ const AddressFormDialog = ({
   const [formData, setFormData] = useState<Omit<Address, "id">>({
     street: address?.street || "",
     city: address?.city || "",
-    state: address?.state || "",
-    zipCode: address?.zipCode || "",
+    state: address?.state || "Nairobi",
+    zipCode: address?.zipCode || "00100",
     isDefault: address?.isDefault || false
   });
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
@@ -159,47 +182,72 @@ const AddressFormDialog = ({
               name="street"
               value={formData.street}
               onChange={handleInputChange}
-              placeholder="123 Main St, Apt 4B"
+              placeholder="123 Moi Avenue, Apartment 4B"
               autoComplete="street-address"
             />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">City/Town</Label>
               <Input
                 id="city"
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                placeholder="New York"
+                placeholder="Nairobi"
                 autoComplete="address-level2"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
-              <Input
-                id="state"
-                name="state"
+              <Label htmlFor="state">County</Label>
+              <Select
                 value={formData.state}
-                onChange={handleInputChange}
-                placeholder="NY"
-                autoComplete="address-level1"
-              />
+                onValueChange={(value) => handleSelectChange("state", value)}
+              >
+                <SelectTrigger id="state" className="w-full">
+                  <SelectValue placeholder="Select county" />
+                </SelectTrigger>
+                <SelectContent>
+                  {kenyaCounties.map((county) => (
+                    <SelectItem key={county} value={county}>
+                      {county}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="zipCode">Zip Code</Label>
-            <Input
-              id="zipCode"
-              name="zipCode"
-              value={formData.zipCode}
-              onChange={handleInputChange}
-              placeholder="10001"
-              autoComplete="postal-code"
-            />
+            <Label htmlFor="zipCode">Postal Code</Label>
+            {formData.state === "Nairobi" ? (
+              <Select
+                value={formData.zipCode}
+                onValueChange={(value) => handleSelectChange("zipCode", value)}
+              >
+                <SelectTrigger id="zipCode" className="w-full">
+                  <SelectValue placeholder="Select postal code" />
+                </SelectTrigger>
+                <SelectContent>
+                  {nairobiPostalCodes.map((postal) => (
+                    <SelectItem key={postal.code} value={postal.code}>
+                      {postal.code} - {postal.area}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="zipCode"
+                name="zipCode"
+                value={formData.zipCode}
+                onChange={handleInputChange}
+                placeholder="00100"
+                autoComplete="postal-code"
+              />
+            )}
           </div>
           
           <div className="flex items-center space-x-2">

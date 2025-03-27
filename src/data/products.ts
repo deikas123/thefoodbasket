@@ -1,12 +1,15 @@
 
 import { Product, Category } from "../types";
 
+// Exchange rate: 1 USD = 130 KES
+const exchangeRate = 130;
+
 export const products: Product[] = [
   {
     id: "p1",
     name: "Organic Avocado",
     description: "Freshly harvested organic avocados, rich in healthy fats and perfect for salads and spreads.",
-    price: 2.99,
+    price: 388.7, // 2.99 USD * 130 KES
     image: "https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "fruits",
     featured: true,
@@ -18,7 +21,7 @@ export const products: Product[] = [
     id: "p2",
     name: "Fresh Strawberries",
     description: "Sweet and juicy strawberries, perfect for desserts or as a healthy snack.",
-    price: 3.49,
+    price: 453.7, // 3.49 USD * 130 KES
     image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "fruits",
     featured: true,
@@ -30,7 +33,7 @@ export const products: Product[] = [
     id: "p3",
     name: "Organic Baby Spinach",
     description: "Fresh, tender leaves of organic baby spinach, perfect for salads and cooking.",
-    price: 2.99,
+    price: 388.7, // 2.99 USD * 130 KES
     image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
     featured: true,
@@ -42,7 +45,7 @@ export const products: Product[] = [
     id: "p4",
     name: "Free-Range Eggs",
     description: "Farm-fresh eggs from free-range chickens, rich in flavor and nutrition.",
-    price: 4.99,
+    price: 648.7, // 4.99 USD * 130 KES
     image: "https://images.unsplash.com/photo-1506976785307-8732e854ad03?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "dairy",
     featured: true,
@@ -54,7 +57,7 @@ export const products: Product[] = [
     id: "p5",
     name: "Whole Grain Bread",
     description: "Freshly baked whole grain bread, made with organic flour and natural ingredients.",
-    price: 3.79,
+    price: 492.7, // 3.79 USD * 130 KES
     image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "bakery",
     featured: true,
@@ -66,7 +69,7 @@ export const products: Product[] = [
     id: "p6",
     name: "Organic Blueberries",
     description: "Plump, sweet organic blueberries, packed with antioxidants and flavor.",
-    price: 4.99,
+    price: 648.7, // 4.99 USD * 130 KES
     image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "fruits",
     featured: false,
@@ -78,7 +81,7 @@ export const products: Product[] = [
     id: "p7",
     name: "Grass-Fed Ground Beef",
     description: "Premium ground beef from grass-fed cows, perfect for burgers and more.",
-    price: 8.99,
+    price: 1168.7, // 8.99 USD * 130 KES
     image: "https://images.unsplash.com/photo-1588347618760-79099292ef0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "meat",
     featured: false,
@@ -90,7 +93,7 @@ export const products: Product[] = [
     id: "p8",
     name: "Organic Bell Peppers",
     description: "Colorful, crisp organic bell peppers, perfect for salads and cooking.",
-    price: 1.99,
+    price: 258.7, // 1.99 USD * 130 KES
     image: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
     featured: false,

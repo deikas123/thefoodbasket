@@ -1,156 +1,62 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { CartProvider } from "@/context/CartContext";
-import { AuthProvider } from "@/context/AuthContext";
-import { WishlistProvider } from "@/context/WishlistContext";
+import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
+import { WishlistProvider } from "@/context/WishlistContext";
+
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import Shop from "./pages/Shop";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Profile from "./pages/Profile";
-import Wishlist from "./pages/Wishlist";
-import Shop from "./pages/Shop";
+import NotFound from "./pages/NotFound";
 import ProductDetails from "./pages/ProductDetails";
 import Checkout from "./pages/Checkout";
+import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails";
-import Cart from "./components/Cart";
-import { useAuth } from "@/context/AuthContext";
+import Wishlist from "./pages/Wishlist";
+import AdminDashboard from "./pages/admin/Dashboard";
 
 const queryClient = new QueryClient();
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
-  
-  return <>{children}</>;
-};
-
-// Role-based protected route
-const RoleRoute = ({ 
-  children, 
-  allowedRoles 
-}: { 
-  children: React.ReactNode, 
-  allowedRoles: string[] 
-}) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-  
-  if (!isAuthenticated || !user || !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" />;
-  }
-  
-  return <>{children}</>;
-};
-
-// App component with routes
-const AppRoutes = () => (
-  <BrowserRouter>
-    <Cart />
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/shop" element={<Shop />} />
-      <Route path="/product/:productId" element={<ProductDetails />} />
-      <Route path="/checkout" element={<Checkout />} />
-      
-      {/* Protected routes */}
-      <Route 
-        path="/profile" 
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        } 
-      />
-      
-      <Route 
-        path="/wishlist" 
-        element={
-          <ProtectedRoute>
-            <Wishlist />
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route 
-        path="/orders" 
-        element={
-          <ProtectedRoute>
-            <Orders />
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route 
-        path="/orders/:orderId" 
-        element={
-          <ProtectedRoute>
-            <OrderDetails />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Admin routes */}
-      <Route 
-        path="/admin/*" 
-        element={
-          <RoleRoute allowedRoles={["admin"]}>
-            <div>Admin Dashboard (placeholder)</div>
-          </RoleRoute>
-        } 
-      />
-      
-      {/* Delivery routes */}
-      <Route 
-        path="/delivery/*" 
-        element={
-          <RoleRoute allowedRoles={["delivery"]}>
-            <div>Delivery Dashboard (placeholder)</div>
-          </RoleRoute>
-        } 
-      />
-      
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </BrowserRouter>
-);
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <WishlistProvider>
-            <CartProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/shop" element={<Shop />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/product/:productId" element={<ProductDetails />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/orders/:orderId" element={<OrderDetails />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/products" element={<AdminDashboard />} />
+                <Route path="/admin/orders" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<AdminDashboard />} />
+                <Route path="/admin/deliveries" element={<AdminDashboard />} />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
               <Toaster />
-              <Sonner />
-              <AppRoutes />
-            </CartProvider>
-          </WishlistProvider>
+            </WishlistProvider>
+          </CartProvider>
         </AuthProvider>
       </ThemeProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+}
 
 export default App;

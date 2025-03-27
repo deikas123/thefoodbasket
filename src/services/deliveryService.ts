@@ -1,24 +1,25 @@
 
 import { DeliveryOption } from "@/types";
 
-// Define different delivery zones with varying delivery rates
+// Define different delivery zones in Nairobi with varying delivery rates
 export const deliveryZones = [
-  { name: "Zone A - Central", baseRate: 4.99, expressRate: 9.99 },
-  { name: "Zone B - Suburbs", baseRate: 6.99, expressRate: 12.99 },
-  { name: "Zone C - Outer Areas", baseRate: 8.99, expressRate: 15.99 },
+  { name: "Zone A - Nairobi CBD", baseRate: 250, expressRate: 450 },
+  { name: "Zone B - Nairobi Suburbs", baseRate: 350, expressRate: 650 },
+  { name: "Zone C - Outer Nairobi", baseRate: 450, expressRate: 850 },
 ];
 
 // Mock geolocation data for delivery cost calculation
 export const calculateDeliveryZone = (postalCode: string): number => {
   // This is a simplified example - in a real app, you would use 
-  // a more robust system based on actual geo-data
+  // a more robust system based on actual geo-data for Kenya
   const code = parseInt(postalCode, 10);
   
   if (isNaN(code)) return 2; // Default to the most expensive zone if invalid
 
-  if (code >= 10000 && code < 20000) return 0; // Zone A
-  if (code >= 20000 && code < 50000) return 1; // Zone B
-  return 2; // Zone C - Outer Areas
+  // Nairobi postal codes
+  if (code >= 100 && code <= 199) return 0; // Zone A - CBD (00100, 00101, etc.)
+  if (code >= 200 && code <= 299) return 1; // Zone B - Suburbs (00200, 00201, etc.)
+  return 2; // Zone C - Outer Nairobi
 };
 
 interface DeliveryParams {
@@ -43,9 +44,9 @@ export const calculateDeliveryCost = ({
   // Base rate based on zone and delivery type
   let cost = isExpress ? zone.expressRate : zone.baseRate;
   
-  // Weight surcharge - $0.50 per kg above 5kg
+  // Weight surcharge - 50 KES per kg above 5kg
   if (weight > 5) {
-    cost += (weight - 5) * 0.5;
+    cost += (weight - 5) * 50;
   }
   
   // Scheduled delivery discount or premium
@@ -138,7 +139,7 @@ export const getDeliveryTimeSlots = (date: Date): { id: string; time: string }[]
 
 // Group orders by delivery zone for hourly dispatch
 export const groupOrdersByZone = (orders: any[]): Record<string, any[]> => {
-  // In a real application, this would group orders by actual zone/locality
+  // Group orders by actual Nairobi neighborhoods
   return orders.reduce((groups: Record<string, any[]>, order) => {
     const zipCode = order.deliveryAddress.zipCode;
     const zoneIndex = calculateDeliveryZone(zipCode);
