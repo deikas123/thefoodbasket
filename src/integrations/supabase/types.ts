@@ -9,7 +9,138 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      addresses: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          is_default: boolean
+          state: string
+          street: string
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          state: string
+          street: string
+          user_id: string
+          zip_code: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          state?: string
+          street?: string
+          user_id?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          delivery_address: Json
+          delivery_fee: number
+          delivery_method: Json
+          discount: number | null
+          estimated_delivery: string
+          id: string
+          items: Json
+          loyalty_points_earned: number | null
+          loyalty_points_used: number | null
+          notes: string | null
+          payment_method: Json
+          promo_code: string | null
+          scheduled_delivery: Json | null
+          status: string
+          subtotal: number
+          total: number
+          tracking: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_address: Json
+          delivery_fee: number
+          delivery_method: Json
+          discount?: number | null
+          estimated_delivery: string
+          id?: string
+          items: Json
+          loyalty_points_earned?: number | null
+          loyalty_points_used?: number | null
+          notes?: string | null
+          payment_method: Json
+          promo_code?: string | null
+          scheduled_delivery?: Json | null
+          status: string
+          subtotal: number
+          total: number
+          tracking?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_address?: Json
+          delivery_fee?: number
+          delivery_method?: Json
+          discount?: number | null
+          estimated_delivery?: string
+          id?: string
+          items?: Json
+          loyalty_points_earned?: number | null
+          loyalty_points_used?: number | null
+          notes?: string | null
+          payment_method?: Json
+          promo_code?: string | null
+          scheduled_delivery?: Json | null
+          status?: string
+          subtotal?: number
+          total?: number
+          tracking?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          dietary_preferences: string[] | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          loyalty_points: number
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          dietary_preferences?: string[] | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          loyalty_points?: number
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          dietary_preferences?: string[] | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          loyalty_points?: number
+          phone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

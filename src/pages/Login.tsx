@@ -20,9 +20,13 @@ const Login = () => {
     password: ""
   });
   
+  const [error, setError] = useState<string | null>(null);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user types
+    if (error) setError(null);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,8 +34,8 @@ const Login = () => {
     try {
       await login(formData.email, formData.password);
       navigate("/");
-    } catch (error) {
-      // Error is handled in the auth context
+    } catch (error: any) {
+      setError(error.message || "Login failed. Please check your credentials and try again.");
       console.error("Login failed", error);
     }
   };
@@ -48,6 +52,12 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-md text-sm">
+                {error}
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
