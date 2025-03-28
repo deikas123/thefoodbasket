@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -27,7 +26,6 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   
-  // Redirect if not logged in or not an admin
   if (!isAuthenticated) {
     navigate("/login", { state: { from: "/admin" } });
     return null;
@@ -38,7 +36,6 @@ const AdminDashboard = () => {
     return null;
   }
   
-  // Dashboard metrics - these would come from an API in a real app
   const metrics = {
     totalRevenue: "KSh 243,500",
     salesGrowth: "+12.5%",
@@ -74,7 +71,6 @@ const AdminDashboard = () => {
             </TabsList>
             
             <TabsContent value="overview" className="space-y-6">
-              {/* Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -141,7 +137,6 @@ const AdminDashboard = () => {
                 </Card>
               </div>
               
-              {/* Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
