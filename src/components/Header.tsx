@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
-import { Menu, ShoppingCart, Search, X, User, Heart, Package } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, ShoppingCart, Search, X, User, Heart, Package, LogOut } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "@/components/ui/use-toast";
 
 const Header = () => {
   const { openCart, itemCount } = useCart();
@@ -24,6 +25,8 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,8 +37,30 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close mobile menu when changing routes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location]);
+
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      toast({
+        title: "Search",
+        description: `Searching for "${searchQuery}"...`,
+      });
+      // Here you would typically redirect to search results page
+      // navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setIsMobileMenuOpen(false);
+  };
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -59,7 +84,8 @@ const Header = () => {
             className="text-2xl font-semibold text-primary flex items-center gap-2 transition-all hover:opacity-90"
           >
             <span className="text-3xl">🧺</span>
-            <span>The Food Basket</span>
+            <span className="hidden sm:inline">The Food Basket</span>
+            <span className="sm:hidden">TFB</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -68,7 +94,9 @@ const Header = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors font-medium"
+                className={`text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors font-medium ${
+                  location.pathname === link.path ? "text-primary dark:text-primary" : ""
+                }`}
               >
                 {link.name}
               </Link>
@@ -76,7 +104,7 @@ const Header = () => {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Theme Toggle */}
             <ThemeToggle />
             
@@ -108,44 +136,61 @@ const Header = () => {
                     className="relative flex items-center gap-2 h-10 px-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
                   >
                     <User size={20} />
-                    <span className="hidden sm:inline-block">
-                      {user?.firstName}
+                    <span className="hidden sm:inline-block truncate max-w-[80px]">
+                      {user?.firstName || "User"}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    <div className="truncate">
+                      {user?.firstName} {user?.lastName}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {user?.email}
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/profile">Profile</Link>
+                    <Link to="/profile" className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/orders">
+                    <Link to="/orders" className="flex items-center">
                       <Package className="mr-2 h-4 w-4" />
                       My Orders
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/wishlist">
+                    <Link to="/wishlist" className="flex items-center">
                       <Heart className="mr-2 h-4 w-4" />
                       My Wishlist
                     </Link>
                   </DropdownMenuItem>
                   {user?.role === "admin" && (
                     <DropdownMenuItem asChild>
-                      <Link to="/admin">Admin Dashboard</Link>
+                      <Link to="/admin" className="flex items-center">
+                        <span className="mr-2 h-4 w-4">👑</span>
+                        Admin Dashboard
+                      </Link>
                     </DropdownMenuItem>
                   )}
                   {user?.role === "delivery" && (
                     <DropdownMenuItem asChild>
-                      <Link to="/delivery">Delivery Dashboard</Link>
+                      <Link to="/delivery" className="flex items-center">
+                        <span className="mr-2 h-4 w-4">🚚</span>
+                        Delivery Dashboard
+                      </Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={logout}
-                    className="text-red-500 cursor-pointer"
+                    onClick={handleLogout}
+                    className="text-red-500 cursor-pointer flex items-center"
                   >
+                    <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -192,14 +237,24 @@ const Header = () => {
             isSearchOpen ? "max-h-16 opacity-100 my-3" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="relative w-full max-w-2xl mx-auto">
+          <form onSubmit={handleSearch} className="relative w-full max-w-2xl mx-auto">
             <Input 
               type="text" 
               placeholder="Search for products..." 
               className="w-full pl-10 pr-4 py-2 rounded-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          </div>
+            <Button 
+              type="submit" 
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-1 top-1/2 transform -translate-y-1/2"
+            >
+              <Search size={18} />
+            </Button>
+          </form>
         </div>
       </div>
 
@@ -214,7 +269,9 @@ const Header = () => {
             <Link
               key={link.path}
               to={link.path}
-              className="block py-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors font-medium"
+              className={`block py-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors font-medium ${
+                location.pathname === link.path ? "text-primary dark:text-primary" : ""
+              }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {link.name}
@@ -239,9 +296,30 @@ const Header = () => {
               My Orders
             </Link>
           )}
+
+          {/* Admin/Delivery dashboard links if applicable */}
+          {isAuthenticated && user?.role === "admin" && (
+            <Link
+              to="/admin"
+              className="block py-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors font-medium"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Admin Dashboard
+            </Link>
+          )}
+          
+          {isAuthenticated && user?.role === "delivery" && (
+            <Link
+              to="/delivery"
+              className="block py-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors font-medium"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Delivery Dashboard
+            </Link>
+          )}
           
           {/* Authentication (Mobile) */}
-          {!isAuthenticated && (
+          {!isAuthenticated ? (
             <div className="pt-2 pb-4 flex flex-col space-y-2">
               <Button asChild>
                 <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>Sign In</Link>
@@ -250,18 +328,41 @@ const Header = () => {
                 <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</Link>
               </Button>
             </div>
+          ) : (
+            <div className="pt-2 pb-4">
+              <div className="py-2 font-medium">
+                {user?.firstName} {user?.lastName}
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           )}
           
           {/* Search Bar (Mobile) */}
           <div className="pt-2 pb-4">
-            <div className="relative w-full">
+            <form onSubmit={handleSearch} className="relative w-full">
               <Input 
                 type="text" 
                 placeholder="Search..." 
                 className="w-full pl-10 pr-4 py-2 rounded-lg"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            </div>
+              <Button 
+                type="submit" 
+                size="sm" 
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8"
+              >
+                Search
+              </Button>
+            </form>
           </div>
         </div>
       </div>

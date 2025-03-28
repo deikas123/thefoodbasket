@@ -17,13 +17,13 @@ interface PaymentMethodsProps {
   setSelectedPayment: (method: PaymentMethod) => void;
 }
 
-// Enhanced payment methods for Kenya
+// Enhanced payment methods for Kenya with better ordering
 const paymentMethods: PaymentMethod[] = [
   {
     id: "mpesa",
     name: "M-Pesa",
     icon: "smartphone",
-    description: "Pay using your M-Pesa mobile money account"
+    description: "Fast and secure mobile money transfer"
   },
   {
     id: "card",
@@ -78,7 +78,7 @@ const PaymentMethods = ({
         {paymentMethods.map((method) => (
           <div
             key={method.id}
-            className="flex items-start space-x-2 border rounded-lg p-4 transition-colors hover:bg-accent/50"
+            className={`flex items-start space-x-2 border rounded-lg p-4 transition-colors hover:bg-accent/50 ${selectedPayment?.id === method.id ? 'border-primary bg-accent/30' : ''}`}
           >
             <RadioGroupItem value={method.id} id={method.id} className="mt-1" />
             <div className="flex-1">
@@ -90,7 +90,7 @@ const PaymentMethods = ({
                 <span className="font-medium ml-2">{method.name}</span>
                 
                 {method.id === "mpesa" && (
-                  <Badge variant="outline" className="ml-2">Popular</Badge>
+                  <Badge variant="outline" className="ml-2 bg-green-50 text-green-600 border-green-200">Popular in Kenya</Badge>
                 )}
               </Label>
               

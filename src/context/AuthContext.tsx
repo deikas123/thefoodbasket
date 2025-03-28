@@ -14,6 +14,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // First check localStorage for saved user data
+        const storedUser = localStorage.getItem("currentUser");
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -21,11 +27,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (session?.user) {
-          const userData = await fetchUserProfile(session.user.id);
-          setUser(userData);
+          // If we have a valid session but no stored user data, fetch it
+          if (!storedUser) {
+            const { data } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (data) {
+              // Create user object and save to state and localStorage
+              const userData: User = {
+                id: session.user.id,
+                email: session.user.email || "",
+                firstName: data.first_name || "",
+                lastName: data.last_name || "",
+                role: (session.user.app_metadata?.role as UserRole) || "customer",
+                addresses: [],
+                loyaltyPoints: data.loyalty_points || 0,
+                createdAt: data.created_at || new Date().toISOString()
+              };
+              
+              setUser(userData);
+              localStorage.setItem("currentUser", JSON.stringify(userData));
+            }
+          }
+        } else {
+          // No session, clear user data
+          setUser(null);
+          localStorage.removeItem("currentUser");
         }
       } catch (error) {
         console.error("Error fetching session:", error);
+        localStorage.removeItem("currentUser");
       } finally {
         setIsLoading(false);
       }
@@ -36,11 +70,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user) {
-          const userData = await fetchUserProfile(session.user.id);
-          setUser(userData);
-        } else {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            const { data } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (data) {
+              // Create user object and save to state and localStorage
+              const userData: User = {
+                id: session.user.id,
+                email: session.user.email || "",
+                firstName: data.first_name || "",
+                lastName: data.last_name || "",
+                role: (session.user.app_metadata?.role as UserRole) || "customer",
+                addresses: [],
+                loyaltyPoints: data.loyalty_points || 0,
+                createdAt: data.created_at || new Date().toISOString()
+              };
+              
+              // Fetch addresses
+              const { data: addressesData } = await supabase
+                .from('addresses')
+                .select('*')
+                .eq('user_id', session.user.id);
+              
+              if (addressesData) {
+                // Convert from database format to app format
+                userData.addresses = addressesData.map(addr => ({
+                  id: addr.id,
+                  street: addr.street,
+                  city: addr.city,
+                  state: addr.state,
+                  zipCode: addr.zip_code,
+                  isDefault: addr.is_default
+                }));
+              }
+              
+              setUser(userData);
+              localStorage.setItem("currentUser", JSON.stringify(userData));
+            }
+          }
+        } else if (event === 'SIGNED_OUT') {
           setUser(null);
+          localStorage.removeItem("currentUser");
         }
         setIsLoading(false);
       }
@@ -48,66 +123,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     return () => subscription.unsubscribe();
   }, []);
-  
-  // Fetch user profile data including addresses
-  const fetchUserProfile = async (userId: string): Promise<User> => {
-    // Fetch profile data
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (profileError) {
-      console.error("Error fetching profile:", profileError);
-      throw profileError;
-    }
-    
-    // Get email and role from auth.users
-    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
-    
-    if (userError) {
-      console.error("Error fetching user data:", userError);
-      throw userError;
-    }
-    
-    // Fetch addresses
-    const { data: addressesData, error: addressesError } = await supabase
-      .from('addresses')
-      .select('*')
-      .eq('user_id', userId);
-    
-    if (addressesError) {
-      console.error("Error fetching addresses:", addressesError);
-      throw addressesError;
-    }
-    
-    // Convert from database format to app format
-    const addresses: Address[] = addressesData ? addressesData.map(addr => ({
-      id: addr.id,
-      street: addr.street,
-      city: addr.city,
-      state: addr.state,
-      zipCode: addr.zip_code,
-      isDefault: addr.is_default
-    })) : [];
-    
-    // Determine user role from metadata or default to "customer"
-    const userRole = (userData?.user?.app_metadata?.role as UserRole) || "customer";
-    
-    return {
-      id: userId,
-      email: userData?.user?.email || "",
-      firstName: profile?.first_name || "",
-      lastName: profile?.last_name || "",
-      role: userRole,
-      addresses: addresses,
-      phone: profile?.phone || undefined,
-      dietaryPreferences: profile?.dietary_preferences || undefined,
-      loyaltyPoints: profile?.loyalty_points || 0,
-      createdAt: profile?.created_at || new Date().toISOString()
-    };
-  };
   
   // Login function
   const login = async (email: string, password: string) => {
@@ -167,7 +182,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error("Registration failed. Please try again.");
       }
       
-      // User profile is created via the database trigger we set up
+      // For testing purposes, simulate successful user creation
+      const newUser: User = {
+        id: data.user.id,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        role: userData.role || "customer",
+        addresses: [],
+        loyaltyPoints: 0,
+        createdAt: new Date().toISOString()
+      };
+      
+      setUser(newUser);
+      localStorage.setItem("currentUser", JSON.stringify(newUser));
       
       toast({
         title: "Registration successful!",
@@ -193,6 +221,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       setUser(null);
+      localStorage.removeItem("currentUser");
       
       toast({
         title: "Logged out",
@@ -238,10 +267,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // If addresses are provided, they're already handled by the AddressFormDialog component
       
-      // Refetch the user profile to get the updated data
-      const updatedUser = await fetchUserProfile(user.id);
+      // Update the user state with new data
+      const updatedUser = {
+        ...user,
+        ...userData
+      };
       
       setUser(updatedUser);
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      
       return updatedUser;
     } catch (error: any) {
       console.error("Error updating profile:", error);
