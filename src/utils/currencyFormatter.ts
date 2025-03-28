@@ -39,3 +39,19 @@ export const formatWithCurrency = (amount: number, currency: string = 'KES'): st
     maximumFractionDigits: 0
   }).format(amount);
 };
+
+/**
+ * Get currency symbol for a given currency code
+ * @param currencyCode - The currency code (e.g., 'KES', 'USD')
+ * @returns The currency symbol
+ */
+export const getCurrencySymbol = (currencyCode: string = 'KES'): string => {
+  return new Intl.NumberFormat('en-KE', {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })
+    .formatToParts(0)
+    .find(part => part.type === 'currency')?.value || 'KSh';
+};
