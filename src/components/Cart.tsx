@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 const Cart = () => {
   const { items, isOpen, closeCart, removeItem, updateQuantity, total, itemCount } = useCart();
@@ -95,7 +96,7 @@ const Cart = () => {
                       <div className="flex-grow">
                         <h4 className="font-medium">{item.product.name}</h4>
                         <div className="text-sm text-muted-foreground">
-                          ${item.product.price.toFixed(2)} each
+                          {formatCurrency(item.product.price)} each
                         </div>
                         
                         <div className="flex items-center mt-2">
@@ -138,7 +139,7 @@ const Cart = () => {
                       </div>
                       
                       <div className="font-medium">
-                        ${(item.product.price * item.quantity).toFixed(2)}
+                        {formatCurrency(item.product.price * item.quantity)}
                       </div>
                     </div>
                   ))}
@@ -150,7 +151,7 @@ const Cart = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">${total.toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(total)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
@@ -158,7 +159,7 @@ const Cart = () => {
                   </div>
                   <div className="border-t pt-2 mt-2 flex justify-between">
                     <span className="font-semibold">Total</span>
-                    <span className="font-semibold">${total.toFixed(2)}</span>
+                    <span className="font-semibold">{formatCurrency(total)}</span>
                   </div>
                 </div>
                 
