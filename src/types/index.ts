@@ -22,6 +22,9 @@ export function useIsMobile() {
 // Add an alias for backward compatibility
 export const useMobile = useIsMobile;
 
+// Import the Order type early so it's available for references below
+import { Order, OrderItem } from './order';
+
 // Product related types
 export interface Product {
   id: string;
@@ -154,7 +157,7 @@ export interface PaymentMethod {
   description?: string;
 }
 
-// Import existing types from separate files
+// Re-export all types from separate files
 export * from './order';
 export * from './wallet';
 export * from './foodBasket';
