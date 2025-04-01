@@ -143,6 +143,27 @@ export interface Database {
           active: boolean;
         };
       };
+      discount_codes: {
+        Row: {
+          id: string;
+          code: string;
+          type: string;
+          value: number;
+          min_purchase: number | null;
+          max_discount: number | null;
+          usage_limit: number | null;
+          usage_count: number;
+          start_date: string;
+          end_date: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+      };
     };
+    Views: {};
+    Functions: {};
+    Enums: {};
+    CompositeTypes: {};
   };
 }
