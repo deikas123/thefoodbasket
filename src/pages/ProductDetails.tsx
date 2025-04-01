@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import AddToAutoReplenishButton from "@/components/product/AddToAutoReplenishButton";
 
@@ -103,16 +103,12 @@ const ProductDetails = () => {
     }
   };
   
-  const handleWishlistToggle = () => {
-    toggleWishlist(product);
-  };
-  
   const goBack = () => {
     navigate(-1);
   };
   
   const isAddingToCart = productQuery.isLoading || productQuery.isError || !product;
-  
+
   if (productQuery.isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -314,7 +310,7 @@ const ProductDetails = () => {
                 <Button
                   variant={isInWishlist ? "default" : "outline"}
                   className="gap-2"
-                  onClick={handleToggleWishlist}
+                  onClick={toggleWishlist}
                 >
                   {isInWishlist ? (
                     <>

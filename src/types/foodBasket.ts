@@ -8,7 +8,7 @@ export interface FoodBasket {
   totalPrice: number;
   createdAt: string;
   updatedAt: string;
-  items?: FoodBasketItem[];
+  items: FoodBasketItem[];
 }
 
 export interface FoodBasketItem {

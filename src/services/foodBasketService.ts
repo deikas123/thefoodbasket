@@ -26,7 +26,8 @@ export const getFoodBaskets = async (): Promise<FoodBasket[]> => {
     image: item.image || undefined,
     totalPrice: item.total_price,
     createdAt: item.created_at,
-    updatedAt: item.updated_at
+    updatedAt: item.updated_at,
+    items: [] // Initialize with empty array
   }));
   
   // Get items for each basket
@@ -61,7 +62,8 @@ export const getFoodBasketById = async (id: string): Promise<FoodBasket | null> 
     image: item.image || undefined,
     totalPrice: item.total_price,
     createdAt: item.created_at,
-    updatedAt: item.updated_at
+    updatedAt: item.updated_at,
+    items: [] // Initialize with empty array
   };
   
   const basketItems = await getFoodBasketItems(basket.id);
