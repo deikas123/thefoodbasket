@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -47,13 +46,13 @@ import {
   ShoppingBasket,
   CalendarClock,
 } from "lucide-react";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Header = () => {
   const { user, logout } = useAuth();
-  const { toggleCart, items } = useCart();
+  const { items, openCart } = useCart();
   const navigate = useNavigate();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -84,7 +83,6 @@ const Header = () => {
     navigate("/login");
   };
   
-  // Calculate total items in cart
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -97,143 +95,138 @@ const Header = () => {
       )}
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
-        {/* Logo & Mobile Menu */}
-        <div className="flex items-center">
-          {isMobile && (
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="mr-1">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[250px] sm:w-[300px]">
-                <SheetHeader className="mb-6">
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                <nav className="space-y-2">
-                  <Link to="/">
-                    <Button variant="ghost" className="w-full justify-start">
-                      Home
-                    </Button>
-                  </Link>
-                  <Link to="/shop">
-                    <Button variant="ghost" className="w-full justify-start">
-                      Shop
-                    </Button>
-                  </Link>
-                  <Link to="/food-baskets">
-                    <Button variant="ghost" className="w-full justify-start">
-                      Food Baskets
-                    </Button>
-                  </Link>
-                  <Separator className="my-4" />
-                  
-                  {user ? (
-                    <>
-                      <div className="px-2 py-1.5">
-                        <p className="text-sm font-medium">My Account</p>
-                      </div>
-                      <Link to="/profile">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-sm"
-                        >
-                          <User className="mr-2 h-4 w-4" />
-                          Profile
-                        </Button>
-                      </Link>
-                      <Link to="/orders">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-sm"
-                        >
-                          <Package className="mr-2 h-4 w-4" />
-                          Orders
-                        </Button>
-                      </Link>
-                      <Link to="/wishlist">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-sm"
-                        >
-                          <Heart className="mr-2 h-4 w-4" />
-                          Wishlist
-                        </Button>
-                      </Link>
-                      <Link to="/wallet">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-sm"
-                        >
-                          <Wallet className="mr-2 h-4 w-4" />
-                          Wallet
-                        </Button>
-                      </Link>
-                      <Link to="/pay-later">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-sm"
-                        >
-                          <Clock className="mr-2 h-4 w-4" />
-                          Pay Later
-                        </Button>
-                      </Link>
-                      <Link to="/auto-replenish">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-sm"
-                        >
-                          <CalendarClock className="mr-2 h-4 w-4" />
-                          Auto Replenish
-                        </Button>
-                      </Link>
+        {isMobile && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="mr-1">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[250px] sm:w-[300px]">
+              <SheetHeader className="mb-6">
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <nav className="space-y-2">
+                <Link to="/">
+                  <Button variant="ghost" className="w-full justify-start">
+                    Home
+                  </Button>
+                </Link>
+                <Link to="/shop">
+                  <Button variant="ghost" className="w-full justify-start">
+                    Shop
+                  </Button>
+                </Link>
+                <Link to="/food-baskets">
+                  <Button variant="ghost" className="w-full justify-start">
+                    Food Baskets
+                  </Button>
+                </Link>
+                <Separator className="my-4" />
+                
+                {user ? (
+                  <>
+                    <div className="px-2 py-1.5">
+                      <p className="text-sm font-medium">My Account</p>
+                    </div>
+                    <Link to="/profile">
                       <Button
                         variant="ghost"
                         className="w-full justify-start text-sm"
-                        onClick={handleLogout}
                       >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Log out
+                        <User className="mr-2 h-4 w-4" />
+                        Profile
                       </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Link to="/login">
-                        <Button
-                          variant="default"
-                          className="w-full justify-center"
-                        >
-                          Sign In
-                        </Button>
-                      </Link>
-                      <Link to="/register">
-                        <Button
-                          variant="outline"
-                          className="w-full justify-center"
-                        >
-                          Create Account
-                        </Button>
-                      </Link>
-                    </>
-                  )}
-                </nav>
-              </SheetContent>
-            </Sheet>
-          )}
+                    </Link>
+                    <Link to="/orders">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-sm"
+                      >
+                        <Package className="mr-2 h-4 w-4" />
+                        Orders
+                      </Button>
+                    </Link>
+                    <Link to="/wishlist">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-sm"
+                      >
+                        <Heart className="mr-2 h-4 w-4" />
+                        Wishlist
+                      </Button>
+                    </Link>
+                    <Link to="/wallet">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-sm"
+                      >
+                        <Wallet className="mr-2 h-4 w-4" />
+                        Wallet
+                      </Button>
+                    </Link>
+                    <Link to="/pay-later">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-sm"
+                      >
+                        <Clock className="mr-2 h-4 w-4" />
+                        Pay Later
+                      </Button>
+                    </Link>
+                    <Link to="/auto-replenish">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-sm"
+                      >
+                        <CalendarClock className="mr-2 h-4 w-4" />
+                        Auto Replenish
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-sm"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login">
+                      <Button
+                        variant="default"
+                        className="w-full justify-center"
+                      >
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link to="/register">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center"
+                      >
+                        Create Account
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        )}
 
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="relative h-8 w-8 md:h-10 md:w-10 flex items-center justify-center">
-              <span className="text-2xl md:text-3xl">🧺</span>
-            </div>
-            <span className="hidden sm:block text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent transition-all">
-              The Food Basket
-            </span>
-          </Link>
-        </div>
+        <Link to="/" className="flex items-center gap-2">
+          <div className="relative h-8 w-8 md:h-10 md:w-10 flex items-center justify-center">
+            <span className="text-2xl md:text-3xl">🧺</span>
+          </div>
+          <span className="hidden sm:block text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent transition-all">
+            The Food Basket
+          </span>
+        </Link>
 
-        {/* Desktop Navigation */}
         {!isMobile && (
           <NavigationMenu className="hidden md:block">
             <NavigationMenuList>
@@ -334,7 +327,6 @@ const Header = () => {
           </NavigationMenu>
         )}
 
-        {/* Right Side Actions */}
         <div className="flex items-center gap-1 md:gap-2">
           {!isMobile && (
             <form onSubmit={handleSearch} className="relative mr-1">
@@ -357,7 +349,6 @@ const Header = () => {
             </Link>
           )}
 
-          {/* Wishlist Button */}
           <Link to="/wishlist">
             <Button variant="ghost" size="icon">
               <Heart className="h-5 w-5" />
@@ -365,7 +356,6 @@ const Header = () => {
             </Button>
           </Link>
 
-          {/* User Menu */}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -374,7 +364,7 @@ const Header = () => {
                     <AvatarFallback>
                       {user.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
-                    {user.avatar && <AvatarImage src={user.avatar} />}
+                    {user.photoURL && <AvatarImage src={user.photoURL} />}
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -427,7 +417,6 @@ const Header = () => {
             </Link>
           )}
 
-          {/* Notifications Button */}
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -480,11 +469,10 @@ const Header = () => {
             </DropdownMenu>
           )}
 
-          {/* Cart Button */}
           <Button
             variant="ghost"
             size="icon"
-            onClick={toggleCart}
+            onClick={openCart}
             className="relative"
           >
             <ShoppingBag className="h-5 w-5" />
@@ -499,7 +487,6 @@ const Header = () => {
             )}
           </Button>
           
-          {/* Theme Toggle */}
           <ThemeToggle />
         </div>
       </div>

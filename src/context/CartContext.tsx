@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from "react";
 import { CartContextType, Product, CartItem, Order, OrderItem } from "../types";
 import { toast } from "@/components/ui/use-toast";
@@ -58,7 +57,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems([]);
   };
 
-  // Create an order from the cart
   const checkout = async (
     userId: string,
     deliveryAddress: Order["deliveryAddress"],

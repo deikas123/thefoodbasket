@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -96,12 +95,13 @@ const Profile = () => {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center mb-6">
-                    <Avatar className="h-20 w-20 mb-4">
-                      <AvatarFallback className="text-xl">
-                        {user.email?.charAt(0).toUpperCase() || "U"}
+                    <Avatar className="h-24 w-24 mb-4">
+                      <AvatarFallback className="text-2xl">
+                        {user?.email?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
-                      {user.avatar && <AvatarImage src={user.avatar} />}
+                      {user?.photoURL && <AvatarImage src={user.photoURL} />}
                     </Avatar>
+                    
                     <h2 className="text-xl font-bold">
                       {user.firstName
                         ? `${user.firstName} ${user.lastName}`
