@@ -1,4 +1,3 @@
-
 import Hero from "@/components/Hero";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import Categories from "@/components/Categories";
@@ -8,6 +7,9 @@ import Cart from "@/components/Cart";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Truck, Clock, HeartHandshake } from "lucide-react";
+import AdminBanner from "@/components/AdminBanner";
+import DealsOfTheDay from "@/components/DealsOfTheDay";
+import OtherProducts from "@/components/OtherProducts";
 
 const Index = () => {
   const { addItem } = useCart();
@@ -18,46 +20,53 @@ const Index = () => {
       <main className="flex-grow">
         <Hero />
         
-        {/* Features Section */}
-        <section className="py-16 bg-primary/5">
+        {/* Admin Promotional Banner */}
+        <section className="py-6 md:py-8">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="flex flex-col items-center text-center p-6 animate-fade-in">
-                <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                  <Truck size={28} />
+            <AdminBanner />
+          </div>
+        </section>
+        
+        {/* Features Section */}
+        <section className="py-10 bg-primary/5">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="flex flex-col items-center text-center p-4 animate-fade-in">
+                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+                  <Truck size={24} />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Free Delivery</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Free delivery on all orders over $50 within city limits.
                 </p>
               </div>
               
-              <div className="flex flex-col items-center text-center p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-                <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                  <ShieldCheck size={28} />
+              <div className="flex flex-col items-center text-center p-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+                  <ShieldCheck size={24} />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">100% Organic</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   All our fresh produce is certified organic and locally sourced.
                 </p>
               </div>
               
-              <div className="flex flex-col items-center text-center p-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-                <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                  <HeartHandshake size={28} />
+              <div className="flex flex-col items-center text-center p-4 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+                  <HeartHandshake size={24} />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Satisfaction Guaranteed</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Not satisfied? We offer hassle-free returns and refunds.
                 </p>
               </div>
               
-              <div className="flex flex-col items-center text-center p-6 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-                <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                  <Clock size={28} />
+              <div className="flex flex-col items-center text-center p-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+                  <Clock size={24} />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Express Delivery</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Need it fast? Choose our express delivery option for same-day service.
                 </p>
               </div>
@@ -65,8 +74,17 @@ const Index = () => {
           </div>
         </section>
         
-        <FeaturedProducts />
+        {/* Categories Section */}
         <Categories />
+        
+        {/* Deals of the Day Section */}
+        <DealsOfTheDay />
+        
+        {/* Other Products Section */}
+        <OtherProducts />
+        
+        {/* Featured Products Section */}
+        <FeaturedProducts />
         
         {/* Newsletter Section */}
         <section className="py-16 bg-primary/5">
