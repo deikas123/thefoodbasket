@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Product } from "@/types";
 import ProductsGrid from "./ProductsGrid";
-import { getProducts } from "@/services/productService";
+import { getFrequentlyPurchasedTogether } from "@/services/productService";
 
 interface RecommendedProductsProps {
   currentProductId: string;
@@ -17,16 +17,8 @@ const RecommendedProducts = ({ currentProductId, currentProductCategory }: Recom
     const fetchRecommendedProducts = async () => {
       setIsLoading(true);
       try {
-        // In a real app with purchase history data, we would fetch frequently purchased together products
-        // For now, we'll simulate by getting products from the same category
-        const allProducts = await getProducts();
-        
-        // Filter products with the same category but exclude current product
-        const similarProducts = allProducts
-          .filter(p => p.category === currentProductCategory && p.id !== currentProductId)
-          // Take max 4 products
-          .slice(0, 4);
-        
+        // Use the service to get frequently purchased together products
+        const similarProducts = await getFrequentlyPurchasedTogether(currentProductId);
         setProducts(similarProducts);
       } catch (error) {
         console.error("Error fetching recommended products:", error);

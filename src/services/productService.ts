@@ -1,4 +1,3 @@
-
 import { Product, Category } from "@/types";
 
 // Rename functions to match the imports in Shop.tsx
@@ -59,13 +58,15 @@ export const getAllProducts = async (): Promise<Product[]> => {
 };
 
 // Simulate fetching a single product by ID from an API
-export const getProductById = async (id: string): Promise<Product | undefined> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // In a real app, you would fetch data from an API endpoint
-  // For demo purposes, we're searching in our static arrays
-  return [...fruitProducts, ...vegetableProducts, ...dairyProducts].find(product => product.id === id);
+export const getProductById = async (id: string): Promise<Product | null> => {
+  try {
+    const products = await getProducts();
+    const product = products.find(p => p.id === id);
+    return product || null;
+  } catch (error) {
+    console.error("Error fetching product by id:", error);
+    return null;
+  }
 };
 
 // Simulate fetching categories from an API
@@ -86,6 +87,27 @@ export const getCategoryById = async (id: string): Promise<Category | undefined>
   // In a real app, you would fetch data from an API endpoint
   // For demo purposes, we're searching in our static array
   return categories.find(category => category.id === id);
+};
+
+// Get frequently purchased together products
+// In a real app, this would use actual purchase data from the database
+export const getFrequentlyPurchasedTogether = async (productId: string): Promise<Product[]> => {
+  try {
+    // Get the product to find its category
+    const product = await getProductById(productId);
+    if (!product) return [];
+    
+    // Find products in the same category
+    const products = await getProducts();
+    const similarProducts = products.filter(
+      p => p.category === product.category && p.id !== productId
+    ).slice(0, 4); // Limit to 4
+    
+    return similarProducts;
+  } catch (error) {
+    console.error("Error fetching frequently purchased together products:", error);
+    return [];
+  }
 };
 
 // Sample product lists for different categories

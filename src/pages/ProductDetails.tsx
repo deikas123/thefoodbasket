@@ -25,12 +25,15 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertCircle,
-  Zap
+  Zap,
+  Loader2,
+  HeartOff
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
 import { formatCurrency } from "@/utils/currencyFormatter";
+import AddToAutoReplenishButton from "@/components/product/AddToAutoReplenishButton";
 
 const ProductDetails = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -103,6 +106,8 @@ const ProductDetails = () => {
   const goBack = () => {
     navigate(-1);
   };
+  
+  const isAddingToCart = productQuery.isLoading || productQuery.isError || !product;
   
   if (productQuery.isLoading) {
     return (
@@ -283,37 +288,47 @@ const ProductDetails = () => {
                 </div>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  className="flex-1"
-                  size="lg"
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0}
-                  variant="outline"
-                >
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Add to Cart
-                </Button>
-                
-                <Button 
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                  size="lg"
-                  onClick={handleBuyNow}
-                  disabled={product.stock === 0}
-                >
-                  <Zap className="mr-2 h-5 w-5" />
-                  Buy Now
-                </Button>
-                
+              <div className="flex flex-wrap gap-3 mt-8">
                 <Button
-                  variant={isInWishlist(product.id) ? "default" : "outline"}
-                  size="lg"
-                  onClick={toggleWishlist}
-                  className={isInWishlist(product.id) ? "bg-red-500 hover:bg-red-600" : ""}
+                  className="gap-2"
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart || product.stock === 0}
                 >
-                  <Heart className={`mr-2 h-5 w-5 ${isInWishlist(product.id) ? "fill-white" : ""}`} />
-                  {isInWishlist(product.id) ? "Added to Wishlist" : "Add to Wishlist"}
+                  {isAddingToCart ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-4 w-4" />
+                      Add to Cart
+                    </>
+                  )}
                 </Button>
+
+                <Button
+                  variant={isInWishlist ? "default" : "outline"}
+                  className="gap-2"
+                  onClick={handleToggleWishlist}
+                >
+                  {isInWishlist ? (
+                    <>
+                      <HeartOff className="h-4 w-4" />
+                      Remove from Wishlist
+                    </>
+                  ) : (
+                    <>
+                      <Heart className="h-4 w-4" />
+                      Add to Wishlist
+                    </>
+                  )}
+                </Button>
+                
+                <AddToAutoReplenishButton 
+                  productId={product.id} 
+                  productName={product.name} 
+                />
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">

@@ -21,6 +21,10 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails";
 import Wishlist from "./pages/Wishlist";
+import Wallet from "./pages/Wallet";
+import PayLater from "./pages/PayLater";
+import FoodBaskets from "./pages/FoodBaskets";
+import AutoReplenish from "./pages/AutoReplenish";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 
@@ -56,6 +60,10 @@ function App() {
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/orders/:orderId" element={<OrderDetails />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/wallet" element={<Wallet />} />
+                <Route path="/pay-later" element={<PayLater />} />
+                <Route path="/food-baskets" element={<FoodBaskets />} />
+                <Route path="/auto-replenish" element={<AutoReplenish />} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
