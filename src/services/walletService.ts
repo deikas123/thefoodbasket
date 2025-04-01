@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Wallet, WalletTransaction } from "@/types/wallet";
 import { toast } from "@/hooks/use-toast";
+import { Database } from "@/types/database.types";
 
 // Get user wallet
 export const getUserWallet = async (): Promise<Wallet | null> => {
@@ -15,7 +16,15 @@ export const getUserWallet = async (): Promise<Wallet | null> => {
     return null;
   }
   
-  return data as Wallet;
+  // Map database response to Wallet type
+  const wallet = data as Database['public']['Tables']['wallets']['Row'];
+  return {
+    id: wallet.id,
+    userId: wallet.user_id,
+    balance: wallet.balance,
+    createdAt: wallet.created_at,
+    updatedAt: wallet.updated_at
+  };
 };
 
 // Create wallet for user if it doesn't exist
@@ -39,8 +48,16 @@ export const createWalletIfNotExist = async (): Promise<Wallet | null> => {
     console.error("Error creating wallet:", error);
     return null;
   }
-  
-  return data as Wallet;
+
+  // Map database response to Wallet type
+  const wallet = data as Database['public']['Tables']['wallets']['Row'];
+  return {
+    id: wallet.id,
+    userId: wallet.user_id,
+    balance: wallet.balance,
+    createdAt: wallet.created_at,
+    updatedAt: wallet.updated_at
+  };
 };
 
 // Add funds to wallet
@@ -54,10 +71,6 @@ export const addFundsToWallet = async (amount: number): Promise<boolean> => {
     });
     return false;
   }
-  
-  // Start a transaction to update wallet balance and create a transaction record
-  const { data: user } = await supabase.auth.getUser();
-  if (!user.user) return false;
   
   // Update wallet balance
   const { error: walletError } = await supabase
@@ -115,7 +128,15 @@ export const getWalletTransactions = async (): Promise<WalletTransaction[]> => {
     return [];
   }
   
-  return data as WalletTransaction[];
+  // Map database response to WalletTransaction[] type
+  return (data as Database['public']['Tables']['wallet_transactions']['Row'][]).map(item => ({
+    id: item.id,
+    walletId: item.wallet_id,
+    amount: item.amount,
+    transactionType: item.transaction_type as "deposit" | "payment" | "refund",
+    description: item.description || undefined,
+    createdAt: item.created_at
+  }));
 };
 
 // Pay using wallet

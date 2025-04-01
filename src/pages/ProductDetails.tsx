@@ -103,6 +103,10 @@ const ProductDetails = () => {
     }
   };
   
+  const handleWishlistToggle = () => {
+    toggleWishlist(product);
+  };
+  
   const goBack = () => {
     navigate(-1);
   };

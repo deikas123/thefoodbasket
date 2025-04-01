@@ -5,6 +5,7 @@ import { Order } from "@/types/order";
 import { toast } from "@/hooks/use-toast";
 import { isEligibleForPayLater } from "./kycService";
 import { format, addDays } from "date-fns";
+import { Database } from "@/types/database.types";
 
 // Create a pay later order
 export const createPayLaterOrder = async (order: Order): Promise<boolean> => {
@@ -63,7 +64,18 @@ export const getUserPayLaterOrders = async (): Promise<PayLaterOrder[]> => {
     return [];
   }
   
-  return data as PayLaterOrder[];
+  // Map database response to PayLaterOrder[] type
+  return (data as Database['public']['Tables']['pay_later_orders']['Row'][]).map(item => ({
+    id: item.id,
+    orderId: item.order_id,
+    userId: item.user_id,
+    totalAmount: item.total_amount,
+    paidAmount: item.paid_amount,
+    dueDate: item.due_date,
+    status: item.status as "active" | "completed" | "overdue",
+    createdAt: item.created_at,
+    updatedAt: item.updated_at
+  }));
 };
 
 // Make a payment towards a pay later order
@@ -83,9 +95,9 @@ export const makePayLaterPayment = async (
     return false;
   }
   
-  const payLaterOrder = orderData as PayLaterOrder;
-  const newPaidAmount = payLaterOrder.paidAmount + amount;
-  const newStatus = newPaidAmount >= payLaterOrder.totalAmount ? "completed" : "active";
+  const payLaterOrder = orderData as Database['public']['Tables']['pay_later_orders']['Row'];
+  const newPaidAmount = payLaterOrder.paid_amount + amount;
+  const newStatus = newPaidAmount >= payLaterOrder.total_amount ? "completed" : "active";
   
   // Update the payment
   const { error } = await supabase
@@ -110,7 +122,7 @@ export const makePayLaterPayment = async (
     title: "Payment successful",
     description: newStatus === "completed" 
       ? "Your pay later order has been fully paid" 
-      : `${((newPaidAmount / payLaterOrder.totalAmount) * 100).toFixed(0)}% paid`,
+      : `${((newPaidAmount / payLaterOrder.total_amount) * 100).toFixed(0)}% paid`,
   });
   
   return true;

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
@@ -45,7 +44,6 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
   
-  // Redirect if cart is empty
   if (items.length === 0 && currentStep !== "confirmation") {
     return (
       <div className="flex flex-col min-h-screen">
@@ -71,13 +69,11 @@ const Checkout = () => {
     );
   }
   
-  // Redirect to login if not authenticated
   if (!isAuthenticated && currentStep !== "confirmation") {
     navigate("/login", { state: { from: "/checkout" } });
     return null;
   }
   
-  // Go to next step
   const nextStep = () => {
     if (currentStep === "delivery") {
       if (!selectedAddress) {
@@ -113,7 +109,6 @@ const Checkout = () => {
     }
   };
   
-  // Go to previous step
   const prevStep = () => {
     if (currentStep === "payment") {
       setCurrentStep("delivery");
@@ -122,7 +117,6 @@ const Checkout = () => {
     }
   };
   
-  // Handle order placement
   const placeOrder = async () => {
     if (!user || !selectedAddress || !selectedDelivery || !selectedPayment) {
       toast({
@@ -143,7 +137,6 @@ const Checkout = () => {
         selectedPayment
       );
       
-      // Success - move to confirmation step
       setCompletedOrder(order);
       setCurrentStep("confirmation");
       
@@ -181,7 +174,6 @@ const Checkout = () => {
             
             <h1 className="text-3xl font-bold">Checkout</h1>
             
-            {/* Stepper */}
             <div className="my-8">
               <CheckoutStepper steps={steps} currentStep={currentStep} />
             </div>
@@ -254,6 +246,7 @@ const Checkout = () => {
                     <PaymentMethods 
                       selectedPayment={selectedPayment}
                       setSelectedPayment={setSelectedPayment}
+                      orderTotal={total}
                     />
                   </CardContent>
                 </Card>

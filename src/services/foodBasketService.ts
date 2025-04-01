@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { FoodBasket, FoodBasketItem } from "@/types/foodBasket";
 import { Product } from "@/types";
 import { getProducts } from "./productService";
+import { Database } from "@/types/database.types";
 
 // Get all food baskets
 export const getFoodBaskets = async (): Promise<FoodBasket[]> => {
@@ -16,8 +17,19 @@ export const getFoodBaskets = async (): Promise<FoodBasket[]> => {
     return [];
   }
   
+  // Map database response to FoodBasket[] type
+  const baskets = (data as Database['public']['Tables']['food_baskets']['Row'][]).map(item => ({
+    id: item.id,
+    name: item.name,
+    description: item.description || undefined,
+    recipe: item.recipe,
+    image: item.image || undefined,
+    totalPrice: item.total_price,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at
+  }));
+  
   // Get items for each basket
-  const baskets = data as FoodBasket[];
   for (const basket of baskets) {
     const basketItems = await getFoodBasketItems(basket.id);
     basket.items = basketItems;
@@ -39,7 +51,19 @@ export const getFoodBasketById = async (id: string): Promise<FoodBasket | null> 
     return null;
   }
   
-  const basket = data as FoodBasket;
+  // Map database response to FoodBasket type
+  const item = data as Database['public']['Tables']['food_baskets']['Row'];
+  const basket: FoodBasket = {
+    id: item.id,
+    name: item.name,
+    description: item.description || undefined,
+    recipe: item.recipe,
+    image: item.image || undefined,
+    totalPrice: item.total_price,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at
+  };
+  
   const basketItems = await getFoodBasketItems(basket.id);
   basket.items = basketItems;
   
@@ -58,7 +82,14 @@ export const getFoodBasketItems = async (basketId: string): Promise<FoodBasketIt
     return [];
   }
   
-  return data as FoodBasketItem[];
+  // Map database response to FoodBasketItem[] type
+  return (data as Database['public']['Tables']['food_basket_items']['Row'][]).map(item => ({
+    id: item.id,
+    basketId: item.basket_id,
+    productId: item.product_id,
+    quantity: item.quantity,
+    createdAt: item.created_at
+  }));
 };
 
 // Generate personalized food baskets based on user's order history

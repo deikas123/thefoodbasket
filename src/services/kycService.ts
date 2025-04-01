@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { KYCVerification } from "@/types/kyc";
 import { toast } from "@/hooks/use-toast";
+import { Database } from "@/types/database.types";
 
 // Get user KYC verification status
 export const getUserKYCStatus = async (): Promise<KYCVerification | null> => {
@@ -14,7 +15,20 @@ export const getUserKYCStatus = async (): Promise<KYCVerification | null> => {
     console.error("Error fetching KYC status:", error);
   }
   
-  return data as KYCVerification || null;
+  if (!data) return null;
+
+  // Map database response to KYCVerification type
+  const kyc = data as Database['public']['Tables']['kyc_verifications']['Row'];
+  return {
+    id: kyc.id,
+    userId: kyc.user_id,
+    idDocumentUrl: kyc.id_document_url || undefined,
+    addressProofUrl: kyc.address_proof_url || undefined,
+    status: kyc.status as "pending" | "approved" | "rejected",
+    adminNotes: kyc.admin_notes || undefined,
+    createdAt: kyc.created_at,
+    updatedAt: kyc.updated_at
+  };
 };
 
 // Submit KYC verification

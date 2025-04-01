@@ -5,6 +5,7 @@ import { Product } from "@/types";
 import { getProductById } from "./productService";
 import { toast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
+import { Database } from "@/types/database.types";
 
 // Get user's auto replenish items
 export const getUserAutoReplenishItems = async (): Promise<AutoReplenishItem[]> => {
@@ -18,7 +19,18 @@ export const getUserAutoReplenishItems = async (): Promise<AutoReplenishItem[]> 
     return [];
   }
   
-  return data as AutoReplenishItem[];
+  // Map database response to AutoReplenishItem[] type
+  return (data as Database['public']['Tables']['auto_replenish_items']['Row'][]).map(item => ({
+    id: item.id,
+    userId: item.user_id,
+    productId: item.product_id,
+    quantity: item.quantity,
+    frequencyDays: item.frequency_days,
+    nextOrderDate: item.next_order_date,
+    active: item.active,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at
+  }));
 };
 
 // Add item to auto replenish
