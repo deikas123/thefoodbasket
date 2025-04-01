@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
@@ -20,3 +21,143 @@ export function useIsMobile() {
 
 // Add an alias for backward compatibility
 export const useMobile = useIsMobile;
+
+// Product related types
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  featured: boolean;
+  rating: number;
+  numReviews: number;
+  stock: number;
+  discountPercentage?: number;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  image: string;
+  productCount: number;
+}
+
+// User related types
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  addresses: Address[];
+  loyaltyPoints: number;
+  createdAt: string;
+  phone?: string;
+  photoURL?: string;
+  dietaryPreferences?: string[];
+}
+
+export type UserRole = "admin" | "customer" | "delivery";
+
+export interface Address {
+  id: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  isDefault: boolean;
+}
+
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export interface RegisterFormData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  role?: UserRole;
+}
+
+// Cart related types
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+export interface CartContextType {
+  items: CartItem[];
+  isOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  addItem: (product: Product, quantity?: number) => void;
+  removeItem: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
+  clearCart: () => void;
+  checkout: (
+    userId: string,
+    deliveryAddress: Order["deliveryAddress"],
+    deliveryMethod: Order["deliveryMethod"],
+    paymentMethod: Order["paymentMethod"],
+    notes?: string
+  ) => Promise<Order>;
+  itemCount: number;
+  total: number;
+}
+
+// Wishlist related types
+export interface WishlistItem {
+  product: Product;
+  addedAt: string;
+}
+
+export interface WishlistContextType {
+  items: WishlistItem[];
+  addItem: (product: Product) => void;
+  removeItem: (productId: string) => void;
+  isInWishlist: (productId: string) => boolean;
+  clearWishlist: () => void;
+  itemCount: number;
+}
+
+// Auth related types
+export interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: RegisterFormData) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<User>;
+}
+
+// Delivery related types
+export interface DeliveryOption {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  estimatedDelivery: string;
+  speed: "standard" | "express";
+}
+
+// Payment related types
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  icon: string;
+  description?: string;
+}
+
+// Import existing types from separate files
+export * from './order';
+export * from './wallet';
+export * from './foodBasket';
+export * from './payLater';
+export * from './kyc';
+export * from './autoReplenish';
