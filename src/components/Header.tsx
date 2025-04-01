@@ -46,7 +46,7 @@ import {
   ShoppingBasket,
   CalendarClock,
 } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/types";
 
 const Header = () => {
   const { user, logout } = useAuth();

@@ -28,6 +28,7 @@ import PayLater from "./pages/PayLater";
 import Promotions from "./pages/Promotions";
 import FoodBaskets from "./pages/FoodBaskets";
 import AutoReplenish from "./pages/AutoReplenish";
+import Notifications from "./pages/Notifications";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import DiscountCodes from "./pages/admin/DiscountCodes";
@@ -70,6 +71,7 @@ function App() {
                 <Route path="/promotions" element={<Promotions />} />
                 <Route path="/food-baskets" element={<FoodBaskets />} />
                 <Route path="/auto-replenish" element={<AutoReplenish />} />
+                <Route path="/notifications" element={<Notifications />} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
