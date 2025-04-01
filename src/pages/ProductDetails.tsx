@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import RecommendedProducts from "@/components/RecommendedProducts";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -29,6 +30,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 const ProductDetails = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -38,14 +40,12 @@ const ProductDetails = () => {
   const { addItem } = useCart();
   const { addItem: addToWishlist, isInWishlist, removeItem } = useWishlist();
   
-  // Fetch product details
   const productQuery = useQuery({
     queryKey: ["product", productId],
     queryFn: () => getProductById(productId || ""),
     enabled: !!productId
   });
   
-  // Fetch category details if product is available
   const categoryQuery = useQuery({
     queryKey: ["category", productQuery.data?.category],
     queryFn: () => getCategoryById(productQuery.data?.category || ""),
@@ -55,7 +55,6 @@ const ProductDetails = () => {
   const product = productQuery.data;
   const category = categoryQuery.data;
   
-  // Calculate sale price if there's a discount
   const salePrice = product?.discountPercentage
     ? (product.price * (1 - product.discountPercentage / 100)).toFixed(2)
     : null;
@@ -164,7 +163,6 @@ const ProductDetails = () => {
       <Header />
       <main className="flex-grow pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-7xl">
-          {/* Breadcrumb Navigation */}
           <div className="mb-6 flex items-center space-x-2 text-sm text-muted-foreground">
             <Button variant="ghost" size="sm" onClick={goBack} className="-ml-3">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -185,7 +183,6 @@ const ProductDetails = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {/* Product Image */}
             <div className="relative">
               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                 <img 
@@ -195,7 +192,6 @@ const ProductDetails = () => {
                 />
               </div>
               
-              {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 {product.discountPercentage && (
                   <Badge className="bg-red-500 text-white">
@@ -211,7 +207,6 @@ const ProductDetails = () => {
               </div>
             </div>
             
-            {/* Product Details */}
             <div className="space-y-6">
               <div>
                 {category && (
@@ -242,7 +237,6 @@ const ProductDetails = () => {
                 {product.description}
               </p>
               
-              {/* Stock Status */}
               <div className="flex items-center gap-2">
                 {product.stock > 0 ? (
                   <>
@@ -264,7 +258,6 @@ const ProductDetails = () => {
               
               <Separator />
               
-              {/* Quantity Picker */}
               <div className="space-y-2">
                 <label htmlFor="quantity" className="block text-sm font-medium">
                   Quantity
@@ -290,7 +283,6 @@ const ProductDetails = () => {
                 </div>
               </div>
               
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
                   className="flex-1"
@@ -324,7 +316,6 @@ const ProductDetails = () => {
                 </Button>
               </div>
               
-              {/* Delivery & Return Info */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
                 <div className="flex flex-col items-center text-center p-4 border rounded-lg">
                   <Truck className="h-6 w-6 mb-2 text-primary" />
@@ -345,6 +336,16 @@ const ProductDetails = () => {
                 </div>
               </div>
             </div>
+          </div>
+          
+          <div className="mt-16">
+            <Separator className="mb-8" />
+            {product && (
+              <RecommendedProducts 
+                currentProductId={product.id} 
+                currentProductCategory={product.category} 
+              />
+            )}
           </div>
         </div>
       </main>

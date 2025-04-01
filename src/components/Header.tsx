@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, ShoppingCart, Search, X, User, Heart, Package, LogOut } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -27,6 +27,7 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,8 +53,8 @@ const Header = () => {
         title: "Search",
         description: `Searching for "${searchQuery}"...`,
       });
-      // Here you would typically redirect to search results page
-      // navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      navigate(`/shop?query=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
     }
   };
 
@@ -70,9 +71,12 @@ const Header = () => {
     { name: "Contact", path: "/contact" }
   ];
 
+  // Check if we're on a page that needs a fixed position header
+  const shouldBeFixed = !["/login", "/register"].includes(location.pathname);
+
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`${shouldBeFixed ? 'fixed' : 'relative'} top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-sm" : "bg-transparent"
       }`}
     >

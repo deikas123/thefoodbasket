@@ -54,7 +54,11 @@ const OtherProducts = () => {
           </Link>
         </div>
         
-        <ProductsGrid products={products} isLoading={isLoading} cols={4} />
+        <ProductsGrid 
+          products={products} 
+          isLoading={isLoading} 
+          cols={4} 
+        />
       </div>
     </div>
   );

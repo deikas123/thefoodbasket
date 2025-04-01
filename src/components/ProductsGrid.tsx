@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from "react";
 import { Product } from "@/types";
 import ProductCard from "./ProductCard";
 
@@ -18,6 +17,18 @@ const ProductsGrid = ({
   isLoading = false, 
   cols = 4 
 }: ProductsGridProps) => {
+  // Create a column class based on the cols prop
+  const getColsClass = () => {
+    switch(cols) {
+      case 2: return "grid-cols-1 sm:grid-cols-2";
+      case 3: return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+      case 4: return "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+      case 5: return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5";
+      case 6: return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6";
+      default: return "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+    }
+  };
+
   return (
     <section className="py-10 px-4">
       <div className="container mx-auto">
@@ -34,7 +45,7 @@ const ProductsGrid = ({
           </div>
         )}
         
-        <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-${cols} gap-3 md:gap-4`}>
+        <div className={`grid ${getColsClass()} gap-3 md:gap-4`}>
           {isLoading ? (
             // Loading skeletons
             Array(8).fill(0).map((_, index) => (

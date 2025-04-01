@@ -8,6 +8,7 @@ import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { useState, useEffect } from "react";
 import Preloader from "@/components/Preloader";
+import AIChatBot from "@/components/AIChatBot";
 
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
@@ -21,6 +22,7 @@ import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails";
 import Wishlist from "./pages/Wishlist";
 import AdminDashboard from "./pages/admin/Dashboard";
+import AdminLogin from "./pages/admin/AdminLogin";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +33,7 @@ function App() {
     // Simulate loading time - in a real app this would be based on actual data loading
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 5000); // 5 seconds to show the preloader
+    }, 2000); // Reduced to 2 seconds to improve user experience
     
     return () => clearTimeout(timer);
   }, []);
@@ -57,6 +59,7 @@ function App() {
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/products" element={<AdminDashboard />} />
                 <Route path="/admin/orders" element={<AdminDashboard />} />
                 <Route path="/admin/users" element={<AdminDashboard />} />
@@ -64,6 +67,7 @@ function App() {
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <AIChatBot />
               <Toaster />
             </WishlistProvider>
           </CartProvider>

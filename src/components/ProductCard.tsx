@@ -76,28 +76,28 @@ const ProductCard = ({ product }: ProductCardProps) => {
           />
         </Button>
         
-        {/* Badges */}
+        {/* Badges - Enhanced contrast */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.discountPercentage && (
-            <Badge className="bg-red-500">
+            <Badge className="bg-red-600 text-white font-medium border-red-600">
               {product.discountPercentage}% OFF
             </Badge>
           )}
           
           {product.featured && (
-            <Badge variant="outline" className="bg-white/80 backdrop-blur-sm">
+            <Badge variant="outline" className="bg-primary/90 text-white border-primary font-medium shadow-sm">
               Featured
             </Badge>
           )}
           
           {product.stock <= 5 && product.stock > 0 && (
-            <Badge variant="outline" className="bg-amber-500 text-white border-amber-500">
+            <Badge variant="outline" className="bg-amber-500 text-white border-amber-500 font-medium">
               Low Stock
             </Badge>
           )}
           
           {product.stock === 0 && (
-            <Badge variant="outline" className="bg-gray-500 text-white border-gray-500">
+            <Badge variant="outline" className="bg-gray-700 text-white border-gray-700 font-medium">
               Out of Stock
             </Badge>
           )}
