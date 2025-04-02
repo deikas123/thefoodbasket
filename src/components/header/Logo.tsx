@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 
 const Logo = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user && user.role === "admin";
 
   return (
     <div className="flex items-center">

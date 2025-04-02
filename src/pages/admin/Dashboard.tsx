@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
@@ -26,15 +27,16 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   
-  if (!isAuthenticated) {
-    navigate("/login", { state: { from: "/admin" } });
-    return null;
-  }
-  
-  if (user?.role !== "admin") {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/admin/login", { state: { from: "/admin" } });
+      return;
+    }
+    
+    if (user && user.role !== "admin") {
+      navigate("/");
+    }
+  }, [user, isAuthenticated, navigate]);
   
   const metrics = {
     totalRevenue: "KSh 243,500",
@@ -46,6 +48,11 @@ const AdminDashboard = () => {
     deliveredOrders: 187,
     deliveryGrowth: "+5.7%"
   };
+
+  // If still loading auth state or not authorized, show nothing yet
+  if (!user || user.role !== "admin") {
+    return null;
+  }
   
   return (
     <div className="flex flex-col min-h-screen">

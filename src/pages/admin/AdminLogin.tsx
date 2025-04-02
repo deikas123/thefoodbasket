@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,11 @@ const AdminLogin = () => {
   const { toast } = useToast();
 
   // Redirect if already logged in as admin
-  if (user?.role === "admin") {
-    navigate("/admin");
-  }
+  useEffect(() => {
+    if (user && user.role === "admin") {
+      navigate("/admin");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,19 +31,11 @@ const AdminLogin = () => {
       await login(email, password);
       
       // Check if user has admin role after login
-      if (user?.role === "admin") {
-        toast({
-          title: "Login successful",
-          description: "Welcome to the admin dashboard!",
-        });
-        navigate("/admin");
-      } else {
-        toast({
-          title: "Access denied",
-          description: "You don't have admin privileges.",
-          variant: "destructive",
-        });
-      }
+      // The state won't be updated immediately, so we'll show a toast and let the useEffect handle redirection
+      toast({
+        title: "Login successful",
+        description: "Checking admin privileges...",
+      });
     } catch (error: any) {
       toast({
         title: "Login failed",
