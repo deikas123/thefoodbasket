@@ -9,8 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { ShieldCheck } from "lucide-react";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@foodbasket.com"); // Pre-filled for demo
+  const [password, setPassword] = useState("password123"); // Pre-filled for demo
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, user } = useAuth();
@@ -60,7 +60,7 @@ const AdminLogin = () => {
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-2xl font-bold">Admin Access</CardTitle>
             <CardDescription>
-              Enter your credentials to access the admin dashboard
+              Use the pre-filled credentials to access the admin dashboard
             </CardDescription>
           </CardHeader>
           
@@ -93,6 +93,12 @@ const AdminLogin = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+              </div>
+              
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md text-xs text-blue-600 dark:text-blue-300">
+                <p className="font-medium">Demo Credentials:</p>
+                <p>Email: admin@foodbasket.com</p>
+                <p>Password: password123</p>
               </div>
             </CardContent>
             

@@ -128,13 +128,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="flex flex-col">
           {salePrice ? (
             <>
-              <span className="font-bold text-lg">{formatCurrency(Number(salePrice))}</span>
+              <span className="font-bold text-lg">KSh {salePrice}</span>
               <span className="text-sm text-muted-foreground line-through">
-                {formatCurrency(product.price)}
+                KSh {product.price}
               </span>
             </>
           ) : (
-            <span className="font-bold text-lg">{formatCurrency(product.price)}</span>
+            <span className="font-bold text-lg">KSh {product.price}</span>
           )}
         </div>
         

@@ -84,10 +84,11 @@ function App() {
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <div className="fixed bottom-4 right-4 flex flex-col gap-4 z-40">
-                <AIChatBot />
-                <LiveChat />
-              </div>
+              
+              {/* Fix overlapping chat buttons by positioning them separately */}
+              <AIChatBot />
+              <LiveChat />
+              
               <Toaster />
             </WishlistProvider>
           </CartProvider>

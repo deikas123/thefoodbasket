@@ -54,13 +54,13 @@ const FeaturedProducts = () => {
         
         {isMobile ? (
           // Mobile view - Carousel
-          <div className="px-4">
+          <div className="px-1">
             <Carousel className="w-full">
               <CarouselContent>
                 {isLoading ? (
                   // Loading skeletons for carousel
                   Array(4).fill(0).map((_, index) => (
-                    <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                    <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 pl-2 pr-2">
                       <div className="product-card h-[300px]">
                         <div className="aspect-square bg-gray-200 dark:bg-gray-800 animate-pulse rounded-md"></div>
                         <div className="p-3">
@@ -74,16 +74,16 @@ const FeaturedProducts = () => {
                   ))
                 ) : (
                   featuredProducts.map((product) => (
-                    <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
-                      <div className="p-1">
-                        <ProductCard product={product} />
-                      </div>
+                    <CarouselItem key={product.id} className="basis-full pl-2 pr-2">
+                      <ProductCard product={product} />
                     </CarouselItem>
                   ))
                 )}
               </CarouselContent>
-              <CarouselPrevious className="hidden md:flex" />
-              <CarouselNext className="hidden md:flex" />
+              <div className="flex justify-center mt-4">
+                <CarouselPrevious className="relative mr-2 transform-none translate-y-0" />
+                <CarouselNext className="relative ml-2 transform-none translate-y-0" />
+              </div>
             </Carousel>
           </div>
         ) : (

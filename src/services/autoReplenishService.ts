@@ -9,9 +9,13 @@ import { Database } from "@/types/database.types";
 
 // Get user's auto replenish items
 export const getUserAutoReplenishItems = async (): Promise<AutoReplenishItem[]> => {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) return [];
+
   const { data, error } = await supabase
     .from("auto_replenish_items")
     .select("*")
+    .eq("user_id", user.user.id)
     .order("next_order_date", { ascending: true });
   
   if (error) {
@@ -61,6 +65,7 @@ export const addToAutoReplenish = async (
         frequency_days: frequencyDays,
         next_order_date: nextOrderDate,
         active: true,
+        updated_at: new Date().toISOString()
       })
       .eq("id", existingItems[0].id);
     
@@ -84,6 +89,8 @@ export const addToAutoReplenish = async (
         frequency_days: frequencyDays,
         next_order_date: nextOrderDate,
         active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
     
     if (error) {
@@ -115,7 +122,10 @@ export const toggleAutoReplenishStatus = async (
 ): Promise<boolean> => {
   const { error } = await supabase
     .from("auto_replenish_items")
-    .update({ active })
+    .update({ 
+      active,
+      updated_at: new Date().toISOString()
+    })
     .eq("id", itemId);
   
   if (error) {
