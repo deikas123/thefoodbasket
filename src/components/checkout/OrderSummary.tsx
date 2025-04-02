@@ -3,6 +3,7 @@ import { CartItem } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -41,7 +42,7 @@ const OrderSummary = ({
                   <span className="font-medium">{item.quantity} x</span>
                   <span className="ml-2 truncate max-w-[180px]">{item.product.name}</span>
                 </div>
-                <span>${(item.product.price * item.quantity).toFixed(2)}</span>
+                <span>{formatCurrency(item.product.price * item.quantity)}</span>
               </div>
             ))}
           </div>
@@ -52,18 +53,18 @@ const OrderSummary = ({
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>{formatCurrency(subtotal)}</span>
           </div>
           
           <div className="flex justify-between">
             <span className="text-muted-foreground">Delivery</span>
-            <span>${deliveryFee.toFixed(2)}</span>
+            <span>{formatCurrency(deliveryFee)}</span>
           </div>
           
           {discount > 0 && (
             <div className="flex justify-between text-green-600">
               <span>Discount</span>
-              <span>-${discount.toFixed(2)}</span>
+              <span>-{formatCurrency(discount)}</span>
             </div>
           )}
         </div>
@@ -72,7 +73,7 @@ const OrderSummary = ({
         
         <div className="flex justify-between font-bold text-lg">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>{formatCurrency(total)}</span>
         </div>
       </CardContent>
     </Card>

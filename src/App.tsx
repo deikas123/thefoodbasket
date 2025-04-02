@@ -84,8 +84,10 @@ function App() {
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <AIChatBot />
-              <LiveChat />
+              <div className="fixed bottom-4 right-4 flex flex-col gap-4 z-40">
+                <AIChatBot />
+                <LiveChat />
+              </div>
               <Toaster />
             </WishlistProvider>
           </CartProvider>

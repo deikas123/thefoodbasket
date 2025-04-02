@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { getUserWallet } from "@/services/walletService";
 import { Wallet } from "@/types/wallet";
 import { RefreshCw, Wallet as WalletIcon } from "lucide-react";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface WalletPaymentOptionProps {
   totalAmount: number;
@@ -60,8 +61,8 @@ const WalletPaymentOption = ({ totalAmount, onWalletSelect }: WalletPaymentOptio
             <div className="text-sm mt-1 ml-7 flex items-center justify-between">
               <p className="text-muted-foreground">
                 {hasEnoughBalance 
-                  ? `Available balance: $${wallet?.balance.toFixed(2)}`
-                  : `Insufficient balance: $${wallet?.balance.toFixed(2)} (Need $${totalAmount.toFixed(2)})`
+                  ? `Available balance: ${formatCurrency(wallet?.balance || 0)}`
+                  : `Insufficient balance: ${formatCurrency(wallet?.balance || 0)} (Need ${formatCurrency(totalAmount)})`
                 }
               </p>
               <button className="text-primary flex items-center text-xs">
