@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
 import Header from "@/components/Header";
@@ -24,11 +24,13 @@ import { getProductById } from "@/services/productService";
 import { ShoppingCart, ChefHat, Filter, ArrowUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import RecipeSuggestions from "@/components/RecipeSuggestions";
+import { Product } from "@/types";
 
 const FoodBaskets = () => {
   const { addItem } = useCart();
   const [activeTab, setActiveTab] = useState("all");
   const [sort, setSort] = useState<"price_asc" | "price_desc">("price_asc");
+  const [productDetails, setProductDetails] = useState<{[key: string]: Product}>({});
 
   // Fetch food baskets
   const foodBasketsQuery = useQuery({
@@ -51,6 +53,30 @@ const FoodBaskets = () => {
     ? foodBasketsQuery.data || [] 
     : personalizedBasketsQuery.data || [];
 
+  // Fetch product details for all baskets
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      const details: {[key: string]: Product} = {};
+      
+      for (const basket of baskets) {
+        for (const item of basket.items) {
+          if (!details[item.productId]) {
+            const product = await getProductById(item.productId);
+            if (product) {
+              details[item.productId] = product;
+            }
+          }
+        }
+      }
+      
+      setProductDetails(details);
+    };
+    
+    if (baskets.length > 0 && !isLoading) {
+      fetchProductDetails();
+    }
+  }, [baskets, isLoading]);
+
   // Sort baskets by price
   const sortedBaskets = [...baskets].sort((a, b) => {
     return sort === "price_asc" 
@@ -62,7 +88,7 @@ const FoodBaskets = () => {
     try {
       // Add all items in the basket to cart
       for (const item of basket.items) {
-        const product = await getProductById(item.productId);
+        const product = productDetails[item.productId] || await getProductById(item.productId);
         if (product) {
           addItem(product, item.quantity);
         }
@@ -84,6 +110,11 @@ const FoodBaskets = () => {
 
   const toggleSort = () => {
     setSort(sort === "price_asc" ? "price_desc" : "price_asc");
+  };
+
+  // Helper to get product name
+  const getProductName = (productId: string) => {
+    return productDetails[productId]?.name || "Loading...";
   };
 
   return (
@@ -157,7 +188,9 @@ const FoodBaskets = () => {
                           <h3 className="text-lg font-medium mb-2">Included Items:</h3>
                           <ul className="list-disc list-inside mb-4 text-sm text-muted-foreground">
                             {basket.items.map((item) => (
-                              <li key={item.id}>{item.productId} x{item.quantity}</li>
+                              <li key={item.id}>
+                                {getProductName(item.productId)} x{item.quantity}
+                              </li>
                             ))}
                           </ul>
                           
@@ -248,7 +281,9 @@ const FoodBaskets = () => {
                           <h3 className="text-lg font-medium mb-2">Included Items:</h3>
                           <ul className="list-disc list-inside mb-4 text-sm text-muted-foreground">
                             {basket.items.map((item) => (
-                              <li key={item.id}>{item.productId} x{item.quantity}</li>
+                              <li key={item.id}>
+                                {getProductName(item.productId)} x{item.quantity}
+                              </li>
                             ))}
                           </ul>
                           
