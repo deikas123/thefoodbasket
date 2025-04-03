@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Package, Wallet, Clock, CalendarClock, LogOut, ShieldAlert } from "lucide-react";
+import { User, Package, Wallet, Clock, CalendarClock, LogOut, ShieldAlert, Truck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const UserMenu = () => {
@@ -61,6 +60,14 @@ const UserMenu = () => {
             <Link to="/admin" className="cursor-pointer">
               <ShieldAlert className="mr-2 h-4 w-4" />
               <span>Admin Dashboard</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
+        {user.role === "delivery" && (
+          <DropdownMenuItem asChild>
+            <Link to="/delivery" className="cursor-pointer">
+              <Truck className="mr-2 h-4 w-4" />
+              <span>Delivery Dashboard</span>
             </Link>
           </DropdownMenuItem>
         )}

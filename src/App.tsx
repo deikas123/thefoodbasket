@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import Preloader from "@/components/Preloader";
 import AIChatBot from "@/components/AIChatBot";
 import LiveChat from "@/components/LiveChat";
+import DeliveryDashboard from "./pages/DeliveryDashboard";
 
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
@@ -38,10 +39,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading time - in a real app this would be based on actual data loading
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // Reduced to 2 seconds to improve user experience
+    }, 2000);
     
     return () => clearTimeout(timer);
   }, []);
@@ -79,6 +79,8 @@ function App() {
                 <Route path="/admin/users" element={<AdminDashboard />} />
                 <Route path="/admin/deliveries" element={<AdminDashboard />} />
                 <Route path="/admin/discount-codes" element={<DiscountCodes />} />
+                
+                <Route path="/delivery" element={<DeliveryDashboard />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
