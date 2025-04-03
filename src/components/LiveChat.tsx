@@ -98,18 +98,18 @@ const LiveChat = () => {
 
   return (
     <>
-      {/* Chat Toggle Button */}
+      {/* Chat Toggle Button - No longer fixed positioned */}
       <Button
         onClick={() => setIsChatOpen(true)}
-        className="fixed bottom-24 right-6 rounded-full h-14 w-14 shadow-lg z-20"
+        className="rounded-full h-14 w-14 shadow-lg"
       >
         <MessageCircle className="h-6 w-6" />
       </Button>
 
-      {/* Chat Window */}
+      {/* Chat Window - Still absolute positioned */}
       <div
         className={cn(
-          "fixed bottom-6 right-6 w-80 md:w-96 z-30 transition-transform duration-300 ease-in-out transform",
+          "absolute bottom-0 right-0 w-80 md:w-96 transition-transform duration-300 ease-in-out transform",
           isChatOpen ? "translate-y-0" : "translate-y-[120%]"
         )}
       >

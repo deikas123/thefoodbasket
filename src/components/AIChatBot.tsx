@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -163,8 +164,8 @@ const AIChatBot = () => {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-50">
-      {/* Chat Button */}
+    <>
+      {/* Chat Button - No longer fixed positioned */}
       <Button
         onClick={toggleChat}
         className={`rounded-full p-3 h-14 w-14 flex items-center justify-center ${
@@ -174,9 +175,9 @@ const AIChatBot = () => {
         {isOpen ? <X size={24} /> : <Bot size={24} />}
       </Button>
       
-      {/* Chat Window */}
+      {/* Chat Window - Still absolute positioned */}
       {isOpen && (
-        <Card className={`absolute bottom-20 right-0 w-80 md:w-96 shadow-lg transition-all duration-300 ${
+        <Card className={`absolute bottom-0 right-0 w-80 md:w-96 shadow-lg transition-all duration-300 ${
           isMinimized ? 'h-14' : 'h-[450px]'
         }`}>
           <CardHeader className={`p-4 flex flex-row items-center justify-between border-b ${
@@ -263,7 +264,7 @@ const AIChatBot = () => {
           )}
         </Card>
       )}
-    </div>
+    </>
   );
 };
 

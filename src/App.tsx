@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -73,7 +72,6 @@ function App() {
                 <Route path="/auto-replenish" element={<AutoReplenish />} />
                 <Route path="/notifications" element={<Notifications />} />
                 
-                {/* Admin Routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/products" element={<AdminDashboard />} />
@@ -85,9 +83,10 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
               
-              {/* Fix overlapping chat buttons by positioning them separately */}
-              <AIChatBot />
-              <LiveChat />
+              <div className="fixed bottom-6 right-6 flex flex-col space-y-4 items-end z-30">
+                <AIChatBot />
+                <LiveChat />
+              </div>
               
               <Toaster />
             </WishlistProvider>
