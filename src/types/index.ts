@@ -133,8 +133,8 @@ export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: RegisterFormData) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (userData: RegisterFormData) => Promise<User>;
   logout: () => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<User>;
 }

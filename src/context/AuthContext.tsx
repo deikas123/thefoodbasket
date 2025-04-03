@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContextType, User, UserRole, RegisterFormData, Address } from "../types";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: "admin@foodbasket.com",
                 firstName: "Admin",
                 lastName: "User",
-                role: "admin",
+                role: "admin" as UserRole,
                 addresses: [],
                 loyaltyPoints: 0,
                 createdAt: new Date().toISOString()
@@ -48,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: "customer@example.com",
                 firstName: "John",
                 lastName: "Doe",
-                role: "customer",
+                role: "customer" as UserRole,
                 addresses: [
                   {
                     id: "a1",
@@ -97,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: "admin@foodbasket.com",
               firstName: "Admin",
               lastName: "User",
-              role: "admin",
+              role: "admin" as UserRole,
               addresses: [],
               loyaltyPoints: 0,
               createdAt: new Date().toISOString()
@@ -107,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: "customer@example.com", 
               firstName: "John",
               lastName: "Doe",
-              role: "customer",
+              role: "customer" as UserRole,
               addresses: [
                 {
                   id: "a1",
@@ -146,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
   
   // Login function
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     setIsLoading(true);
     
     try {
@@ -157,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: "admin@foodbasket.com",
           firstName: "Admin",
           lastName: "User",
-          role: "admin",
+          role: "admin" as UserRole,
           addresses: [],
           loyaltyPoints: 0,
           createdAt: new Date().toISOString()
@@ -167,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: "customer@example.com",
           firstName: "John",
           lastName: "Doe",
-          role: "customer",
+          role: "customer" as UserRole,
           addresses: [
             {
               id: "a1",
@@ -210,7 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   // Register function
-  const register = async (userData: RegisterFormData) => {
+  const register = async (userData: RegisterFormData): Promise<User> => {
     setIsLoading(true);
     
     try {
@@ -220,7 +221,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        role: userData.role || "customer",
+        role: (userData.role as UserRole) || "customer",
         addresses: [],
         loyaltyPoints: 0,
         createdAt: new Date().toISOString()
