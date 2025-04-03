@@ -28,14 +28,24 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
       
-      // Check if user has admin role after login
-      // The state won't be updated immediately, so we'll show a toast and let the useEffect handle redirection
+      if (loggedInUser.role !== 'admin') {
+        toast({
+          title: "Access denied",
+          description: "You don't have admin privileges",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       toast({
         title: "Login successful",
-        description: "Checking admin privileges...",
+        description: "Welcome to admin dashboard",
       });
+      
+      // Navigate to admin dashboard
+      navigate("/admin");
     } catch (error: any) {
       toast({
         title: "Login failed",

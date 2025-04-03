@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,9 @@ import Footer from "@/components/Footer";
 const Login = () => {
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const from = location.state?.from || "/";
   
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -32,8 +35,15 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(formData.email, formData.password);
-      navigate("/");
+      const user = await login(formData.email, formData.password);
+      
+      // Check if the user is logging in as admin
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else {
+        // Navigate to the previous page or home
+        navigate(from);
+      }
     } catch (error: any) {
       setError(error.message || "Login failed. Please check your credentials and try again.");
       console.error("Login failed", error);
@@ -96,6 +106,12 @@ const Login = () => {
                     required
                   />
                 </div>
+              </div>
+              
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md text-xs text-blue-600 dark:text-blue-300">
+                <p className="font-medium">Demo Credentials:</p>
+                <p>Admin: admin@foodbasket.com / password123</p>
+                <p>Customer: customer@example.com / password123</p>
               </div>
               
               <Button type="submit" className="w-full" disabled={isLoading}>

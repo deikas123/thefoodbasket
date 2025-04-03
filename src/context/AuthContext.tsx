@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContextType, User, UserRole, RegisterFormData, Address } from "../types";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,46 +19,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(JSON.parse(storedUser));
         }
         
+        // Verify if there's an actual Supabase session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          throw error;
+          console.error("Error fetching session:", error);
+          // Don't throw here, just continue with localStorage user if available
         }
         
         if (session?.user) {
           // If we have a valid session but no stored user data, fetch it
           if (!storedUser) {
-            const { data } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (data) {
-              // Create user object and save to state and localStorage
-              const userData: User = {
-                id: session.user.id,
-                email: session.user.email || "",
-                firstName: data.first_name || "",
-                lastName: data.last_name || "",
-                role: (session.user.app_metadata?.role as UserRole) || "customer",
+            // For demo purposes, fetch from mock user data
+            // In a real app, you would fetch from Supabase
+            const mockUsers = [
+              {
+                id: "u1",
+                email: "admin@foodbasket.com",
+                firstName: "Admin",
+                lastName: "User",
+                role: "admin",
                 addresses: [],
-                loyaltyPoints: data.loyalty_points || 0,
-                createdAt: data.created_at || new Date().toISOString()
-              };
-              
-              setUser(userData);
-              localStorage.setItem("currentUser", JSON.stringify(userData));
+                loyaltyPoints: 0,
+                createdAt: new Date().toISOString()
+              },
+              {
+                id: "u2",
+                email: "customer@example.com",
+                firstName: "John",
+                lastName: "Doe",
+                role: "customer",
+                addresses: [
+                  {
+                    id: "a1",
+                    street: "123 Main St",
+                    city: "Anytown",
+                    state: "CA",
+                    zipCode: "12345",
+                    isDefault: true
+                  }
+                ],
+                phone: "555-123-4567",
+                dietaryPreferences: ["vegetarian"],
+                loyaltyPoints: 100,
+                createdAt: new Date().toISOString()
+              }
+            ];
+            
+            const mockUser = mockUsers.find(u => u.email === session.user.email);
+            
+            if (mockUser) {
+              setUser(mockUser);
+              localStorage.setItem("currentUser", JSON.stringify(mockUser));
             }
           }
-        } else {
-          // No session, clear user data
-          setUser(null);
-          localStorage.removeItem("currentUser");
         }
       } catch (error) {
         console.error("Error fetching session:", error);
-        localStorage.removeItem("currentUser");
+        // Keep existing user from localStorage if available
       } finally {
         setIsLoading(false);
       }
@@ -70,49 +87,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event, session);
+        
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // For demo purposes, use mock data
+          const mockUsers = [
+            {
+              id: "u1",
+              email: "admin@foodbasket.com",
+              firstName: "Admin",
+              lastName: "User",
+              role: "admin",
+              addresses: [],
+              loyaltyPoints: 0,
+              createdAt: new Date().toISOString()
+            },
+            {
+              id: "u2",
+              email: "customer@example.com", 
+              firstName: "John",
+              lastName: "Doe",
+              role: "customer",
+              addresses: [
+                {
+                  id: "a1",
+                  street: "123 Main St",
+                  city: "Anytown",
+                  state: "CA",
+                  zipCode: "12345",
+                  isDefault: true
+                }
+              ],
+              phone: "555-123-4567",
+              dietaryPreferences: ["vegetarian"],
+              loyaltyPoints: 100,
+              createdAt: new Date().toISOString()
+            }
+          ];
+          
           if (session?.user) {
-            const { data } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
+            const mockUser = mockUsers.find(u => u.email === session.user.email);
             
-            if (data) {
-              // Create user object and save to state and localStorage
-              const userData: User = {
-                id: session.user.id,
-                email: session.user.email || "",
-                firstName: data.first_name || "",
-                lastName: data.last_name || "",
-                role: (session.user.app_metadata?.role as UserRole) || "customer",
-                addresses: [],
-                loyaltyPoints: data.loyalty_points || 0,
-                createdAt: data.created_at || new Date().toISOString()
-              };
-              
-              // Fetch addresses
-              const { data: addressesData } = await supabase
-                .from('addresses')
-                .select('*')
-                .eq('user_id', session.user.id);
-              
-              if (addressesData) {
-                // Convert from database format to app format
-                userData.addresses = addressesData.map(addr => ({
-                  id: addr.id,
-                  street: addr.street,
-                  city: addr.city,
-                  state: addr.state,
-                  zipCode: addr.zip_code,
-                  isDefault: addr.is_default
-                }));
-              }
-              
-              setUser(userData);
-              localStorage.setItem("currentUser", JSON.stringify(userData));
+            if (mockUser) {
+              setUser(mockUser);
+              localStorage.setItem("currentUser", JSON.stringify(mockUser));
             }
           }
+          
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           localStorage.removeItem("currentUser");
@@ -129,25 +150,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      // For demo purposes, skip actual Supabase auth and use mock data
+      const mockUsers = [
+        {
+          id: "u1",
+          email: "admin@foodbasket.com",
+          firstName: "Admin",
+          lastName: "User",
+          role: "admin",
+          addresses: [],
+          loyaltyPoints: 0,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "u2",
+          email: "customer@example.com",
+          firstName: "John",
+          lastName: "Doe",
+          role: "customer",
+          addresses: [
+            {
+              id: "a1",
+              street: "123 Main St",
+              city: "Anytown",
+              state: "CA",
+              zipCode: "12345",
+              isDefault: true
+            }
+          ],
+          phone: "555-123-4567",
+          dietaryPreferences: ["vegetarian"],
+          loyaltyPoints: 100,
+          createdAt: new Date().toISOString()
+        }
+      ];
       
-      if (error) {
-        throw error;
+      const user = mockUsers.find(u => u.email === email);
+      
+      if (!user) {
+        throw new Error("Invalid email or password");
       }
       
-      if (!data.user) {
-        throw new Error("Login failed. User not found.");
-      }
-      
-      // User data is fetched via the auth state change listener
+      // Save the user to localStorage
+      localStorage.setItem("currentUser", JSON.stringify(user));
+      setUser(user);
       
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
+      
+      return user;
     } catch (error: any) {
       console.error("Login error:", error);
       throw new Error(error.message || "Login failed. Please check your credentials.");
@@ -161,30 +214,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // Register the user with Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            role: userData.role || "customer"
-          }
-        }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (!data.user) {
-        throw new Error("Registration failed. Please try again.");
-      }
-      
-      // For testing purposes, simulate successful user creation
+      // For demo purposes, create a new mock user
       const newUser: User = {
-        id: data.user.id,
+        id: `u${Date.now()}`,
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
@@ -194,13 +226,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: new Date().toISOString()
       };
       
-      setUser(newUser);
+      // Save to localStorage
       localStorage.setItem("currentUser", JSON.stringify(newUser));
+      setUser(newUser);
       
       toast({
         title: "Registration successful!",
         description: "Your account has been created.",
       });
+      
+      return newUser;
     } catch (error: any) {
       console.error("Registration error:", error);
       throw new Error(error.message || "Registration failed. Please try again.");
@@ -214,14 +249,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        throw error;
-      }
-      
-      setUser(null);
+      // Just clear local storage and state
       localStorage.removeItem("currentUser");
+      setUser(null);
       
       toast({
         title: "Logged out",
@@ -246,32 +276,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
-      // Update profile data
-      if (userData.firstName !== undefined || 
-          userData.lastName !== undefined || 
-          userData.phone !== undefined ||
-          userData.dietaryPreferences !== undefined) {
-        
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            phone: userData.phone,
-            dietary_preferences: userData.dietaryPreferences
-          })
-          .eq('id', user.id);
-        
-        if (error) throw error;
-      }
-      
-      // If addresses are provided, they're already handled by the AddressFormDialog component
-      
       // Update the user state with new data
-      const updatedUser = {
-        ...user,
-        ...userData
-      };
+      const updatedUser = { ...user, ...userData };
       
       setUser(updatedUser);
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { CartContextType, Product, CartItem, Order, OrderItem } from "../types";
 import { toast } from "@/components/ui/use-toast";
 import { createOrder } from "@/services/orderService";
@@ -9,6 +9,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cartItems');
+    if (savedCart) {
+      try {
+        setItems(JSON.parse(savedCart));
+      } catch (error) {
+        console.error("Error parsing saved cart:", error);
+        localStorage.removeItem('cartItems');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(items));
+  }, [items]);
+  
   const openCart = () => setIsOpen(true);
   const closeCart = () => setIsOpen(false);
 
@@ -55,6 +71,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = () => {
     setItems([]);
+    localStorage.removeItem('cartItems');
   };
 
   const checkout = async (

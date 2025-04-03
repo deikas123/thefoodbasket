@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Package, Wallet, Clock, CalendarClock, LogOut } from "lucide-react";
+import { User, Package, Wallet, Clock, CalendarClock, LogOut, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const UserMenu = () => {
@@ -47,8 +47,23 @@ const UserMenu = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>My Account</span>
+          {user.role === "admin" && (
+            <span className="text-xs font-normal px-2 py-0.5 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full">
+              Admin
+            </span>
+          )}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {user.role === "admin" && (
+          <DropdownMenuItem asChild>
+            <Link to="/admin" className="cursor-pointer">
+              <ShieldAlert className="mr-2 h-4 w-4" />
+              <span>Admin Dashboard</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link to="/profile" className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />

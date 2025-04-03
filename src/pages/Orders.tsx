@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Clock, Package, ShoppingBag, Truck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 const Orders = () => {
   const navigate = useNavigate();
@@ -23,7 +24,9 @@ const Orders = () => {
     const fetchOrders = async () => {
       if (user && isAuthenticated) {
         try {
+          console.log("Fetching orders for user:", user.id);
           const userOrders = await getUserOrders(user.id);
+          console.log("Fetched orders:", userOrders);
           setOrders(userOrders);
         } catch (error) {
           console.error("Failed to fetch orders:", error);
@@ -153,7 +156,7 @@ const Orders = () => {
                             <div>
                               <p className="font-medium text-sm">{item.name}</p>
                               <p className="text-sm text-muted-foreground">
-                                {item.quantity} × ${item.price.toFixed(2)}
+                                {item.quantity} × {formatCurrency(item.price)}
                               </p>
                             </div>
                           </div>
@@ -174,7 +177,7 @@ const Orders = () => {
                           <span className="text-sm">{order.deliveryMethod.name}</span>
                         </div>
                         <div className="font-semibold">
-                          Total: ${order.total.toFixed(2)}
+                          Total: {formatCurrency(order.total)}
                         </div>
                       </div>
                     </div>
