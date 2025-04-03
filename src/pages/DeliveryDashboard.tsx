@@ -9,8 +9,10 @@ import { getUserOrders, updateOrderStatus } from "@/services/orderService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { Order, OrderStatus } from "@/types";
-import { MapPin, Package, Truck, CheckCircle, Clock, ArrowRight } from "lucide-react";
+import { MapPin, Package, Truck, CheckCircle, Clock, ArrowRight, Clipboard } from "lucide-react";
 import OrderTrackingModal from "@/components/delivery/OrderTrackingModal";
+import CustomerSignatureModal from "@/components/delivery/CustomerSignatureModal";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DeliveryDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -18,6 +20,7 @@ const DeliveryDashboard: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
 
   const { data: deliveryOrders, isLoading } = useQuery({
     queryKey: ['delivery-orders', user?.id],
@@ -25,9 +28,9 @@ const DeliveryDashboard: React.FC = () => {
     enabled: !!user
   });
 
-  const filterDeliveryOrders = (orders: Order[] = []) => 
+  const filterDeliveryOrders = (orders: Order[] = [], statuses: OrderStatus[]) => 
     orders.filter(order => 
-      ['dispatched', 'out_for_delivery'].includes(order.status)
+      statuses.includes(order.status as OrderStatus)
     );
     
   const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
@@ -76,6 +79,37 @@ const DeliveryDashboard: React.FC = () => {
     setSelectedOrder(order);
     setIsTrackingModalOpen(true);
   };
+
+  const handleRequestSignature = (order: Order) => {
+    setSelectedOrder(order);
+    setIsSignatureModalOpen(true);
+  };
+
+  const handleDeliveryComplete = async (order: Order, signatureData: string) => {
+    try {
+      // Update the order with signature data and mark as delivered
+      const updatedOrder = await updateOrderStatus(
+        order.id, 
+        'delivered', 
+        { signature: signatureData, deliveredAt: new Date().toISOString() }
+      );
+      
+      if (updatedOrder) {
+        toast({
+          title: "Delivery Completed",
+          description: "Order has been successfully delivered and signed for",
+        });
+        queryClient.invalidateQueries({ queryKey: ['delivery-orders'] });
+        setIsSignatureModalOpen(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Completion Failed",
+        description: "Could not complete the delivery process",
+        variant: "destructive"
+      });
+    }
+  };
   
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -105,90 +139,194 @@ const DeliveryDashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Delivery Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6">Delivery Driver Dashboard</h1>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Deliveries</CardTitle>
-          <CardDescription>Manage your delivery tasks and update order status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <p>Loading deliveries...</p>
-            </div>
-          ) : (
-            <>
-              {filterDeliveryOrders(deliveryOrders).length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No active deliveries at the moment</p>
+      <Tabs defaultValue="active">
+        <TabsList className="mb-4">
+          <TabsTrigger value="active">Active Deliveries</TabsTrigger>
+          <TabsTrigger value="completed">Completed Deliveries</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="active">
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Deliveries</CardTitle>
+              <CardDescription>Manage your delivery tasks and update order status</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <p>Loading deliveries...</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order ID</TableHead>
-                      <TableHead>Customer Address</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Estimated Delivery</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filterDeliveryOrders(deliveryOrders).map(order => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.id}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <span>
-                              {order.deliveryAddress.street}, {order.deliveryAddress.city}, {order.deliveryAddress.state}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant="outline" 
-                            className="flex items-center w-fit"
-                          >
-                            {getStatusIcon(order.status)}
-                            {order.status.replace('_', ' ')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{order.estimatedDelivery}</TableCell>
-                        <TableCell>{order.total}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewTracking(order)}
-                            >
-                              Track
-                            </Button>
-                            
-                            {getNextStatus(order.status as OrderStatus) && (
-                              <Button 
-                                size="sm"
-                                onClick={() => handleStatusUpdate(order)}
+                <>
+                  {filterDeliveryOrders(deliveryOrders, ['dispatched', 'out_for_delivery']).length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No active deliveries at the moment</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Order ID</TableHead>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Address</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Estimated Delivery</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filterDeliveryOrders(deliveryOrders, ['dispatched', 'out_for_delivery']).map(order => (
+                          <TableRow key={order.id}>
+                            <TableCell className="font-medium">{order.id}</TableCell>
+                            <TableCell>
+                              {order.customer?.name || 'Customer'}
+                              <div className="text-xs text-muted-foreground">
+                                {order.customer?.phone || 'No phone available'}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <span>
+                                  {order.deliveryAddress.street}, {order.deliveryAddress.city}, {order.deliveryAddress.state}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant="outline" 
+                                className="flex items-center w-fit"
                               >
-                                <span className="mr-1">{getActionButtonText(order.status as OrderStatus)}</span>
-                                <ArrowRight className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                                {getStatusIcon(order.status)}
+                                {order.status.replace('_', ' ')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{order.estimatedDelivery}</TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleViewTracking(order)}
+                                >
+                                  View Details
+                                </Button>
+                                
+                                {order.status === 'out_for_delivery' && (
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => handleRequestSignature(order)}
+                                  >
+                                    <Clipboard className="h-3.5 w-3.5 mr-1" />
+                                    Get Signature
+                                  </Button>
+                                )}
+                                
+                                {order.status === 'dispatched' && (
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => handleStatusUpdate(order)}
+                                  >
+                                    <span className="mr-1">Start Delivery</span>
+                                    <ArrowRight className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="completed">
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Deliveries</CardTitle>
+              <CardDescription>View your delivery history</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <p>Loading deliveries...</p>
+                </div>
+              ) : (
+                <>
+                  {filterDeliveryOrders(deliveryOrders, ['delivered']).length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No completed deliveries yet</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Order ID</TableHead>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Address</TableHead>
+                          <TableHead>Delivered At</TableHead>
+                          <TableHead>Signature</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filterDeliveryOrders(deliveryOrders, ['delivered']).map(order => (
+                          <TableRow key={order.id}>
+                            <TableCell className="font-medium">{order.id}</TableCell>
+                            <TableCell>
+                              {order.customer?.name || 'Customer'}
+                              <div className="text-xs text-muted-foreground">
+                                {order.customer?.phone || 'No phone available'}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <span>
+                                  {order.deliveryAddress.street}, {order.deliveryAddress.city}, {order.deliveryAddress.state}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {order.tracking?.deliveredAt ? 
+                                new Date(order.tracking.deliveredAt).toLocaleString() : 
+                                'Not available'
+                              }
+                            </TableCell>
+                            <TableCell>
+                              {order.tracking?.signature ? 
+                                <span className="text-green-600">Signed</span> : 
+                                <span className="text-amber-600">Not signed</span>
+                              }
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewTracking(order)}
+                              >
+                                View Details
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
       
       {selectedOrder && (
         <OrderTrackingModal
@@ -196,6 +334,15 @@ const DeliveryDashboard: React.FC = () => {
           onClose={() => setIsTrackingModalOpen(false)}
           order={selectedOrder}
           onStatusUpdate={handleStatusUpdate}
+        />
+      )}
+
+      {selectedOrder && (
+        <CustomerSignatureModal
+          isOpen={isSignatureModalOpen}
+          onClose={() => setIsSignatureModalOpen(false)}
+          order={selectedOrder}
+          onComplete={handleDeliveryComplete}
         />
       )}
     </div>

@@ -25,6 +25,12 @@ export interface Order {
     city: string;
     state: string;
     zipCode: string;
+    notes?: string;
+  };
+  customer?: {
+    name: string;
+    phone: string;
+    email?: string;
   };
   deliveryMethod: {
     id: string;
@@ -64,6 +70,8 @@ export interface Order {
       phone: string;
       photo: string;
     };
+    signature?: string;
+    deliveredAt?: string;
   };
 }
 

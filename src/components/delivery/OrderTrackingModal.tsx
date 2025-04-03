@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Order, OrderStatus } from "@/types";
-import { Package, Truck, CheckCircle, Clock, MapPin, User, Calendar, Banknote } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, MapPin, User, Calendar, Banknote, Phone, Mail } from "lucide-react";
 import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface OrderTrackingModalProps {
@@ -73,11 +73,34 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            Track delivery progress and update status
+            Order details and tracking information
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Customer Information */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium flex items-center">
+              <User className="h-4 w-4 mr-2" />
+              Customer Information
+            </h3>
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p className="font-medium">{order.customer?.name || 'Customer'}</p>
+              <div className="mt-1 space-y-1 text-muted-foreground">
+                <div className="flex items-center">
+                  <Phone className="h-3.5 w-3.5 mr-2" />
+                  <span>{order.customer?.phone || 'No phone available'}</span>
+                </div>
+                {order.customer?.email && (
+                  <div className="flex items-center">
+                    <Mail className="h-3.5 w-3.5 mr-2" />
+                    <span>{order.customer.email}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Delivery Address */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium flex items-center">
@@ -87,6 +110,12 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
             <div className="bg-muted p-3 rounded-md text-sm">
               <p>{order.deliveryAddress.street}</p>
               <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.zipCode}</p>
+              {order.deliveryAddress.notes && (
+                <p className="mt-2 text-muted-foreground border-t pt-2 mt-2">
+                  <span className="font-medium">Notes: </span>
+                  {order.deliveryAddress.notes}
+                </p>
+              )}
             </div>
           </div>
 
@@ -186,6 +215,23 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Customer Signature (if available) */}
+          {order.tracking?.signature && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium flex items-center">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Customer Signature
+              </h3>
+              <div className="bg-white border rounded-md p-2">
+                <img 
+                  src={order.tracking.signature} 
+                  alt="Customer signature" 
+                  className="max-h-32 mx-auto"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center mt-4">
