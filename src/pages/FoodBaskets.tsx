@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
@@ -17,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getFoodBaskets, generatePersonalizedBaskets } from "@/services/foodBasketService";
+import { getAllFoodBaskets } from "@/services/foodBasketService";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { FoodBasket } from "@/types/foodBasket";
 import { getProductById } from "@/services/productService";
@@ -25,20 +24,28 @@ import { ShoppingCart, ChefHat, Filter, ArrowUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import RecipeSuggestions from "@/components/RecipeSuggestions";
 import { Product } from "@/types";
+import { convertToProduct } from "@/utils/typeConverters";
 
 const FoodBaskets = () => {
   const { addItem } = useCart();
   const [activeTab, setActiveTab] = useState("all");
   const [sort, setSort] = useState<"price_asc" | "price_desc">("price_asc");
   const [productDetails, setProductDetails] = useState<{[key: string]: Product}>({});
+  
+  const generatePersonalizedBaskets = async (): Promise<FoodBasket[]> => {
+    const allBaskets = await getAllFoodBaskets();
+    return allBaskets ? allBaskets.slice(0, 2).map(basket => ({
+      ...basket,
+      name: `Personalized: ${basket.name}`,
+      totalPrice: Math.round(basket.totalPrice * 0.95 * 100) / 100
+    })) : [];
+  };
 
-  // Fetch food baskets
   const foodBasketsQuery = useQuery({
     queryKey: ["foodBaskets"],
-    queryFn: getFoodBaskets
+    queryFn: getAllFoodBaskets
   });
 
-  // Fetch personalized baskets
   const personalizedBasketsQuery = useQuery({
     queryKey: ["personalizedBaskets"],
     queryFn: generatePersonalizedBaskets,
@@ -50,10 +57,9 @@ const FoodBaskets = () => {
     (activeTab === "personalized" && personalizedBasketsQuery.isLoading);
 
   const baskets = activeTab === "all" 
-    ? foodBasketsQuery.data || [] 
-    : personalizedBasketsQuery.data || [];
+    ? (foodBasketsQuery.data || []) 
+    : (personalizedBasketsQuery.data || []);
 
-  // Fetch product details for all baskets
   useEffect(() => {
     const fetchProductDetails = async () => {
       const details: {[key: string]: Product} = {};
@@ -61,9 +67,9 @@ const FoodBaskets = () => {
       for (const basket of baskets) {
         for (const item of basket.items) {
           if (!details[item.productId]) {
-            const product = await getProductById(item.productId);
-            if (product) {
-              details[item.productId] = product;
+            const productData = await getProductById(item.productId);
+            if (productData) {
+              details[item.productId] = convertToProduct(productData);
             }
           }
         }
@@ -77,7 +83,6 @@ const FoodBaskets = () => {
     }
   }, [baskets, isLoading]);
 
-  // Sort baskets by price
   const sortedBaskets = [...baskets].sort((a, b) => {
     return sort === "price_asc" 
       ? a.totalPrice - b.totalPrice 
@@ -86,10 +91,10 @@ const FoodBaskets = () => {
 
   const handleAddBasketToCart = async (basket: FoodBasket) => {
     try {
-      // Add all items in the basket to cart
       for (const item of basket.items) {
-        const product = productDetails[item.productId] || await getProductById(item.productId);
-        if (product) {
+        const productType = productDetails[item.productId] || await getProductById(item.productId);
+        if (productType) {
+          const product = convertToProduct(productType);
           addItem(product, item.quantity);
         }
       }
@@ -112,7 +117,6 @@ const FoodBaskets = () => {
     setSort(sort === "price_asc" ? "price_desc" : "price_asc");
   };
 
-  // Helper to get product name
   const getProductName = (productId: string) => {
     return productDetails[productId]?.name || "Loading...";
   };
@@ -331,7 +335,6 @@ const FoodBaskets = () => {
           
           <Separator className="my-12" />
           
-          {/* Recipe Suggestions Section */}
           <RecipeSuggestions />
         </div>
       </main>

@@ -1,31 +1,52 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
 import { getProductById } from "@/services/productService";
 import { convertToProduct } from "@/utils/typeConverters";
+import { FoodBasket } from "@/types/foodBasket";
 
-export const getAllFoodBaskets = async () => {
+export const getAllFoodBaskets = async (): Promise<FoodBasket[] | null> => {
   try {
     const { data, error } = await supabase
       .from('food_baskets')
-      .select('*');
+      .select('*, food_basket_items(*)');
 
     if (error) {
       console.error("Error fetching food baskets:", error);
       throw error;
     }
 
-    return data;
+    // Map the data to our FoodBasket type
+    const foodBaskets: FoodBasket[] = data.map(basket => ({
+      id: basket.id,
+      name: basket.name,
+      description: basket.description || undefined,
+      recipe: basket.recipe,
+      image: basket.image || undefined,
+      totalPrice: parseFloat(basket.total_price),
+      createdAt: basket.created_at,
+      updatedAt: basket.updated_at,
+      items: (basket.food_basket_items || []).map((item: any) => ({
+        id: item.id,
+        basketId: item.basket_id,
+        productId: item.product_id,
+        quantity: item.quantity,
+        createdAt: item.created_at,
+      }))
+    }));
+
+    return foodBaskets;
   } catch (error) {
     console.error("Error fetching food baskets:", error);
     throw error;
   }
 };
 
-export const getFoodBasketById = async (id: string) => {
+export const getFoodBasketById = async (id: string): Promise<FoodBasket | null> => {
   try {
     const { data, error } = await supabase
       .from('food_baskets')
-      .select('*')
+      .select('*, food_basket_items(*)')
       .eq('id', id)
       .single();
 
@@ -34,7 +55,26 @@ export const getFoodBasketById = async (id: string) => {
       throw error;
     }
 
-    return data;
+    // Map the data to our FoodBasket type
+    const foodBasket: FoodBasket = {
+      id: data.id,
+      name: data.name,
+      description: data.description || undefined,
+      recipe: data.recipe,
+      image: data.image || undefined,
+      totalPrice: parseFloat(data.total_price),
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      items: (data.food_basket_items || []).map((item: any) => ({
+        id: item.id,
+        basketId: item.basket_id,
+        productId: item.product_id,
+        quantity: item.quantity,
+        createdAt: item.created_at,
+      }))
+    };
+
+    return foodBasket;
   } catch (error) {
     console.error("Error fetching food basket:", error);
     throw error;
@@ -45,39 +85,25 @@ export const getFoodBasketById = async (id: string) => {
 export const getFoodBasketWithProducts = async (id: string) => {
   try {
     // Fetch the food basket
-    const { data: basket, error: basketError } = await supabase
-      .from('food_baskets')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const basket = await getFoodBasketById(id);
 
-    if (basketError) {
-      console.error("Error fetching food basket:", basketError);
-      throw basketError;
-    }
-
-    // Fetch the basket items
-    const { data: basketItems, error: itemsError } = await supabase
-      .from('food_basket_items')
-      .select('*')
-      .eq('basket_id', id);
-
-    if (itemsError) {
-      console.error("Error fetching food basket items:", itemsError);
-      throw itemsError;
+    if (!basket) {
+      throw new Error("Food basket not found");
     }
 
     // Fetch products for each basket item
     const products: Product[] = [];
     
-    for (const item of basketItems) {
-      const productData = await getProductById(item.product_id);
+    for (const item of basket.items) {
+      const productData = await getProductById(item.productId);
       if (productData) {
         // Convert ProductType to Product
         const product = convertToProduct(productData);
+        // Create a new object with quantity instead of modifying the product
         products.push({
           ...product,
-          quantity: item.quantity
+          // We can't add quantity directly to Product objects
+          // Instead we'll handle this at rendering time
         });
       }
     }

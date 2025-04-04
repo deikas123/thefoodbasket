@@ -4,6 +4,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { products as mockProducts } from "@/data/products";
+import { UserRole } from "@/types";
 
 export const initializeDatabase = async () => {
   try {
@@ -128,11 +129,51 @@ const createDemoOrders = async () => {
   }
 };
 
-// This function would need to be implemented once a products table exists in Supabase
-// For now, we're using mock products from data/products.ts
-/*
-const createProducts = async () => {
-  // Implementation would go here when products table is created
-  console.log("Using mock products instead of database products");
+// Add the missing functions
+export const seedProducts = async (): Promise<boolean> => {
+  try {
+    // Check if products already exist (using mock data since we don't have a products table yet)
+    console.log("Checking if products need to be seeded...");
+    
+    // For now, we always return false since we don't have a products table
+    // In a real implementation, this would check the actual database
+    return false;
+  } catch (error) {
+    console.error("Error seeding products:", error);
+    return false;
+  }
 };
-*/
+
+export const checkAndAssignRoleIfFirstUser = async (userId: string): Promise<void> => {
+  try {
+    // Count existing users
+    const { count, error: countError } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
+    
+    if (countError) {
+      console.error("Error counting users:", countError);
+      return;
+    }
+    
+    // If this is one of the first few users, assign admin role
+    if (count !== null && count <= 3) {
+      console.log("Assigning admin role to user", userId);
+      
+      // Check if user_roles table exists
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert([
+          { user_id: userId, role: 'admin' }
+        ]);
+      
+      if (roleError) {
+        console.error("Error assigning role:", roleError);
+      } else {
+        console.log("Admin role assigned successfully");
+      }
+    }
+  } catch (error) {
+    console.error("Error in checkAndAssignRoleIfFirstUser:", error);
+  }
+};

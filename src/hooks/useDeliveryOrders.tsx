@@ -94,7 +94,7 @@ export const useDeliveryOrders = (userId: string | undefined) => {
           timestamp: new Date().toISOString(),
           deliveredAt: new Date().toISOString(),
           signature: signatureData,
-          description: "Delivery completed with signature"
+          note: "Delivery completed with signature" // Using note instead of description
         }
       );
       
