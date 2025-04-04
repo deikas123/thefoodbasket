@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,6 +11,8 @@ import Preloader from "@/components/Preloader";
 import AIChatBot from "@/components/AIChatBot";
 import LiveChat from "@/components/LiveChat";
 import DeliveryDashboard from "./pages/DeliveryDashboard";
+import DeliveryDriverDashboard from "./pages/DeliveryDriverDashboard";
+import DeliveryLayout from "./components/delivery/DeliveryLayout";
 
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
@@ -80,7 +83,15 @@ function App() {
                 <Route path="/admin/deliveries" element={<AdminDashboard />} />
                 <Route path="/admin/discount-codes" element={<DiscountCodes />} />
                 
+                {/* Original delivery dashboard (will be removed later) */}
                 <Route path="/delivery" element={<DeliveryDashboard />} />
+                
+                {/* New dedicated delivery driver routes with layout */}
+                <Route path="/driver" element={<DeliveryLayout />}>
+                  <Route index element={<DeliveryDriverDashboard />} />
+                  <Route path="history" element={<DeliveryDriverDashboard />} />
+                  <Route path="profile" element={<Profile />} />
+                </Route>
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
