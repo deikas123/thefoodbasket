@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
 import { getProductById } from "@/services/productService";
@@ -22,7 +23,7 @@ export const getAllFoodBaskets = async (): Promise<FoodBasket[] | null> => {
       description: basket.description || undefined,
       recipe: basket.recipe,
       image: basket.image || undefined,
-      totalPrice: parseFloat(basket.total_price),
+      totalPrice: parseFloat(basket.total_price.toString()),
       createdAt: basket.created_at,
       updatedAt: basket.updated_at,
       items: (basket.food_basket_items || []).map((item: any) => ({
@@ -61,7 +62,7 @@ export const getFoodBasketById = async (id: string): Promise<FoodBasket | null> 
       description: data.description || undefined,
       recipe: data.recipe,
       image: data.image || undefined,
-      totalPrice: parseFloat(data.total_price),
+      totalPrice: parseFloat(data.total_price.toString()),
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       items: (data.food_basket_items || []).map((item: any) => ({
