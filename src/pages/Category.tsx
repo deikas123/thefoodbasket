@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { convertToProducts } from "@/utils/typeConverters";
 
 const Category = () => {
   const { categoryId } = useParams<{ categoryId: string }>();

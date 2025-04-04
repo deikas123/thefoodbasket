@@ -1,47 +1,46 @@
 
-import { useState, useEffect } from "react";
-import { Product } from "@/types";
-import ProductsGrid from "./ProductsGrid";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ProductCard } from "@/components";
 import { getFrequentlyPurchasedTogether } from "@/services/productService";
 
 interface RecommendedProductsProps {
   currentProductId: string;
-  currentProductCategory: string;
+  currentProductCategory?: string;
 }
 
-const RecommendedProducts = ({ currentProductId, currentProductCategory }: RecommendedProductsProps) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const RecommendedProducts = ({ currentProductId }: RecommendedProductsProps) => {
+  const { data: recommendedProducts, isLoading } = useQuery({
+    queryKey: ["recommended-products", currentProductId],
+    queryFn: () => getFrequentlyPurchasedTogether(currentProductId),
+    enabled: !!currentProductId,
+  });
 
-  useEffect(() => {
-    const fetchRecommendedProducts = async () => {
-      setIsLoading(true);
-      try {
-        // Use the service to get frequently purchased together products
-        const similarProducts = await getFrequentlyPurchasedTogether(currentProductId);
-        setProducts(similarProducts);
-      } catch (error) {
-        console.error("Error fetching recommended products:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchRecommendedProducts();
-  }, [currentProductId, currentProductCategory]);
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">Frequently Bought Together</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-60 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  if (!products.length && !isLoading) {
+  if (!recommendedProducts || recommendedProducts.length === 0) {
     return null;
   }
-  
+
   return (
-    <div className="py-6 md:py-10">
-      <h2 className="text-xl md:text-2xl font-bold mb-4">Frequently Purchased Together</h2>
-      <ProductsGrid 
-        products={products} 
-        isLoading={isLoading} 
-        cols={4} 
-      />
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Frequently Bought Together</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {recommendedProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
     </div>
   );
 };

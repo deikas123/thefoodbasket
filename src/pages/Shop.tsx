@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Product, Category } from "@/types";
 import { getProducts, getCategories } from "@/services/productService";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -30,6 +29,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { convertToProducts } from "@/utils/typeConverters";
+import { ProductType } from "@/types/supabase";
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -100,7 +101,7 @@ const Shop = () => {
   };
   
   // Sort products
-  const sortProducts = (products: Product[]) => {
+  const sortProducts = (products: ProductType[]) => {
     const sortedProducts = [...products];
     
     switch (sortOption) {

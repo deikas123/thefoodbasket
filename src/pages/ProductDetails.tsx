@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getProductById, getCategoryById } from "@/services/productService";
+import { getProductById, getCategoryById, getFrequentlyPurchasedTogether } from "@/services/productService";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import Header from "@/components/Header";
@@ -34,6 +35,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import AddToAutoReplenishButton from "@/components/product/AddToAutoReplenishButton";
+import { convertToProduct } from "@/utils/typeConverters";
 
 const ProductDetails = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -82,13 +84,13 @@ const ProductDetails = () => {
   
   const handleAddToCart = () => {
     if (product) {
-      addItem(product, quantity);
+      addItem(convertToProduct(product), quantity);
     }
   };
   
   const handleBuyNow = () => {
     if (product) {
-      addItem(product, quantity);
+      addItem(convertToProduct(product), quantity);
       navigate('/checkout');
     }
   };
@@ -99,7 +101,7 @@ const ProductDetails = () => {
     if (isInWishlist(product.id)) {
       removeItem(product.id);
     } else {
-      addToWishlist(product);
+      addToWishlist(convertToProduct(product));
     }
   };
   

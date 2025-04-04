@@ -16,7 +16,22 @@ export interface ProfileType extends Tables<'profiles'> {
 
 export interface AddressType extends Tables<'addresses'> {}
 
-export interface ProductType extends Tables<'products'> {}
+// Define ProductType with all necessary fields
+export interface ProductType {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  stock: number;
+  featured: boolean;
+  rating?: number;
+  num_reviews?: number;
+  discountPercentage?: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface OrderItem {
   productId: string;
@@ -26,8 +41,17 @@ export interface OrderItem {
   image: string;
 }
 
-export interface OrderType extends Tables<'orders'> {
+export interface OrderType {
+  id: string;
+  user_id: string;
+  status: OrderStatus;
   items: OrderItem[];
+  subtotal: number;
+  delivery_fee: number;
+  discount?: number;
+  total: number;
+  created_at: string;
+  updated_at: string;
   tracking?: {
     events: {
       status: string;
@@ -53,4 +77,10 @@ export interface OrderType extends Tables<'orders'> {
     state: string;
     zipCode: string;
   };
+  estimated_delivery: string;
+  scheduled_delivery?: any;
+  notes?: string;
+  loyalty_points_earned?: number;
+  loyalty_points_used?: number;
+  promo_code?: string;
 }
