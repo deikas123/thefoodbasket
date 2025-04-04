@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUserOrders, updateOrderStatus } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { convertToOrders } from '@/utils/typeConverters';
 
 export const useDeliveryOrders = (userId: string | undefined) => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -13,9 +14,12 @@ export const useDeliveryOrders = (userId: string | undefined) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: deliveryOrders, isLoading } = useQuery({
+  const { data: orderTypes, isLoading } = useQuery({
     queryKey: ['delivery-orders', userId],
-    queryFn: () => getUserOrders(userId || ''),
+    queryFn: async () => {
+      const orders = await getUserOrders(userId || '');
+      return convertToOrders(orders); // Convert OrderType[] to Order[]
+    },
     enabled: !!userId
   });
 
@@ -82,7 +86,12 @@ export const useDeliveryOrders = (userId: string | undefined) => {
       const updatedOrder = await updateOrderStatus(
         order.id, 
         'delivered', 
-        { signature: signatureData, deliveredAt: new Date().toISOString() }
+        { 
+          status: 'delivered',
+          timestamp: new Date().toISOString(),
+          deliveredAt: new Date().toISOString(),
+          signature: signatureData
+        }
       );
       
       if (updatedOrder) {
@@ -103,7 +112,7 @@ export const useDeliveryOrders = (userId: string | undefined) => {
   };
 
   return {
-    deliveryOrders,
+    deliveryOrders: orderTypes || [],
     isLoading,
     filterDeliveryOrders,
     selectedOrder,

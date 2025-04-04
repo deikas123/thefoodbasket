@@ -31,6 +31,8 @@ export interface ProductType {
   discountPercentage?: number;
   created_at: string;
   updated_at: string;
+  // Add these properties to match Product type
+  numReviews?: number;
 }
 
 export interface OrderItem {
@@ -54,11 +56,20 @@ export interface OrderType {
   updated_at: string;
   tracking?: {
     events: {
-      status: string;
+      status: OrderStatus;
       timestamp: string;
       location?: string;
       note?: string;
+      description?: string;
     }[];
+    signature?: string;
+    deliveredAt?: string;
+    driver?: {
+      id: string;
+      name: string;
+      phone: string;
+      photo: string;
+    };
   };
   delivery_method: {
     id: string;

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types";
 import { Clock, ArrowRight } from "lucide-react";
 import ProductCard from "./ProductCard";
-import { getAllProducts } from "@/services/productService";
+import { getProducts } from "@/services/productService";
+import { convertToProducts } from "@/utils/typeConverters";
 
 interface TimeLeft {
   hours: string;
@@ -51,10 +52,11 @@ const DealsOfTheDay = () => {
   const fetchDeals = async () => {
     setIsLoading(true);
     try {
-      const allProducts = await getAllProducts();
+      const allProducts = await getProducts();
       // Filter products with discount percentage
       const discountedProducts = allProducts.filter(p => p.discountPercentage);
-      setProducts(discountedProducts.slice(0, 4)); // Take up to 4 products
+      const convertedProducts = convertToProducts(discountedProducts);
+      setProducts(convertedProducts.slice(0, 4)); // Take up to 4 products
     } catch (error) {
       console.error("Error fetching deals:", error);
     } finally {

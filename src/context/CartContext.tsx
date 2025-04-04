@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { CartContextType, Product, CartItem, Order, OrderItem } from "../types";
+import { CartContextType, Product, CartItem, Order } from "../types";
 import { toast } from "@/components/ui/use-toast";
-import { createOrder } from "@/services/orderService";
+import { createOrder, CreateOrderInput } from "@/services/orderService";
+import { convertToOrder } from "@/utils/typeConverters";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -80,12 +82,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     deliveryMethod: Order["deliveryMethod"],
     paymentMethod: Order["paymentMethod"],
     notes?: string
-  ) => {
+  ): Promise<Order> => {
     if (items.length === 0) {
       throw new Error("Cannot checkout with an empty cart");
     }
 
-    const orderItems: OrderItem[] = items.map(item => ({
+    const orderItems = items.map(item => ({
       productId: item.product.id,
       name: item.product.name,
       price: item.product.price,
@@ -97,34 +99,36 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const deliveryFee = deliveryMethod.price;
     const orderTotal = subtotal + deliveryFee;
 
-    const estimatedDelivery = deliveryMethod.estimatedDelivery;
-
-    const orderData = {
-      userId,
+    // Convert from Order types to OrderType/CreateOrderInput types
+    const orderData: CreateOrderInput = {
+      user_id: userId,
       items: orderItems,
-      status: "pending" as const,
-      deliveryAddress,
-      deliveryMethod,
-      paymentMethod,
+      delivery_address: {
+        street: deliveryAddress.street,
+        city: deliveryAddress.city,
+        state: deliveryAddress.state,
+        zipCode: deliveryAddress.zipCode
+      },
+      delivery_method: {
+        id: deliveryMethod.id,
+        name: deliveryMethod.name,
+        price: deliveryMethod.price,
+        estimatedDays: parseInt(deliveryMethod.estimatedDelivery) || 3
+      },
+      payment_method: {
+        id: paymentMethod.id,
+        name: paymentMethod.name
+      },
       subtotal,
-      deliveryFee,
+      delivery_fee: deliveryFee,
       total: orderTotal,
       notes,
-      estimatedDelivery,
-      tracking: {
-        events: [
-          {
-            status: "pending" as const,
-            timestamp: new Date().toISOString(),
-            description: "Order placed"
-          }
-        ]
-      }
+      estimated_delivery: deliveryMethod.estimatedDelivery
     };
 
-    const order = await createOrder(orderData);
+    const orderResult = await createOrder(orderData);
     clearCart();
-    return order;
+    return convertToOrder(orderResult);
   };
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);

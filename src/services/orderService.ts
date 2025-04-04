@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { OrderType, OrderItem } from "@/types/supabase";
+import { OrderType, OrderStatus, OrderItem } from "@/types/supabase";
+import { Json } from "@/types/database.types";
 
 export interface CreateOrderInput {
   user_id: string;
@@ -33,12 +34,19 @@ export interface CreateOrderInput {
 }
 
 export const createOrder = async (orderData: CreateOrderInput): Promise<OrderType> => {
+  // Convert to the right format for Supabase
+  const orderDataForDb = {
+    ...orderData,
+    status: 'pending' as OrderStatus,
+    items: orderData.items as unknown as Json,
+    delivery_address: orderData.delivery_address as unknown as Json,
+    delivery_method: orderData.delivery_method as unknown as Json,
+    payment_method: orderData.payment_method as unknown as Json
+  };
+    
   const { data, error } = await supabase
     .from('orders')
-    .insert([{
-      ...orderData,
-      status: 'pending'
-    }])
+    .insert([orderDataForDb])
     .select()
     .single();
     
@@ -47,7 +55,8 @@ export const createOrder = async (orderData: CreateOrderInput): Promise<OrderTyp
     throw error;
   }
   
-  return data;
+  // Cast the data to OrderType to ensure proper type
+  return data as unknown as OrderType;
 };
 
 export const getUserOrders = async (userId: string): Promise<OrderType[]> => {
@@ -62,7 +71,8 @@ export const getUserOrders = async (userId: string): Promise<OrderType[]> => {
     throw error;
   }
   
-  return data || [];
+  // Cast the data to OrderType[] to ensure proper types
+  return (data || []) as unknown as OrderType[];
 };
 
 export const getOrderById = async (orderId: string): Promise<OrderType | null> => {
@@ -81,13 +91,21 @@ export const getOrderById = async (orderId: string): Promise<OrderType | null> =
     throw error;
   }
   
-  return data;
+  // Cast the data to OrderType to ensure proper type
+  return data as unknown as OrderType;
 };
 
 export const updateOrderStatus = async (
   orderId: string, 
-  status: string, 
-  trackingEvent?: { status: string; timestamp: string; location?: string; note?: string }
+  status: OrderStatus, 
+  trackingEvent?: { 
+    status: OrderStatus; 
+    timestamp: string; 
+    location?: string; 
+    note?: string;
+    signature?: string;
+    deliveredAt?: string;
+  }
 ): Promise<OrderType> => {
   // Get current order to access tracking
   const { data: currentOrder, error: fetchError } = await supabase
@@ -110,7 +128,10 @@ export const updateOrderStatus = async (
         status, 
         timestamp: new Date().toISOString() 
       }
-    ]
+    ],
+    // Add signature and deliveredAt if provided
+    ...(trackingEvent?.signature ? { signature: trackingEvent.signature } : {}),
+    ...(trackingEvent?.deliveredAt ? { deliveredAt: trackingEvent.deliveredAt } : {})
   };
   
   // Update order
@@ -118,7 +139,7 @@ export const updateOrderStatus = async (
     .from('orders')
     .update({
       status,
-      tracking: updatedTracking,
+      tracking: updatedTracking as unknown as Json,
       updated_at: new Date().toISOString()
     })
     .eq('id', orderId)
@@ -130,7 +151,8 @@ export const updateOrderStatus = async (
     throw error;
   }
   
-  return data;
+  // Cast the data to OrderType to ensure proper type
+  return data as unknown as OrderType;
 };
 
 export const getAllOrders = async (): Promise<OrderType[]> => {
@@ -144,7 +166,8 @@ export const getAllOrders = async (): Promise<OrderType[]> => {
     throw error;
   }
   
-  return data || [];
+  // Cast the data to OrderType[] to ensure proper types
+  return (data || []) as unknown as OrderType[];
 };
 
 export const getDeliveryOrders = async (): Promise<OrderType[]> => {
@@ -159,5 +182,27 @@ export const getDeliveryOrders = async (): Promise<OrderType[]> => {
     throw error;
   }
   
-  return data || [];
+  // Cast the data to OrderType[] to ensure proper types
+  return (data || []) as unknown as OrderType[];
+};
+
+// Add cancelOrder function that was missing
+export const cancelOrder = async (orderId: string): Promise<OrderType> => {
+  const { data, error } = await supabase
+    .from('orders')
+    .update({
+      status: 'cancelled' as OrderStatus,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', orderId)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error("Error cancelling order:", error);
+    throw error;
+  }
+  
+  // Cast the data to OrderType to ensure proper type
+  return data as unknown as OrderType;
 };

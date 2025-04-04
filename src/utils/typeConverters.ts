@@ -16,7 +16,7 @@ export function convertToProduct(product: ProductType): Product {
     stock: product.stock,
     featured: product.featured || false,
     rating: product.rating || 0,
-    numReviews: product.num_reviews || 0,
+    numReviews: product.num_reviews || product.numReviews || 0,
     discountPercentage: product.discountPercentage || 0,
   };
 }
@@ -41,7 +41,8 @@ export function convertToOrder(order: OrderType): Order {
     deliveryFee: order.delivery_fee,
     discount: order.discount || 0,
     total: order.total,
-    createdAt: new Date(order.created_at),
+    createdAt: order.created_at,
+    updatedAt: order.updated_at,
     deliveryMethod: {
       id: order.delivery_method.id,
       name: order.delivery_method.name,
@@ -61,7 +62,17 @@ export function convertToOrder(order: OrderType): Order {
     loyaltyPointsEarned: order.loyalty_points_earned || 0,
     loyaltyPointsUsed: order.loyalty_points_used || 0,
     promoCode: order.promo_code,
-    tracking: order.tracking,
+    tracking: order.tracking ? {
+      events: order.tracking.events.map(event => ({
+        status: event.status,
+        timestamp: event.timestamp,
+        description: event.note || "",
+        location: event.location
+      })),
+      driver: order.tracking.driver,
+      signature: order.tracking.signature,
+      deliveredAt: order.tracking.deliveredAt,
+    } : undefined,
   };
 }
 
