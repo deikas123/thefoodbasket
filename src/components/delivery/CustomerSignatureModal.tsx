@@ -2,7 +2,7 @@
 import React, { useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Order } from "@/types";
+import { Order } from "@/types/order";
 import { Clipboard, CheckCircle, RotateCcw } from "lucide-react";
 
 interface CustomerSignatureModalProps {
