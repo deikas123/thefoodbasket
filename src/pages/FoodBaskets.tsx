@@ -24,7 +24,7 @@ import { ShoppingCart, ChefHat, Filter, ArrowUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import RecipeSuggestions from "@/components/RecipeSuggestions";
 import { Product } from "@/types";
-import { convertToProduct } from "@/utils/typeConverters";
+import { convertToProduct, convertFromProduct } from "@/utils/typeConverters";
 
 const FoodBaskets = () => {
   const { addItem } = useCart();
@@ -94,7 +94,7 @@ const FoodBaskets = () => {
       for (const item of basket.items) {
         const productType = productDetails[item.productId] || await getProductById(item.productId);
         if (productType) {
-          const product = convertToProduct(productType);
+          const product = productType.id ? convertToProduct(productType) : productType as Product;
           addItem(product, item.quantity);
         }
       }

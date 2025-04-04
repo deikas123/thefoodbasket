@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
 import { getProductById } from "@/services/productService";
-import { convertToProduct } from "@/utils/typeConverters";
+import { convertToProduct, convertFromProduct } from "@/utils/typeConverters";
 import { FoodBasket } from "@/types/foodBasket";
 
 export const getAllFoodBaskets = async (): Promise<FoodBasket[] | null> => {
