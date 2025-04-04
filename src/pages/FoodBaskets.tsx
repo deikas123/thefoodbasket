@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
@@ -32,6 +33,7 @@ const FoodBaskets = () => {
   const [sort, setSort] = useState<"price_asc" | "price_desc">("price_asc");
   const [productDetails, setProductDetails] = useState<{[key: string]: Product}>({});
   
+  // Create a function to generate personalized baskets
   const generatePersonalizedBaskets = async (): Promise<FoodBasket[]> => {
     const allBaskets = await getAllFoodBaskets();
     return allBaskets ? allBaskets.slice(0, 2).map(basket => ({
@@ -94,7 +96,12 @@ const FoodBaskets = () => {
       for (const item of basket.items) {
         const productType = productDetails[item.productId] || await getProductById(item.productId);
         if (productType) {
-          const product = productType.id ? convertToProduct(productType) : productType as Product;
+          // We need to ensure we have a Product type here
+          // If it's a ProductType, convert it. If it's already a Product, use as is
+          const product = productType.hasOwnProperty('created_at') 
+            ? convertToProduct(productType) 
+            : productType as unknown as Product;
+            
           addItem(product, item.quantity);
         }
       }

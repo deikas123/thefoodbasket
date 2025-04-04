@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
 import { getProductById } from "@/services/productService";
@@ -81,7 +80,6 @@ export const getFoodBasketById = async (id: string): Promise<FoodBasket | null> 
   }
 };
 
-// Modify this function to fix type issues
 export const getFoodBasketWithProducts = async (id: string) => {
   try {
     // Fetch the food basket
