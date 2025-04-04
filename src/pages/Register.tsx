@@ -34,6 +34,18 @@ const Register = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+      setError("All fields are required");
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+    
     try {
       await register(formData);
       navigate("/");

@@ -1,8 +1,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { AuthContextType, User, UserRole, RegisterFormData, Address } from "../types";
+import { User as SupabaseUser } from "@supabase/supabase-js";
+import { AuthContextType, User, RegisterFormData, LoginFormData } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { ProfileType, UserRole } from "@/types/supabase";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -14,71 +16,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkSession = async () => {
       try {
-        // First check localStorage for saved user data
-        const storedUser = localStorage.getItem("currentUser");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
-        
-        // Verify if there's an actual Supabase session
+        // Get Supabase session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error fetching session:", error);
-          // Don't throw here, just continue with localStorage user if available
+          setIsLoading(false);
+          return;
         }
         
         if (session?.user) {
-          // If we have a valid session but no stored user data, fetch it
-          if (!storedUser) {
-            // For demo purposes, fetch from mock user data
-            // In a real app, you would fetch from Supabase
-            const mockUsers = [
-              {
-                id: "u1",
-                email: "admin@foodbasket.com",
-                firstName: "Admin",
-                lastName: "User",
-                role: "admin" as UserRole,
-                addresses: [],
-                loyaltyPoints: 0,
-                createdAt: new Date().toISOString()
-              },
-              {
-                id: "u2",
-                email: "customer@example.com",
-                firstName: "John",
-                lastName: "Doe",
-                role: "customer" as UserRole,
-                addresses: [
-                  {
-                    id: "a1",
-                    street: "123 Main St",
-                    city: "Anytown",
-                    state: "CA",
-                    zipCode: "12345",
-                    isDefault: true
-                  }
-                ],
-                phone: "555-123-4567",
-                dietaryPreferences: ["vegetarian"],
-                loyaltyPoints: 100,
-                createdAt: new Date().toISOString()
-              }
-            ];
-            
-            const mockUser = mockUsers.find(u => u.email === session.user.email);
-            
-            if (mockUser) {
-              setUser(mockUser);
-              localStorage.setItem("currentUser", JSON.stringify(mockUser));
-            }
-          }
+          await loadUserData(session.user);
+        } else {
+          setUser(null);
+          setIsLoading(false);
         }
       } catch (error) {
-        console.error("Error fetching session:", error);
-        // Keep existing user from localStorage if available
-      } finally {
+        console.error("Error checking session:", error);
         setIsLoading(false);
       }
     };
@@ -90,55 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         console.log("Auth state changed:", event, session);
         
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // For demo purposes, use mock data
-          const mockUsers = [
-            {
-              id: "u1",
-              email: "admin@foodbasket.com",
-              firstName: "Admin",
-              lastName: "User",
-              role: "admin" as UserRole,
-              addresses: [],
-              loyaltyPoints: 0,
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: "u2",
-              email: "customer@example.com", 
-              firstName: "John",
-              lastName: "Doe",
-              role: "customer" as UserRole,
-              addresses: [
-                {
-                  id: "a1",
-                  street: "123 Main St",
-                  city: "Anytown",
-                  state: "CA",
-                  zipCode: "12345",
-                  isDefault: true
-                }
-              ],
-              phone: "555-123-4567",
-              dietaryPreferences: ["vegetarian"],
-              loyaltyPoints: 100,
-              createdAt: new Date().toISOString()
-            }
-          ];
-          
-          if (session?.user) {
-            const mockUser = mockUsers.find(u => u.email === session.user.email);
-            
-            if (mockUser) {
-              setUser(mockUser);
-              localStorage.setItem("currentUser", JSON.stringify(mockUser));
-            }
-          }
-          
+        if (event === 'SIGNED_IN' && session?.user) {
+          await loadUserData(session.user);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
-          localStorage.removeItem("currentUser");
         }
+        
         setIsLoading(false);
       }
     );
@@ -146,65 +57,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
   
+  // Load user data including profile and role
+  const loadUserData = async (supabaseUser: SupabaseUser) => {
+    try {
+      // Get user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+        
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        throw new Error("Failed to load user profile");
+      }
+      
+      // Get user role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', supabaseUser.id);
+        
+      if (roleError) {
+        console.error("Error fetching role:", roleError);
+        throw new Error("Failed to load user role");
+      }
+      
+      // Default role is customer
+      const role = roleData && roleData.length > 0 ? roleData[0].role as UserRole : 'customer';
+      
+      // Create user object
+      const userData: User = {
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        firstName: profileData?.first_name || '',
+        lastName: profileData?.last_name || '',
+        role: role,
+        addresses: [],  // Will be loaded as needed
+        loyaltyPoints: profileData?.loyalty_points || 0,
+        createdAt: supabaseUser.created_at || new Date().toISOString(),
+        phone: profileData?.phone || undefined,
+        dietaryPreferences: profileData?.dietary_preferences || undefined
+      };
+      
+      setUser(userData);
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Login function
   const login = async (email: string, password: string): Promise<User> => {
     setIsLoading(true);
     
     try {
-      // For demo purposes, skip actual Supabase auth and use mock data
-      const mockUsers = [
-        {
-          id: "u1",
-          email: "admin@foodbasket.com",
-          firstName: "Admin",
-          lastName: "User",
-          role: "admin" as UserRole,
-          addresses: [],
-          loyaltyPoints: 0,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "u2",
-          email: "customer@example.com",
-          firstName: "John",
-          lastName: "Doe",
-          role: "customer" as UserRole,
-          addresses: [
-            {
-              id: "a1",
-              street: "123 Main St",
-              city: "Anytown",
-              state: "CA",
-              zipCode: "12345",
-              isDefault: true
-            }
-          ],
-          phone: "555-123-4567",
-          dietaryPreferences: ["vegetarian"],
-          loyaltyPoints: 100,
-          createdAt: new Date().toISOString()
-        }
-      ];
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      const user = mockUsers.find(u => u.email === email);
+      if (error) throw error;
       
-      if (!user) {
-        throw new Error("Invalid email or password");
+      if (!data.user) {
+        throw new Error("No user returned after login");
       }
       
-      // Save the user to localStorage
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      setUser(user);
+      // User data will be loaded via onAuthStateChange
       
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
       
-      return user;
+      // Return placeholder, actual user will be set via auth state change
+      return { id: data.user.id } as User;
     } catch (error: any) {
       console.error("Login error:", error);
-      throw new Error(error.message || "Login failed. Please check your credentials.");
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials",
+        variant: "destructive"
+      });
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -215,31 +152,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // For demo purposes, create a new mock user
-      const newUser: User = {
-        id: `u${Date.now()}`,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        role: (userData.role as UserRole) || "customer",
-        addresses: [],
-        loyaltyPoints: 0,
-        createdAt: new Date().toISOString()
-      };
+      // Check if passwords match
+      if (userData.confirmPassword && userData.password !== userData.confirmPassword) {
+        throw new Error("Passwords don't match");
+      }
       
-      // Save to localStorage
-      localStorage.setItem("currentUser", JSON.stringify(newUser));
-      setUser(newUser);
+      // Register with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (!data.user) {
+        throw new Error("No user returned after registration");
+      }
       
       toast({
         title: "Registration successful!",
         description: "Your account has been created.",
       });
       
-      return newUser;
+      // Return placeholder, actual user will be set via auth state change
+      return { id: data.user.id } as User;
     } catch (error: any) {
       console.error("Registration error:", error);
-      throw new Error(error.message || "Registration failed. Please try again.");
+      toast({
+        title: "Registration failed",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -250,19 +200,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // Just clear local storage and state
-      localStorage.removeItem("currentUser");
-      setUser(null);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
       
       toast({
         title: "Logged out",
         description: "You've been successfully logged out.",
       });
+      
+      setUser(null);
     } catch (error: any) {
       console.error("Logout error:", error);
       toast({
         title: "Logout failed",
-        description: error.message || "Logout failed. Please try again.",
+        description: error.message || "Please try again",
         variant: "destructive"
       });
     } finally {
@@ -277,11 +229,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
-      // Update the user state with new data
-      const updatedUser = { ...user, ...userData };
+      // Update profile in Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: userData.firstName || user.firstName,
+          last_name: userData.lastName || user.lastName,
+          phone: userData.phone || user.phone,
+          dietary_preferences: userData.dietaryPreferences || user.dietaryPreferences
+        })
+        .eq('id', user.id);
+        
+      if (error) throw error;
       
+      // Update local user state
+      const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
       
       return updatedUser;
     } catch (error: any) {

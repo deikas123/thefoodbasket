@@ -13,6 +13,7 @@ import LiveChat from "@/components/LiveChat";
 import DeliveryDashboard from "./pages/DeliveryDashboard";
 import DeliveryDriverDashboard from "./pages/DeliveryDriverDashboard";
 import DeliveryLayout from "./components/delivery/DeliveryLayout";
+import InitialSetup from "./components/setup/InitialSetup";
 
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
@@ -101,6 +102,7 @@ function App() {
                 <LiveChat />
               </div>
               
+              <InitialSetup />
               <Toaster />
             </WishlistProvider>
           </CartProvider>
