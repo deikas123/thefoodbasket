@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Clock, Package, ShoppingBag, Truck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { formatCurrency } from "@/utils/currencyFormatter";
+import { convertToOrders } from "@/utils/typeConverters";
 
 const Orders = () => {
   const navigate = useNavigate();
@@ -25,9 +26,9 @@ const Orders = () => {
       if (user && isAuthenticated) {
         try {
           console.log("Fetching orders for user:", user.id);
-          const userOrders = await getUserOrders(user.id);
-          console.log("Fetched orders:", userOrders);
-          setOrders(userOrders);
+          const orderTypes = await getUserOrders(user.id);
+          const convertedOrders = convertToOrders(orderTypes);
+          setOrders(convertedOrders);
         } catch (error) {
           console.error("Failed to fetch orders:", error);
         } finally {

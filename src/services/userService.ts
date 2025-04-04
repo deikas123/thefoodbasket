@@ -1,6 +1,121 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { ProfileType } from "@/types/supabase";
+import { ProfileType, UserRole } from "@/types/supabase";
+import { User } from "@/types";
+
+export const getUserById = async (userId: string): Promise<User | null> => {
+  try {
+    // Get the user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+      
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return null;
+    }
+    
+    // Get the user role
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    // Use a default role if none is found or there's an error
+    const role = !roleError && roleData ? (roleData.role as UserRole) : 'customer';
+
+    // Get user's addresses
+    const { data: addresses, error: addressesError } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('user_id', userId);
+      
+    if (addressesError) {
+      console.error("Error fetching addresses:", addressesError);
+    }
+    
+    // Convert profile to User type
+    const user: User = {
+      id: profile.id,
+      email: `${profile.id}@example.com`, // Placeholder since we don't have this in profiles
+      firstName: profile.first_name || '',
+      lastName: profile.last_name || '',
+      role: role as UserRole,
+      addresses: addresses ? addresses.map(addr => ({
+        id: addr.id,
+        street: addr.street,
+        city: addr.city,
+        state: addr.state,
+        zipCode: addr.zip_code,
+        isDefault: addr.is_default
+      })) : [],
+      loyaltyPoints: profile.loyalty_points || 0,
+      createdAt: profile.created_at,
+      phone: profile.phone || undefined,
+      dietaryPreferences: profile.dietary_preferences || []
+    };
+    
+    return user;
+  } catch (error) {
+    console.error("Error in getUserById:", error);
+    return null;
+  }
+};
+
+export const getAllUsers = async (): Promise<User[]> => {
+  try {
+    // Get all profiles
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*');
+      
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+      return [];
+    }
+    
+    // Get all roles
+    const { data: roles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('*');
+      
+    if (rolesError) {
+      console.error("Error fetching roles:", rolesError);
+    }
+    
+    // Create a map of roles by user_id for quick lookup
+    const roleMap = new Map();
+    if (roles) {
+      roles.forEach(r => roleMap.set(r.user_id, r.role));
+    }
+    
+    // Convert profiles to Users
+    const users: User[] = profiles.map(profile => {
+      // Use the mapped role or default to 'customer'
+      const role = roleMap.has(profile.id) ? roleMap.get(profile.id) : 'customer';
+      
+      return {
+        id: profile.id,
+        email: `${profile.id}@example.com`, // Placeholder
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        role: role as UserRole,
+        addresses: [], // We'd need to fetch these separately if needed
+        loyaltyPoints: profile.loyalty_points || 0,
+        createdAt: profile.created_at,
+        phone: profile.phone || undefined,
+        dietaryPreferences: profile.dietary_preferences || []
+      };
+    });
+    
+    return users;
+  } catch (error) {
+    console.error("Error in getAllUsers:", error);
+    return [];
+  }
+};
 
 export const getUserProfile = async (userId: string): Promise<ProfileType | null> => {
   const { data, error } = await supabase
@@ -54,39 +169,6 @@ export const getUserRole = async (userId: string): Promise<string | null> => {
   }
   
   return data.role;
-};
-
-export const getAllUsers = async (): Promise<ProfileType[]> => {
-  // Get all profiles
-  const { data: profiles, error: profilesError } = await supabase
-    .from('profiles')
-    .select('*');
-    
-  if (profilesError) {
-    console.error("Error fetching profiles:", profilesError);
-    throw profilesError;
-  }
-  
-  // Get all roles
-  const { data: roles, error: rolesError } = await supabase
-    .from('user_roles')
-    .select('*');
-    
-  if (rolesError) {
-    console.error("Error fetching roles:", rolesError);
-    throw rolesError;
-  }
-  
-  // Combine profiles with roles
-  const usersWithRoles = profiles.map(profile => {
-    const userRole = roles.find(role => role.user_id === profile.id);
-    return {
-      ...profile,
-      role: userRole ? userRole.role : 'customer'
-    };
-  });
-  
-  return usersWithRoles;
 };
 
 export const assignUserRole = async (userId: string, role: string): Promise<void> => {

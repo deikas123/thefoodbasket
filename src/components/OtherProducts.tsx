@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Product } from "@/types";
 import { getProducts } from "@/services/productService";
+import { convertToProducts } from "@/utils/typeConverters";
 import ProductsGrid from "./ProductsGrid";
 
 const OtherProducts = () => {
@@ -26,7 +27,7 @@ const OtherProducts = () => {
           .sort(() => 0.5 - Math.random())
           .slice(0, 8);
         
-        setProducts(randomProducts);
+        setProducts(convertToProducts(randomProducts));
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {

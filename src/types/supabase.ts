@@ -26,13 +26,12 @@ export interface ProductType {
   category: string;
   stock: number;
   featured: boolean;
-  rating?: number;
+  rating: number;
   num_reviews?: number;
+  numReviews: number; // Added to match with Product interface
   discountPercentage?: number;
   created_at: string;
   updated_at: string;
-  // Add these properties to match Product type
-  numReviews?: number;
 }
 
 export interface OrderItem {

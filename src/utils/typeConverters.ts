@@ -22,6 +22,28 @@ export function convertToProduct(product: ProductType): Product {
 }
 
 /**
+ * Converts a Product to ProductType (for sending to supabase)
+ */
+export function convertFromProduct(product: Product): ProductType {
+  return {
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    image: product.image,
+    category: product.category,
+    stock: product.stock,
+    featured: product.featured,
+    rating: product.rating,
+    numReviews: product.numReviews,
+    num_reviews: product.numReviews,
+    discountPercentage: product.discountPercentage,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+/**
  * Converts an array of ProductType to Product array
  */
 export function convertToProducts(products: ProductType[]): Product[] {
@@ -66,13 +88,61 @@ export function convertToOrder(order: OrderType): Order {
       events: order.tracking.events.map(event => ({
         status: event.status,
         timestamp: event.timestamp,
-        description: event.note || "",
+        description: event.description || event.note || "",
         location: event.location
       })),
       driver: order.tracking.driver,
       signature: order.tracking.signature,
       deliveredAt: order.tracking.deliveredAt,
     } : undefined,
+  };
+}
+
+/**
+ * Converts an Order to OrderType (for sending to supabase)
+ */
+export function convertFromOrder(order: Order): OrderType {
+  return {
+    id: order.id,
+    user_id: order.userId,
+    status: order.status,
+    items: order.items,
+    subtotal: order.subtotal,
+    delivery_fee: order.deliveryFee,
+    discount: order.discount,
+    total: order.total,
+    created_at: order.createdAt,
+    updated_at: order.updatedAt,
+    delivery_method: {
+      id: order.deliveryMethod.id,
+      name: order.deliveryMethod.name,
+      price: order.deliveryMethod.price,
+      estimatedDays: parseInt(order.deliveryMethod.estimatedDelivery) || 3,
+    },
+    payment_method: order.paymentMethod,
+    delivery_address: {
+      street: order.deliveryAddress.street,
+      city: order.deliveryAddress.city,
+      state: order.deliveryAddress.state,
+      zipCode: order.deliveryAddress.zipCode
+    },
+    estimated_delivery: order.estimatedDelivery,
+    scheduled_delivery: order.scheduledDelivery,
+    notes: order.notes,
+    loyalty_points_earned: order.loyaltyPointsEarned,
+    loyalty_points_used: order.loyaltyPointsUsed,
+    promo_code: order.promoCode,
+    tracking: order.tracking ? {
+      events: order.tracking.events.map(event => ({
+        status: event.status,
+        timestamp: event.timestamp,
+        note: event.description,
+        location: event.location
+      })),
+      driver: order.tracking.driver,
+      signature: order.tracking.signature,
+      deliveredAt: order.tracking.deliveredAt,
+    } : undefined
   };
 }
 

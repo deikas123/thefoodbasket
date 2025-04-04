@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
+import { convertToOrder } from "@/utils/typeConverters";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +53,8 @@ const OrderDetails = () => {
       if (!orderId) return;
       try {
         const orderData = await getOrderById(orderId);
-        setOrder(orderData);
+        const convertedOrder = orderData ? convertToOrder(orderData) : null;
+        setOrder(convertedOrder);
       } catch (error) {
         console.error("Failed to fetch order:", error);
         toast({
@@ -74,8 +76,9 @@ const OrderDetails = () => {
     
     setIsCancelling(true);
     try {
-      const updatedOrder = await cancelOrder(order.id);
-      if (updatedOrder) {
+      const updatedOrderType = await cancelOrder(order.id);
+      if (updatedOrderType) {
+        const updatedOrder = convertToOrder(updatedOrderType);
         setOrder(updatedOrder);
         toast({
           title: "Order cancelled",

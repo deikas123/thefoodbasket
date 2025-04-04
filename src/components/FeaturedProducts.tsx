@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
-import { products } from "@/data/products";
+import { products as mockProducts } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { convertToProducts } from "@/utils/typeConverters";
+import { ProductType } from "@/types/supabase";
 import { 
   Carousel, 
   CarouselContent, 
@@ -36,8 +38,18 @@ const FeaturedProducts = () => {
     return () => clearTimeout(timer);
   }, []);
   
-  // Get featured products
-  const featuredProducts = products.filter(product => product.featured);
+  // Get featured products and convert to Product type
+  const featuredProductTypes = mockProducts
+    .filter(product => product.featured)
+    .map(product => ({
+      ...product,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      num_reviews: product.numReviews,
+      numReviews: product.numReviews
+    })) as ProductType[];
+    
+  const featuredProducts = convertToProducts(featuredProductTypes);
   
   return (
     <section className="py-12 px-4 md:py-16">

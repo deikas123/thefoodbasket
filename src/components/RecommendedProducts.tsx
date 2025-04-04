@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import ProductCard from "@/components/ProductCard"; // Fixed import path
+import ProductCard from "@/components/ProductCard"; 
 import { getFrequentlyPurchasedTogether } from "@/services/productService";
 
 interface RecommendedProductsProps {

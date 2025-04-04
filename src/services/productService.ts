@@ -1,6 +1,9 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ProductType } from "@/types/supabase";
 import { products as mockProducts } from "@/data/products";
+import { Product } from "@/types";
+import { convertToProduct, convertToProducts } from "@/utils/typeConverters";
 
 // Type for categories
 export interface Category {
@@ -25,7 +28,8 @@ export const getProducts = async (
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       num_reviews: p.numReviews,
-    })) as unknown as ProductType[];
+      numReviews: p.numReviews
+    })) as ProductType[];
     
     // Apply filters if provided
     if (categoryId) {
@@ -72,7 +76,8 @@ export const getFeaturedProducts = async (): Promise<ProductType[]> => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         num_reviews: p.numReviews,
-      })) as unknown as ProductType[];
+        numReviews: p.numReviews
+      })) as ProductType[];
     
     return featuredProducts;
   } catch (error) {
@@ -91,7 +96,8 @@ export const getProductsByCategory = async (category: string): Promise<ProductTy
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         num_reviews: p.numReviews,
-      })) as unknown as ProductType[];
+        numReviews: p.numReviews
+      })) as ProductType[];
     
     return categoryProducts;
   } catch (error) {
@@ -114,7 +120,8 @@ export const getProductById = async (id: string): Promise<ProductType | null> =>
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       num_reviews: product.numReviews,
-    } as unknown as ProductType;
+      numReviews: product.numReviews
+    } as ProductType;
   } catch (error) {
     console.error("Error fetching product:", error);
     return null;
@@ -168,6 +175,9 @@ export const getCategoryById = async (id: string): Promise<Category | null> => {
   }
 };
 
+// For now, all these functions work with mock data since Supabase tables aren't set up yet
+// When ready to switch to real database, uncomment and update these functions
+
 export const createProduct = async (product: Omit<ProductType, 'id' | 'created_at' | 'updated_at'>): Promise<ProductType> => {
   // This is a placeholder that would normally interact with Supabase
   const newProduct = {
@@ -203,7 +213,7 @@ export const deleteProduct = async (id: string): Promise<void> => {
 };
 
 // Add additional helper function for recommended products
-export const getFrequentlyPurchasedTogether = async (productId: string): Promise<ProductType[]> => {
+export const getFrequentlyPurchasedTogether = async (productId: string): Promise<Product[]> => {
   try {
     // For now, return other products in the same category
     const product = await getProductById(productId);
@@ -212,7 +222,7 @@ export const getFrequentlyPurchasedTogether = async (productId: string): Promise
       return [];
     }
     
-    const relatedProducts = mockProducts
+    const relatedProductTypes = mockProducts
       .filter(p => p.category === product.category && p.id !== productId)
       .slice(0, 4)
       .map(p => ({
@@ -220,9 +230,10 @@ export const getFrequentlyPurchasedTogether = async (productId: string): Promise
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         num_reviews: p.numReviews,
-      })) as unknown as ProductType[];
+        numReviews: p.numReviews
+      })) as ProductType[];
     
-    return relatedProducts;
+    return convertToProducts(relatedProductTypes);
   } catch (error) {
     console.error("Error fetching related products:", error);
     return [];

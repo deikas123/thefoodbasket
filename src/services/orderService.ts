@@ -71,8 +71,23 @@ export const getUserOrders = async (userId: string): Promise<OrderType[]> => {
     throw error;
   }
   
-  // Cast the data to OrderType[] to ensure proper types
-  return (data || []) as unknown as OrderType[];
+  // Process the data to ensure proper types
+  const orders = data?.map(order => {
+    return {
+      ...order,
+      status: order.status as OrderStatus,
+      items: order.items as unknown as OrderItem[],
+      delivery_address: order.delivery_address as any,
+      delivery_method: order.delivery_method as any,
+      payment_method: order.payment_method as any,
+      tracking: order.tracking ? {
+        ...order.tracking as any,
+        events: Array.isArray((order.tracking as any)?.events) ? (order.tracking as any).events : []
+      } : undefined
+    } as OrderType;
+  }) || [];
+  
+  return orders;
 };
 
 export const getOrderById = async (orderId: string): Promise<OrderType | null> => {
@@ -91,8 +106,21 @@ export const getOrderById = async (orderId: string): Promise<OrderType | null> =
     throw error;
   }
   
-  // Cast the data to OrderType to ensure proper type
-  return data as unknown as OrderType;
+  // Process the data to ensure proper types
+  const order = {
+    ...data,
+    status: data.status as OrderStatus,
+    items: data.items as unknown as OrderItem[],
+    delivery_address: data.delivery_address as any,
+    delivery_method: data.delivery_method as any,
+    payment_method: data.payment_method as any,
+    tracking: data.tracking ? {
+      ...data.tracking as any,
+      events: Array.isArray((data.tracking as any)?.events) ? (data.tracking as any).events : []
+    } : undefined
+  } as OrderType;
+  
+  return order;
 };
 
 export const updateOrderStatus = async (
@@ -123,7 +151,7 @@ export const updateOrderStatus = async (
   const currentTracking = currentOrder.tracking || { events: [] };
   const updatedTracking = {
     events: [
-      ...(currentTracking.events || []),
+      ...(Array.isArray((currentTracking as any)?.events) ? (currentTracking as any).events : []),
       trackingEvent || { 
         status, 
         timestamp: new Date().toISOString() 
@@ -151,8 +179,21 @@ export const updateOrderStatus = async (
     throw error;
   }
   
-  // Cast the data to OrderType to ensure proper type
-  return data as unknown as OrderType;
+  // Process the data to ensure proper types
+  const order = {
+    ...data,
+    status: data.status as OrderStatus,
+    items: data.items as unknown as OrderItem[],
+    delivery_address: data.delivery_address as any,
+    delivery_method: data.delivery_method as any,
+    payment_method: data.payment_method as any,
+    tracking: data.tracking ? {
+      ...data.tracking as any,
+      events: Array.isArray((data.tracking as any)?.events) ? (data.tracking as any).events : []
+    } : undefined
+  } as OrderType;
+  
+  return order;
 };
 
 export const getAllOrders = async (): Promise<OrderType[]> => {
@@ -166,8 +207,23 @@ export const getAllOrders = async (): Promise<OrderType[]> => {
     throw error;
   }
   
-  // Cast the data to OrderType[] to ensure proper types
-  return (data || []) as unknown as OrderType[];
+  // Process the data to ensure proper types
+  const orders = data?.map(order => {
+    return {
+      ...order,
+      status: order.status as OrderStatus,
+      items: order.items as unknown as OrderItem[],
+      delivery_address: order.delivery_address as any,
+      delivery_method: order.delivery_method as any,
+      payment_method: order.payment_method as any,
+      tracking: order.tracking ? {
+        ...order.tracking as any,
+        events: Array.isArray((order.tracking as any)?.events) ? (order.tracking as any).events : []
+      } : undefined
+    } as OrderType;
+  }) || [];
+  
+  return orders;
 };
 
 export const getDeliveryOrders = async (): Promise<OrderType[]> => {
@@ -182,8 +238,23 @@ export const getDeliveryOrders = async (): Promise<OrderType[]> => {
     throw error;
   }
   
-  // Cast the data to OrderType[] to ensure proper types
-  return (data || []) as unknown as OrderType[];
+  // Process the data to ensure proper types
+  const orders = data?.map(order => {
+    return {
+      ...order,
+      status: order.status as OrderStatus,
+      items: order.items as unknown as OrderItem[],
+      delivery_address: order.delivery_address as any,
+      delivery_method: order.delivery_method as any,
+      payment_method: order.payment_method as any,
+      tracking: order.tracking ? {
+        ...order.tracking as any,
+        events: Array.isArray((order.tracking as any)?.events) ? (order.tracking as any).events : []
+      } : undefined
+    } as OrderType;
+  }) || [];
+  
+  return orders;
 };
 
 // Add cancelOrder function that was missing
@@ -203,6 +274,19 @@ export const cancelOrder = async (orderId: string): Promise<OrderType> => {
     throw error;
   }
   
-  // Cast the data to OrderType to ensure proper type
-  return data as unknown as OrderType;
+  // Process the data to ensure proper types
+  const order = {
+    ...data,
+    status: data.status as OrderStatus,
+    items: data.items as unknown as OrderItem[],
+    delivery_address: data.delivery_address as any,
+    delivery_method: data.delivery_method as any,
+    payment_method: data.payment_method as any,
+    tracking: data.tracking ? {
+      ...data.tracking as any,
+      events: Array.isArray((data.tracking as any)?.events) ? (data.tracking as any).events : []
+    } : undefined
+  } as OrderType;
+  
+  return order;
 };

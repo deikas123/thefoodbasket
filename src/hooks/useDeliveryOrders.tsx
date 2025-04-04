@@ -18,10 +18,13 @@ export const useDeliveryOrders = (userId: string | undefined) => {
     queryKey: ['delivery-orders', userId],
     queryFn: async () => {
       const orders = await getUserOrders(userId || '');
-      return convertToOrders(orders); // Convert OrderType[] to Order[]
+      return orders; // Return the OrderType[] directly
     },
     enabled: !!userId
   });
+  
+  // Convert OrderType[] to Order[] for use in the component
+  const deliveryOrders = orderTypes ? convertToOrders(orderTypes) : [];
 
   const filterDeliveryOrders = (orders: Order[] = [], statuses: OrderStatus[]) => 
     orders.filter(order => 
@@ -90,7 +93,8 @@ export const useDeliveryOrders = (userId: string | undefined) => {
           status: 'delivered',
           timestamp: new Date().toISOString(),
           deliveredAt: new Date().toISOString(),
-          signature: signatureData
+          signature: signatureData,
+          description: "Delivery completed with signature"
         }
       );
       
@@ -112,7 +116,7 @@ export const useDeliveryOrders = (userId: string | undefined) => {
   };
 
   return {
-    deliveryOrders: orderTypes || [],
+    deliveryOrders,
     isLoading,
     filterDeliveryOrders,
     selectedOrder,

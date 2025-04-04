@@ -1,179 +1,138 @@
+// Note: Since this is a demo service, we're keeping the changes minimal.
+// In a real application, you would need to update the database schema 
+// to include a products table before using these functions.
 
 import { supabase } from "@/integrations/supabase/client";
-import { getUserRole } from "./userService";
+import { products as mockProducts } from "@/data/products";
 
-// Sample products to seed the database
-const sampleProducts = [
-  {
-    name: "Fresh Tomatoes",
-    description: "Locally grown organic tomatoes, perfect for salads and cooking.",
-    price: 3.99,
-    image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dG9tYXRvZXN8ZW58MHx8MHx8fDA%3D",
-    category: "vegetables",
-    featured: true,
-    stock: 50
-  },
-  {
-    name: "Organic Bananas",
-    description: "Sweet and nutritious organic bananas.",
-    price: 2.49,
-    image: "https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmFuYW5hc3xlbnwwfHwwfHx8MA%3D%3D",
-    category: "fruits",
-    featured: true,
-    stock: 100
-  },
-  {
-    name: "Whole Milk",
-    description: "Farm-fresh whole milk, pasteurized and homogenized.",
-    price: 3.29,
-    image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fG1pbGt8ZW58MHx8MHx8fDA%3D",
-    category: "dairy",
-    featured: false,
-    stock: 30
-  },
-  {
-    name: "Free-Range Eggs",
-    description: "Farm-fresh free-range eggs from happy chickens.",
-    price: 4.99,
-    image: "https://images.unsplash.com/photo-1598965402089-897ce52e8355?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8ZWdnc3xlbnwwfHwwfHx8MA%3D%3D",
-    category: "dairy",
-    featured: false,
-    stock: 24
-  },
-  {
-    name: "Fresh Spinach",
-    description: "Organic fresh spinach leaves, washed and ready to use.",
-    price: 2.99,
-    image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c3BpbmFjaHxlbnwwfHwwfHx8MA%3D%3D",
-    category: "vegetables",
-    featured: true,
-    stock: 40
-  },
-  {
-    name: "Whole Grain Bread",
-    description: "Freshly baked whole grain bread with seeds.",
-    price: 3.99,
-    image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YnJlYWR8ZW58MHx8MHx8fDA%3D",
-    category: "bakery",
-    featured: false,
-    stock: 20
-  },
-  {
-    name: "Chicken Breast",
-    description: "Boneless, skinless chicken breast from free-range chickens.",
-    price: 8.99,
-    image: "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Y2hpY2tlbiUyMGJyZWFzdHxlbnwwfHwwfHx8MA%3D%3D",
-    category: "meat",
-    featured: false,
-    stock: 15
-  },
-  {
-    name: "Fresh Avocados",
-    description: "Ripe and ready to eat avocados.",
-    price: 6.49,
-    image: "https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YXZvY2Fkb3xlbnwwfHwwfHx8MA%3D%3D",
-    category: "fruits",
-    featured: true,
-    stock: 30
-  }
-];
-
-export const seedProducts = async () => {
+export const initializeDatabase = async () => {
   try {
-    // Check if products already exist
-    const { count, error: countError } = await supabase
-      .from('products')
-      .select('*', { count: 'exact', head: true });
-      
-    if (countError) {
-      console.error("Error checking products count:", countError);
-      throw countError;
-    }
-    
-    // Only seed if no products exist
-    if (count === 0) {
-      const { error } = await supabase
-        .from('products')
-        .insert(sampleProducts);
-        
-      if (error) {
-        console.error("Error seeding products:", error);
-        throw error;
+    console.log("Initializing database...");
+    await createDemoUser();
+    // Removed createProducts() call as there's no products table yet in Supabase
+    await createDemoOrders();
+    console.log("Database initialized successfully!");
+  } catch (error) {
+    console.error("Error initializing database:", error);
+  }
+};
+
+// Create a demo user for testing
+const createDemoUser = async () => {
+  const { data: existingUsers, error: queryError } = await supabase
+    .from('profiles')
+    .select('*')
+    .limit(1);
+  
+  if (queryError) {
+    console.error("Error checking for existing users:", queryError);
+    return;
+  }
+  
+  // If there are already users, don't create more
+  if (existingUsers && existingUsers.length > 0) {
+    console.log("Users already exist, skipping user creation");
+    return;
+  }
+  
+  // In a real app, this would create a user via Supabase Auth
+  // For demo purposes, we're just adding a profile directly
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert([
+      {
+        id: '00000000-0000-0000-0000-000000000000',
+        first_name: 'Demo',
+        last_name: 'User',
+        phone: '+1234567890',
+        loyalty_points: 100
       }
-      
-      console.log("Database seeded with initial products");
-      return true;
-    } else {
-      console.log("Products already exist, skipping seed");
-      return false;
-    }
-  } catch (error) {
-    console.error("Error in seed function:", error);
-    throw error;
+    ]);
+  
+  if (error) {
+    console.error("Error creating demo user:", error);
+  } else {
+    console.log("Demo user created:", data);
   }
 };
 
-export const createAdminUser = async (userId: string) => {
-  try {
-    const { error } = await supabase
-      .from('user_roles')
-      .insert([{ user_id: userId, role: 'admin' }]);
-      
-    if (error) {
-      console.error("Error creating admin user:", error);
-      throw error;
-    }
-    
-    console.log("Admin role assigned to user:", userId);
-    return true;
-  } catch (error) {
-    console.error("Error in createAdminUser function:", error);
-    throw error;
+// Function to create demo orders
+const createDemoOrders = async () => {
+  const { data: existingOrders, error: queryError } = await supabase
+    .from('orders')
+    .select('*')
+    .limit(1);
+  
+  if (queryError) {
+    console.error("Error checking for existing orders:", queryError);
+    return;
   }
-};
-
-export const createDeliveryUser = async (userId: string) => {
-  try {
-    const { error } = await supabase
-      .from('user_roles')
-      .insert([{ user_id: userId, role: 'delivery' }]);
-      
-    if (error) {
-      console.error("Error creating delivery user:", error);
-      throw error;
-    }
-    
-    console.log("Delivery role assigned to user:", userId);
-    return true;
-  } catch (error) {
-    console.error("Error in createDeliveryUser function:", error);
-    throw error;
+  
+  // If there are already orders, don't create more
+  if (existingOrders && existingOrders.length > 0) {
+    console.log("Orders already exist, skipping order creation");
+    return;
   }
-};
-
-export const checkAndAssignRoleIfFirstUser = async (userId: string) => {
-  try {
-    // Check if this is the first user
-    const { count, error: countError } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true });
-      
-    if (countError) {
-      console.error("Error checking user count:", countError);
-      return;
-    }
-    
-    // If this is the first or second user, make them an admin
-    if (count <= 2) {
-      // Check if user already has role
-      const role = await getUserRole(userId);
-      
-      // If no role or customer role, make admin
-      if (!role || role === 'customer') {
-        await createAdminUser(userId);
+  
+  // Demo order - note we're using a limited set of fields to match the schema
+  const demoOrder = {
+    user_id: '00000000-0000-0000-0000-000000000000',
+    status: 'processing',
+    items: [
+      {
+        productId: mockProducts[0].id,
+        name: mockProducts[0].name,
+        price: mockProducts[0].price,
+        quantity: 2,
+        image: mockProducts[0].image
+      },
+      {
+        productId: mockProducts[1].id,
+        name: mockProducts[1].name,
+        price: mockProducts[1].price,
+        quantity: 1,
+        image: mockProducts[1].image
       }
-    }
-  } catch (error) {
-    console.error("Error checking first user:", error);
+    ],
+    subtotal: mockProducts[0].price * 2 + mockProducts[1].price,
+    delivery_fee: 5.99,
+    total: mockProducts[0].price * 2 + mockProducts[1].price + 5.99,
+    delivery_address: {
+      street: '123 Main St',
+      city: 'Anytown',
+      state: 'CA',
+      zipCode: '12345'
+    },
+    delivery_method: {
+      id: 'standard',
+      name: 'Standard Delivery',
+      price: 5.99,
+      estimatedDays: 3
+    },
+    payment_method: {
+      id: 'card',
+      name: 'Credit Card',
+      last4: '4242'
+    },
+    estimated_delivery: '3 days'
+  };
+  
+  const { data, error } = await supabase
+    .from('orders')
+    .insert([demoOrder]);
+  
+  if (error) {
+    console.error("Error creating demo orders:", error);
+  } else {
+    console.log("Demo orders created");
   }
 };
+
+// This function would need to be implemented once a products table exists in Supabase
+// For now, we're using mock products from data/products.ts
+/*
+const createProducts = async () => {
+  // Implementation would go here when products table is created
+  console.log("Using mock products instead of database products");
+};
+*/

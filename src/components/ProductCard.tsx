@@ -10,11 +10,10 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useQuery } from "@tanstack/react-query";
 import { getCategoryById } from "@/services/productService";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { ProductType } from "@/types/supabase";
-import { convertToProduct } from "@/utils/typeConverters";
+import { Product } from "@/types";
 
 interface ProductCardProps {
-  product: ProductType;
+  product: Product;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
@@ -34,7 +33,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const handleAddToCart = () => {
     setIsAdding(true);
     setTimeout(() => {
-      addItem(convertToProduct(product));
+      addItem(product);
       setIsAdding(false);
     }, 300);
   };
@@ -43,7 +42,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     if (isInWishlist(product.id)) {
       removeItem(product.id);
     } else {
-      addToWishlist(convertToProduct(product));
+      addToWishlist(product);
     }
   };
   
