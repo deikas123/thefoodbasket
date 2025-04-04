@@ -21,6 +21,8 @@ const DeliveryDashboard: React.FC = () => {
     isTrackingModalOpen,
     isSignatureModalOpen,
     setIsTrackingModalOpen,
+    // Add setIsSignatureModalOpen here
+    setIsSignatureModalOpen,
     handleStatusUpdate,
     handleViewTracking,
     handleRequestSignature,
@@ -89,6 +91,7 @@ const DeliveryDashboard: React.FC = () => {
       {selectedOrder && (
         <CustomerSignatureModal
           isOpen={isSignatureModalOpen}
+          // Use setIsSignatureModalOpen here
           onClose={() => setIsSignatureModalOpen(false)}
           order={selectedOrder}
           onComplete={handleDeliveryComplete}
