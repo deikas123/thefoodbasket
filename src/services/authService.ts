@@ -1,129 +1,139 @@
 
 import { User, RegisterFormData, LoginFormData, UserRole } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
-// Simulate a database of users
-let users: User[] = [
-  {
-    id: "u1",
-    email: "admin@foodbasket.com",
-    firstName: "Admin",
-    lastName: "User",
-    role: "admin",
+// Get the current user from Supabase
+export const getCurrentUser = async (): Promise<User | null> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
+  
+  // Get user profile from Supabase
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .single();
+    
+  // Get user role from Supabase
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', session.user.id)
+    .single();
+  
+  const role = roleData?.role as UserRole || 'customer';
+  
+  return {
+    id: session.user.id,
+    email: session.user.email || '',
+    firstName: profile?.first_name || '',
+    lastName: profile?.last_name || '',
+    role: role,
     addresses: [],
-    loyaltyPoints: 0,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "u2",
-    email: "customer@example.com",
-    firstName: "John",
-    lastName: "Doe",
-    role: "customer",
-    addresses: [
-      {
-        id: "a1",
-        street: "123 Main St",
-        city: "Anytown",
-        state: "CA",
-        zipCode: "12345",
-        isDefault: true
-      }
-    ],
-    phone: "555-123-4567",
-    dietaryPreferences: ["vegetarian"],
-    loyaltyPoints: 100,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "u3",
-    email: "delivery@foodbasket.com",
-    firstName: "Delivery",
-    lastName: "Person",
-    role: "delivery",
-    addresses: [],
-    loyaltyPoints: 0,
-    createdAt: new Date().toISOString()
-  }
-];
-
-// Store the current user in localStorage
-export const getCurrentUser = (): User | null => {
-  const storedUser = localStorage.getItem("currentUser");
-  return storedUser ? JSON.parse(storedUser) : null;
+    loyaltyPoints: profile?.loyalty_points || 0,
+    createdAt: session.user.created_at || new Date().toISOString(),
+    phone: profile?.phone || undefined,
+    dietaryPreferences: profile?.dietary_preferences || undefined
+  };
 };
 
-// Simulate login API call
+// Login with Supabase
 export const login = async (credentials: LoginFormData): Promise<User> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: credentials.email,
+    password: credentials.password
+  });
   
-  // Find the user by email
-  const user = users.find(u => u.email === credentials.email);
-  
-  // In a real app, you would check the password here
-  // For demo purposes, we're just checking if the user exists
-  if (!user) {
-    throw new Error("Invalid email or password");
+  if (error) {
+    throw error;
   }
   
-  // Save the user to localStorage (in a real app, you'd use a token)
-  localStorage.setItem("currentUser", JSON.stringify(user));
+  if (!data.user) {
+    throw new Error("No user returned after login");
+  }
+  
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error("Failed to get user profile");
+  }
   
   return user;
 };
 
-// Simulate register API call
+// Register with Supabase
 export const register = async (userData: RegisterFormData): Promise<User> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Check if email already exists
-  if (users.some(u => u.email === userData.email)) {
-    throw new Error("Email already in use");
+  // Check if passwords match
+  if (userData.confirmPassword && userData.password !== userData.confirmPassword) {
+    throw new Error("Passwords don't match");
   }
   
-  // Create a new user
-  const newUser: User = {
-    id: `u${users.length + 1}`,
+  // Register with Supabase
+  const { data, error } = await supabase.auth.signUp({
     email: userData.email,
+    password: userData.password,
+    options: {
+      data: {
+        first_name: userData.firstName,
+        last_name: userData.lastName
+      }
+    }
+  });
+  
+  if (error) {
+    throw error;
+  }
+  
+  if (!data.user) {
+    throw new Error("No user returned after registration");
+  }
+  
+  // The profile will be created by the database trigger
+  return {
+    id: data.user.id,
+    email: data.user.email || '',
     firstName: userData.firstName,
     lastName: userData.lastName,
-    role: userData.role || "customer",
+    role: 'customer',
     addresses: [],
     loyaltyPoints: 0,
-    createdAt: new Date().toISOString()
+    createdAt: data.user.created_at || new Date().toISOString()
   };
-  
-  // Add the user to our "database"
-  users = [...users, newUser];
-  
-  // Save the user to localStorage
-  localStorage.setItem("currentUser", JSON.stringify(newUser));
-  
-  return newUser;
 };
 
-// Simulate logout
-export const logout = (): void => {
-  localStorage.removeItem("currentUser");
+// Logout with Supabase
+export const logout = async (): Promise<void> => {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    throw error;
+  }
 };
 
-// Update user profile
+// Update profile using Supabase
 export const updateProfile = async (userData: Partial<User>): Promise<User> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const currentUser = getCurrentUser();
-  if (!currentUser) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
   
-  // Update the user in our "database"
-  const updatedUser = { ...currentUser, ...userData };
-  users = users.map(u => u.id === updatedUser.id ? updatedUser : u);
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      first_name: userData.firstName,
+      last_name: userData.lastName,
+      phone: userData.phone,
+      dietary_preferences: userData.dietaryPreferences
+    })
+    .eq('id', session.user.id);
+    
+  if (error) {
+    throw error;
+  }
   
-  // Update localStorage
-  localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+  // Get the updated user
+  const updatedUser = await getCurrentUser();
+  if (!updatedUser) {
+    throw new Error("Failed to get updated user profile");
+  }
   
   return updatedUser;
 };
