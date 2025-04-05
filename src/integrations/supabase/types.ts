@@ -78,6 +78,206 @@ export type Database = {
         }
         Relationships: []
       }
+      banners: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_date: string
+          id: string
+          image: string
+          link: string | null
+          priority: number
+          start_date: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_date: string
+          id?: string
+          image: string
+          link?: string | null
+          priority?: number
+          start_date: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_date?: string
+          id?: string
+          image?: string
+          link?: string | null
+          priority?: number
+          start_date?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      daily_offers: {
+        Row: {
+          active: boolean
+          created_at: string
+          discount_percentage: number
+          end_date: string
+          id: string
+          product_id: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          discount_percentage: number
+          end_date: string
+          id?: string
+          product_id?: string | null
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          discount_percentage?: number
+          end_date?: string
+          id?: string
+          product_id?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_offers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_zones: {
+        Row: {
+          active: boolean
+          base_fee: number
+          created_at: string
+          id: string
+          max_delivery_time: number
+          min_delivery_time: number
+          name: string
+          per_km_fee: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_fee: number
+          created_at?: string
+          id?: string
+          max_delivery_time: number
+          min_delivery_time: number
+          name: string
+          per_km_fee: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_fee?: number
+          created_at?: string
+          id?: string
+          max_delivery_time?: number
+          min_delivery_time?: number
+          name?: string
+          per_km_fee?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      discount_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          max_discount: number | null
+          min_purchase: number | null
+          start_date: string
+          type: string
+          updated_at: string
+          usage_count: number
+          usage_limit: number | null
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          max_discount?: number | null
+          min_purchase?: number | null
+          start_date: string
+          type: string
+          updated_at?: string
+          usage_count?: number
+          usage_limit?: number | null
+          value: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          max_discount?: number | null
+          min_purchase?: number | null
+          start_date?: string
+          type?: string
+          updated_at?: string
+          usage_count?: number
+          usage_limit?: number | null
+          value?: number
+        }
+        Relationships: []
+      }
       food_basket_items: {
         Row: {
           basket_id: string
@@ -285,6 +485,113 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: true
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_tag_relations: {
+        Row: {
+          created_at: string
+          product_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          product_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          product_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_tag_relations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_tag_relations_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "product_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string
+          discount_percentage: number | null
+          featured: boolean
+          id: string
+          image: string
+          name: string
+          num_reviews: number
+          price: number
+          rating: number
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description: string
+          discount_percentage?: number | null
+          featured?: boolean
+          id?: string
+          image: string
+          name: string
+          num_reviews?: number
+          price: number
+          rating?: number
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string
+          discount_percentage?: number | null
+          featured?: boolean
+          id?: string
+          image?: string
+          name?: string
+          num_reviews?: number
+          price?: number
+          rating?: number
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_product_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           },
         ]

@@ -1,214 +1,444 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import AdminLayout from "@/components/admin/AdminLayout";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/use-toast";
-import { useAuth } from "@/context/AuthContext";
-import { getCategories, createCategory, updateCategory, deleteCategory } from "@/services/categoryService";
-import AdminLayout from "@/components/admin/AdminLayout";
+import { getCategoriesWithCounts, createCategory, updateCategory, deleteCategory } from "@/services/categoryService";
 import { Category } from "@/services/productService";
+import { Pencil, Trash2, PlusCircle, MoreHorizontal } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+const ITEMS_PER_PAGE = 10;
 
 const Categories = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
-  const [categoryName, setCategoryName] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    image: ""
+  });
   
-  useEffect(() => {
-    // Verify user is admin
-    if (user?.role !== "admin") {
-      navigate("/");
-      return;
-    }
-
-    fetchCategories();
-  }, [user, navigate]);
+  // Fetch categories
+  const { data: categories = [], isLoading, error } = useQuery({
+    queryKey: ["admin", "categories"],
+    queryFn: getCategoriesWithCounts
+  });
   
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      const data = await getCategories();
-      setCategories(data);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast({
+  // Create category mutation
+  const createMutation = useMutation({
+    mutationFn: (data: { name: string; description: string; image: string }) => 
+      createCategory(data.name, data.description, data.image),
+    onSuccess: () => {
+      toast({ 
+        title: "Category created",
+        description: "The category has been created successfully."
+      });
+      setIsAddDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
+      resetForm();
+    },
+    onError: (error) => {
+      toast({ 
         title: "Error",
-        description: "Failed to fetch categories",
-        variant: "destructive",
+        description: "Failed to create category. Please try again.",
+        variant: "destructive"
       });
-    } finally {
-      setLoading(false);
+      console.error("Error creating category:", error);
     }
-  };
+  });
   
-  const handleOpenDialog = (category?: Category) => {
-    if (category) {
-      setCurrentCategory(category);
-      setCategoryName(category.name);
-    } else {
-      setCurrentCategory(null);
-      setCategoryName("");
-    }
-    setDialogOpen(true);
-  };
-  
-  const handleSubmit = async () => {
-    if (!categoryName.trim()) {
-      toast({
+  // Update category mutation
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: string; updates: Partial<Category> & { description?: string, image?: string } }) => 
+      updateCategory(data.id, data.updates),
+    onSuccess: () => {
+      toast({ 
+        title: "Category updated",
+        description: "The category has been updated successfully."
+      });
+      setIsEditDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
+      resetForm();
+    },
+    onError: (error) => {
+      toast({ 
         title: "Error",
-        description: "Category name cannot be empty",
-        variant: "destructive",
+        description: "Failed to update category. Please try again.",
+        variant: "destructive"
       });
-      return;
+      console.error("Error updating category:", error);
     }
-    
-    try {
-      if (currentCategory) {
-        // Update existing category
-        await updateCategory(currentCategory.id, categoryName);
-        toast({
-          title: "Success",
-          description: "Category updated successfully",
-        });
-      } else {
-        // Create new category
-        await createCategory(categoryName);
-        toast({
-          title: "Success",
-          description: "Category created successfully",
-        });
-      }
-      
-      setDialogOpen(false);
-      fetchCategories();
-    } catch (error) {
-      console.error("Error saving category:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save category",
-        variant: "destructive",
-      });
-    }
-  };
+  });
   
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
-    
-    try {
-      await deleteCategory(id);
-      toast({
-        title: "Success",
-        description: "Category deleted successfully",
+  // Delete category mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteCategory,
+    onSuccess: () => {
+      toast({ 
+        title: "Category deleted",
+        description: "The category has been deleted successfully."
       });
-      fetchCategories();
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+        variant: "destructive"
+      });
       console.error("Error deleting category:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete category",
-        variant: "destructive",
+    }
+  });
+  
+  // Calculate paginated data
+  const paginatedData = categories.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+  
+  const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE);
+  
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      image: ""
+    });
+    setCurrentCategory(null);
+  };
+  
+  // Open edit dialog
+  const handleEdit = (category: Category) => {
+    setCurrentCategory(category);
+    setFormData({
+      name: category.name,
+      description: "",
+      image: ""
+    });
+    setIsEditDialogOpen(true);
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast({ 
+        title: "Validation Error",
+        description: "Category name is required.",
+        variant: "destructive"
       });
+      return;
+    }
+    
+    if (isEditDialogOpen && currentCategory) {
+      updateMutation.mutate({
+        id: currentCategory.id,
+        updates: {
+          name: formData.name,
+          description: formData.description,
+          image: formData.image
+        }
+      });
+    } else {
+      createMutation.mutate(formData);
     }
   };
-
+  
   return (
     <AdminLayout>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Product Categories</CardTitle>
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-2" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+            <p className="text-muted-foreground">
+              Manage product categories for your store
+            </p>
+          </div>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
             Add Category
           </Button>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <p>Loading categories...</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Products</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                      No categories found. Create your first category to get started.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  categories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell>{category.name}</TableCell>
-                      <TableCell>{category.productCount || 0}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="mr-2"
-                          onClick={() => handleOpenDialog(category)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(category.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>All Categories</CardTitle>
+            <CardDescription>
+              You have {categories.length} categories in total
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              </div>
+            ) : error ? (
+              <div className="text-center py-8 text-destructive">
+                Error loading categories. Please try again.
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No categories found. Create your first category to get started.
+              </div>
+            ) : (
+              <>
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>ID (Slug)</TableHead>
+                        <TableHead className="text-right">Products</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedData.map((category) => (
+                        <TableRow key={category.id}>
+                          <TableCell className="font-medium">{category.name}</TableCell>
+                          <TableCell>{category.id}</TableCell>
+                          <TableCell className="text-right">{category.productCount}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Actions</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleEdit(category)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently delete the category "{category.name}".
+                                        {category.productCount > 0 && (
+                                          <span className="font-bold text-destructive">
+                                            {" "}This will also affect {category.productCount} products!
+                                          </span>
+                                        )}
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => deleteMutation.mutate(category.id)}
+                                        className="bg-destructive hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                {totalPages > 1 && (
+                  <Pagination className="mt-4">
+                    <PaginationContent>
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <PaginationItem key={i + 1}>
+                          <PaginationLink
+                            isActive={page === i + 1}
+                            onClick={() => setPage(i + 1)}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                    </PaginationContent>
+                  </Pagination>
                 )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
       
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+      {/* Add Category Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>
-              {currentCategory ? "Edit Category" : "Add New Category"}
-            </DialogTitle>
+            <DialogTitle>Add New Category</DialogTitle>
+            <DialogDescription>
+              Create a new category for your products.
+            </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <label htmlFor="category-name" className="block text-sm font-medium mb-2">
-              Category Name
-            </label>
-            <Input
-              id="category-name"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-              placeholder="Enter category name"
-              className="w-full"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit}>
-              {currentCategory ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Fruits & Vegetables"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Fresh produce from local farms..."
+                  rows={3}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="image">Image URL</Label>
+                <Input
+                  id="image"
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  placeholder="https://example.com/image.jpg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to use a placeholder image
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setIsAddDialogOpen(false);
+                  resetForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create Category"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Category Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>
+              Update the details for this category.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name">Name *</Label>
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-image">Image URL</Label>
+                <Input
+                  id="edit-image"
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to keep existing image
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  resetForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? "Updating..." : "Update Category"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </AdminLayout>

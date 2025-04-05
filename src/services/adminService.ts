@@ -2,53 +2,30 @@
 import { supabase } from "@/integrations/supabase/client";
 import { KYCVerification } from "@/types/kyc";
 
-// Mock data for KYC verifications (in a real app this would come from Supabase)
-const mockKYCVerifications: KYCVerification[] = [
-  {
-    id: "1",
-    userId: "user-123",
-    status: "pending",
-    createdAt: "2024-03-01T10:00:00Z",
-    updatedAt: "2024-03-01T10:00:00Z",
-    idDocumentUrl: "https://placehold.co/600x400?text=ID+Document",
-    addressProofUrl: "https://placehold.co/600x400?text=Address+Proof"
-  },
-  {
-    id: "2",
-    userId: "user-456",
-    status: "approved",
-    createdAt: "2024-03-02T14:30:00Z",
-    updatedAt: "2024-03-03T09:15:00Z",
-    idDocumentUrl: "https://placehold.co/600x400?text=ID+Document",
-    addressProofUrl: "https://placehold.co/600x400?text=Address+Proof",
-    adminNotes: "Documents verified successfully."
-  },
-  {
-    id: "3",
-    userId: "user-789",
-    status: "rejected",
-    createdAt: "2024-03-04T11:45:00Z",
-    updatedAt: "2024-03-04T16:20:00Z",
-    idDocumentUrl: "https://placehold.co/600x400?text=ID+Document",
-    addressProofUrl: "https://placehold.co/600x400?text=Address+Proof",
-    adminNotes: "Address proof doesn't match the provided information."
-  }
-];
-
 // Get all KYC verifications (for admin)
 export const getKYCVerificationsForAdmin = async (): Promise<KYCVerification[]> => {
   try {
-    // In a real implementation, you would fetch from Supabase
-    // const { data, error } = await supabase
-    //   .from('kyc_verifications')
-    //   .select('*')
-    //   .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('kyc_verifications')
+      .select('*')
+      .order('created_at', { ascending: false });
     
-    // if (error) throw error;
-    // return data as KYCVerification[];
+    if (error) {
+      console.error("Error fetching KYC verifications:", error);
+      return [];
+    }
     
-    // For now, return mock data
-    return mockKYCVerifications;
+    // Map Supabase response to our KYCVerification type
+    return data.map(item => ({
+      id: item.id,
+      userId: item.user_id,
+      status: item.status as "pending" | "approved" | "rejected",
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+      idDocumentUrl: item.id_document_url || undefined,
+      addressProofUrl: item.address_proof_url || undefined,
+      adminNotes: item.admin_notes || undefined
+    }));
   } catch (error) {
     console.error("Error fetching KYC verifications:", error);
     return [];
@@ -61,32 +38,63 @@ export const updateKYCVerification = async (
   updates: { status: "approved" | "rejected"; adminNotes?: string }
 ): Promise<void> => {
   try {
-    // In a real implementation, you would update in Supabase
-    // const { error } = await supabase
-    //   .from('kyc_verifications')
-    //   .update({
-    //     status: updates.status,
-    //     admin_notes: updates.adminNotes,
-    //     updated_at: new Date().toISOString()
-    //   })
-    //   .eq('id', id);
-    
-    // if (error) throw error;
-    
-    // For now, we'll just update the mock data
-    const index = mockKYCVerifications.findIndex(v => v.id === id);
-    if (index !== -1) {
-      mockKYCVerifications[index] = {
-        ...mockKYCVerifications[index],
+    const { error } = await supabase
+      .from('kyc_verifications')
+      .update({
         status: updates.status,
-        adminNotes: updates.adminNotes,
-        updatedAt: new Date().toISOString()
-      };
-    }
+        admin_notes: updates.adminNotes,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+    
+    if (error) throw error;
   } catch (error) {
     console.error("Error updating KYC verification:", error);
     throw error;
   }
 };
 
-// Add more admin-specific functions here as we implement them
+// Add more admin-specific functions as we implement them
+export const getAdminDashboardStats = async () => {
+  try {
+    // Get total number of users
+    const { count: userCount, error: userError } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true });
+    
+    // Get total number of orders
+    const { count: orderCount, error: orderError } = await supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true });
+    
+    // Get total number of products
+    const { count: productCount, error: productError } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true });
+    
+    // Get pending KYC verifications count
+    const { count: pendingKYCCount, error: kycError } = await supabase
+      .from('kyc_verifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    
+    if (userError || orderError || productError || kycError) {
+      console.error("Error fetching admin dashboard stats:", { userError, orderError, productError, kycError });
+    }
+    
+    return {
+      userCount: userCount || 0,
+      orderCount: orderCount || 0,
+      productCount: productCount || 0,
+      pendingKYCCount: pendingKYCCount || 0
+    };
+  } catch (error) {
+    console.error("Error fetching admin dashboard stats:", error);
+    return {
+      userCount: 0,
+      orderCount: 0,
+      productCount: 0,
+      pendingKYCCount: 0
+    };
+  }
+};
