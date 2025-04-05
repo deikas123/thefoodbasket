@@ -36,6 +36,8 @@ import Notifications from "./pages/Notifications";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import DiscountCodes from "./pages/admin/DiscountCodes";
+import Categories from "./pages/admin/Categories";
+import PayLaterVerification from "./pages/admin/PayLaterVerification";
 
 const queryClient = new QueryClient();
 
@@ -79,10 +81,12 @@ function App() {
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/products" element={<AdminDashboard />} />
+                <Route path="/admin/categories" element={<Categories />} />
                 <Route path="/admin/orders" element={<AdminDashboard />} />
                 <Route path="/admin/users" element={<AdminDashboard />} />
                 <Route path="/admin/deliveries" element={<AdminDashboard />} />
                 <Route path="/admin/discount-codes" element={<DiscountCodes />} />
+                <Route path="/admin/pay-later-verification" element={<PayLaterVerification />} />
                 
                 {/* Original delivery dashboard (will be removed later) */}
                 <Route path="/delivery" element={<DeliveryDashboard />} />
