@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ProductType } from "@/types/supabase";
-import { products as mockProducts } from "@/data/products";
 import { Product } from "@/types";
 import { convertToProduct, convertToProducts } from "@/utils/typeConverters";
 
@@ -12,8 +11,7 @@ export interface Category {
   productCount?: number;
 }
 
-// Because the Supabase tables are not properly set up yet, we'll use mock data
-// but keep the API structure consistent
+// Get all products with optional filtering
 export const getProducts = async (
   categoryId?: string,
   searchTerm?: string,
@@ -22,41 +20,56 @@ export const getProducts = async (
   inStockOnly?: boolean
 ): Promise<ProductType[]> => {
   try {
-    // Use mock data from data/products.ts
-    let filteredProducts = mockProducts.map(p => ({
-      ...p,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      num_reviews: p.numReviews,
-      numReviews: p.numReviews
-    })) as ProductType[];
+    let query = supabase
+      .from('products')
+      .select('*, categories(name, slug)');
     
     // Apply filters if provided
     if (categoryId) {
-      filteredProducts = filteredProducts.filter(p => p.category === categoryId);
+      query = query.eq('category_id', categoryId);
     }
     
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filteredProducts = filteredProducts.filter(p => 
-        p.name.toLowerCase().includes(term) || 
-        p.description.toLowerCase().includes(term)
-      );
+      const term = `%${searchTerm.toLowerCase()}%`;
+      query = query.or(`name.ilike.${term},description.ilike.${term}`);
     }
     
     if (typeof minPrice === 'number') {
-      filteredProducts = filteredProducts.filter(p => p.price >= minPrice);
+      query = query.gte('price', minPrice);
     }
     
     if (typeof maxPrice === 'number') {
-      filteredProducts = filteredProducts.filter(p => p.price <= maxPrice);
+      query = query.lte('price', maxPrice);
     }
     
     if (inStockOnly) {
-      filteredProducts = filteredProducts.filter(p => p.stock > 0);
+      query = query.gt('stock', 0);
     }
     
-    return filteredProducts;
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error("Error fetching products:", error);
+      return [];
+    }
+    
+    // Map the data to our ProductType
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      image: item.image,
+      category: item.categories?.slug || '',
+      stock: item.stock,
+      featured: item.featured,
+      rating: item.rating,
+      num_reviews: item.num_reviews,
+      numReviews: item.num_reviews,
+      discountPercentage: item.discount_percentage,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
   } catch (error) {
     console.error("Error fetching products:", error);
     return [];
@@ -68,18 +81,32 @@ export const getAllProducts = getProducts;
 
 export const getFeaturedProducts = async (): Promise<ProductType[]> => {
   try {
-    // Use mock data
-    const featuredProducts = mockProducts
-      .filter(p => p.featured)
-      .map(p => ({
-        ...p,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        num_reviews: p.numReviews,
-        numReviews: p.numReviews
-      })) as ProductType[];
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, categories(name, slug)')
+      .eq('featured', true);
     
-    return featuredProducts;
+    if (error) {
+      console.error("Error fetching featured products:", error);
+      return [];
+    }
+    
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      image: item.image,
+      category: item.categories?.slug || '',
+      stock: item.stock,
+      featured: item.featured,
+      rating: item.rating,
+      num_reviews: item.num_reviews,
+      numReviews: item.num_reviews,
+      discountPercentage: item.discount_percentage,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
   } catch (error) {
     console.error("Error fetching featured products:", error);
     return [];
@@ -88,18 +115,44 @@ export const getFeaturedProducts = async (): Promise<ProductType[]> => {
 
 export const getProductsByCategory = async (category: string): Promise<ProductType[]> => {
   try {
-    // Use mock data
-    const categoryProducts = mockProducts
-      .filter(p => p.category === category)
-      .map(p => ({
-        ...p,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        num_reviews: p.numReviews,
-        numReviews: p.numReviews
-      })) as ProductType[];
+    // Get the category id from the slug
+    const { data: categoryData, error: categoryError } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', category)
+      .single();
     
-    return categoryProducts;
+    if (categoryError || !categoryData) {
+      console.error("Error fetching category:", categoryError);
+      return [];
+    }
+    
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, categories(name, slug)')
+      .eq('category_id', categoryData.id);
+    
+    if (error) {
+      console.error("Error fetching products by category:", error);
+      return [];
+    }
+    
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      image: item.image,
+      category: item.categories?.slug || '',
+      stock: item.stock,
+      featured: item.featured,
+      rating: item.rating,
+      num_reviews: item.num_reviews,
+      numReviews: item.num_reviews,
+      discountPercentage: item.discount_percentage,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
   } catch (error) {
     console.error("Error fetching products by category:", error);
     return [];
@@ -108,47 +161,72 @@ export const getProductsByCategory = async (category: string): Promise<ProductTy
 
 export const getProductById = async (id: string): Promise<ProductType | null> => {
   try {
-    // Use mock data
-    const product = mockProducts.find(p => p.id === id);
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, categories(name, slug)')
+      .eq('id', id)
+      .single();
     
-    if (!product) {
+    if (error || !data) {
+      console.error("Error fetching product:", error);
       return null;
     }
     
     return {
-      ...product,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      num_reviews: product.numReviews,
-      numReviews: product.numReviews
-    } as ProductType;
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      image: data.image,
+      category: data.categories?.slug || '',
+      stock: data.stock,
+      featured: data.featured,
+      rating: data.rating,
+      num_reviews: data.num_reviews,
+      numReviews: data.num_reviews,
+      discountPercentage: data.discount_percentage,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
   } catch (error) {
     console.error("Error fetching product:", error);
     return null;
   }
 };
 
-// Add categories functionality
+// Get all categories with their product counts
 export const getCategories = async (): Promise<Category[]> => {
   try {
-    // Extract unique categories from mock data
-    const categoryMap = new Map<string, number>();
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, name, slug');
     
-    mockProducts.forEach(product => {
-      if (product.category) {
-        const count = categoryMap.get(product.category) || 0;
-        categoryMap.set(product.category, count + 1);
-      }
-    });
+    if (error) {
+      console.error("Error fetching categories:", error);
+      return [];
+    }
     
-    // Convert to array of category objects
-    const categories: Category[] = Array.from(categoryMap.entries()).map(([id, count]) => ({
-      id,
-      name: id.charAt(0).toUpperCase() + id.slice(1), // Capitalize first letter
-      productCount: count
-    }));
+    // Get product counts for each category
+    const categoriesWithCounts = await Promise.all(
+      data.map(async (category) => {
+        const { count, error: countError } = await supabase
+          .from('products')
+          .select('id', { count: 'exact', head: true })
+          .eq('category_id', category.id);
+        
+        if (countError) {
+          console.error(`Error counting products for category ${category.name}:`, countError);
+        }
+        
+        return {
+          id: category.slug, // Use slug as ID for backwards compatibility
+          name: category.name,
+          productCount: count || 0
+        };
+      })
+    );
     
-    return categories;
+    return categoriesWithCounts;
   } catch (error) {
     console.error("Error fetching categories:", error);
     return [];
@@ -157,17 +235,32 @@ export const getCategories = async (): Promise<Category[]> => {
 
 export const getCategoryById = async (id: string): Promise<Category | null> => {
   try {
-    // Get the category and count products from mock data
-    const categoryProducts = mockProducts.filter(p => p.category === id);
+    // Get the category by slug
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, name, slug')
+      .eq('slug', id)
+      .single();
     
-    if (categoryProducts.length === 0) {
+    if (error || !data) {
+      console.error("Error fetching category:", error);
       return null;
     }
     
+    // Get product count for this category
+    const { count, error: countError } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('category_id', data.id);
+    
+    if (countError) {
+      console.error("Error counting products:", countError);
+    }
+    
     return {
-      id,
-      name: id.charAt(0).toUpperCase() + id.slice(1), // Capitalize first letter
-      productCount: categoryProducts.length
+      id: data.slug,
+      name: data.name,
+      productCount: count || 0
     };
   } catch (error) {
     console.error("Error fetching category:", error);
@@ -175,63 +268,185 @@ export const getCategoryById = async (id: string): Promise<Category | null> => {
   }
 };
 
-// For now, all these functions work with mock data since Supabase tables aren't set up yet
-// When ready to switch to real database, uncomment and update these functions
-
 export const createProduct = async (product: Omit<ProductType, 'id' | 'created_at' | 'updated_at'>): Promise<ProductType> => {
-  // This is a placeholder that would normally interact with Supabase
-  const newProduct = {
-    ...product,
-    id: `temp-${Math.random().toString(36).substring(2, 11)}`,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  return newProduct as ProductType;
+  try {
+    // Get category_id from the slug
+    const { data: categoryData, error: categoryError } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', product.category)
+      .single();
+    
+    if (categoryError || !categoryData) {
+      throw new Error(`Category with slug ${product.category} not found`);
+    }
+    
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        category_id: categoryData.id,
+        stock: product.stock,
+        featured: product.featured,
+        rating: product.rating,
+        num_reviews: product.numReviews,
+        discount_percentage: product.discountPercentage
+      })
+      .select('*, categories(name, slug)')
+      .single();
+    
+    if (error || !data) {
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      image: data.image,
+      category: data.categories?.slug || '',
+      stock: data.stock,
+      featured: data.featured,
+      rating: data.rating,
+      num_reviews: data.num_reviews,
+      numReviews: data.num_reviews,
+      discountPercentage: data.discount_percentage,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
+  } catch (error) {
+    console.error("Error creating product:", error);
+    throw error;
+  }
 };
 
 export const updateProduct = async (id: string, product: Partial<ProductType>): Promise<ProductType> => {
-  // This is a placeholder that would normally interact with Supabase
-  const existingProduct = await getProductById(id);
-  
-  if (!existingProduct) {
-    throw new Error(`Product with id ${id} not found`);
+  try {
+    let categoryId = undefined;
+    
+    // If category is being updated, get the category_id
+    if (product.category) {
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', product.category)
+        .single();
+      
+      if (categoryError || !categoryData) {
+        throw new Error(`Category with slug ${product.category} not found`);
+      }
+      
+      categoryId = categoryData.id;
+    }
+    
+    const { data, error } = await supabase
+      .from('products')
+      .update({
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        category_id: categoryId,
+        stock: product.stock,
+        featured: product.featured,
+        rating: product.rating,
+        num_reviews: product.numReviews,
+        discount_percentage: product.discountPercentage
+      })
+      .eq('id', id)
+      .select('*, categories(name, slug)')
+      .single();
+    
+    if (error || !data) {
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      image: data.image,
+      category: data.categories?.slug || '',
+      stock: data.stock,
+      featured: data.featured,
+      rating: data.rating,
+      num_reviews: data.num_reviews,
+      numReviews: data.num_reviews,
+      discountPercentage: data.discount_percentage,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
+  } catch (error) {
+    console.error("Error updating product:", error);
+    throw error;
   }
-  
-  const updatedProduct = {
-    ...existingProduct,
-    ...product,
-    updated_at: new Date().toISOString()
-  };
-  
-  return updatedProduct;
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {
-  // This is a placeholder that would normally interact with Supabase
-  console.log(`Product with id ${id} would be deleted`);
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    throw error;
+  }
 };
 
 // Add additional helper function for recommended products
 export const getFrequentlyPurchasedTogether = async (productId: string): Promise<Product[]> => {
   try {
-    // For now, return other products in the same category
-    const product = await getProductById(productId);
+    // Get the product to find its category
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('category_id')
+      .eq('id', productId)
+      .single();
     
-    if (!product || !product.category) {
+    if (productError || !product) {
+      console.error("Error fetching product for recommendations:", productError);
       return [];
     }
     
-    const relatedProductTypes = mockProducts
-      .filter(p => p.category === product.category && p.id !== productId)
-      .slice(0, 4)
-      .map(p => ({
-        ...p,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        num_reviews: p.numReviews,
-        numReviews: p.numReviews
-      })) as ProductType[];
+    // Find other products in the same category
+    const { data: relatedProducts, error } = await supabase
+      .from('products')
+      .select('*, categories(name, slug)')
+      .eq('category_id', product.category_id)
+      .neq('id', productId)
+      .limit(4);
+    
+    if (error) {
+      console.error("Error fetching related products:", error);
+      return [];
+    }
+    
+    const relatedProductTypes = relatedProducts.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      image: item.image,
+      category: item.categories?.slug || '',
+      stock: item.stock,
+      featured: item.featured,
+      rating: item.rating,
+      num_reviews: item.num_reviews,
+      numReviews: item.num_reviews,
+      discountPercentage: item.discount_percentage,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
     
     return convertToProducts(relatedProductTypes);
   } catch (error) {
