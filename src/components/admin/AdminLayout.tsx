@@ -11,12 +11,17 @@ import {
   FileCheck, 
   CreditCard,
   Settings,
-  Package 
+  Package,
+  Image,
+  Ticket,
+  BadgePercent,
+  Calendar
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdminBanner from "@/components/AdminBanner";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/use-toast";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -28,7 +33,17 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   useEffect(() => {
     // Check if user is admin
-    if (!user || user.role !== "admin") {
+    if (!user) {
+      navigate("/login", { state: { from: window.location.pathname } });
+      return;
+    }
+    
+    if (user.role !== "admin") {
+      toast({
+        title: "Access Denied",
+        description: "You do not have admin privileges",
+        variant: "destructive"
+      });
       navigate("/");
     }
   }, [user, navigate]);
@@ -40,10 +55,18 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { name: "Orders", icon: Package, path: "/admin/orders" },
     { name: "Users", icon: Users, path: "/admin/users" },
     { name: "Deliveries", icon: Truck, path: "/admin/deliveries" },
+    { name: "Banners", icon: Image, path: "/admin/banners" },
+    { name: "Coupons", icon: Ticket, path: "/admin/discount-codes" },
+    { name: "Daily Offers", icon: BadgePercent, path: "/admin/daily-offers" },
     { name: "Pay Later Verification", icon: FileCheck, path: "/admin/pay-later-verification" },
-    { name: "Discount Codes", icon: CreditCard, path: "/admin/discount-codes" },
+    { name: "Delivery Zones", icon: Calendar, path: "/admin/delivery-zones" },
     { name: "Settings", icon: Settings, path: "/admin/settings" },
   ];
+
+  // Don't render the admin layout if no user or not an admin
+  if (!user || user.role !== "admin") {
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

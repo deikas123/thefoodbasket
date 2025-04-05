@@ -78,6 +78,7 @@ function App() {
                 <Route path="/auto-replenish" element={<AutoReplenish />} />
                 <Route path="/notifications" element={<Notifications />} />
                 
+                {/* Admin Routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/products" element={<AdminDashboard />} />
@@ -85,8 +86,12 @@ function App() {
                 <Route path="/admin/orders" element={<AdminDashboard />} />
                 <Route path="/admin/users" element={<AdminDashboard />} />
                 <Route path="/admin/deliveries" element={<AdminDashboard />} />
+                <Route path="/admin/banners" element={<AdminDashboard />} />
                 <Route path="/admin/discount-codes" element={<DiscountCodes />} />
+                <Route path="/admin/daily-offers" element={<AdminDashboard />} />
                 <Route path="/admin/pay-later-verification" element={<PayLaterVerification />} />
+                <Route path="/admin/delivery-zones" element={<AdminDashboard />} />
+                <Route path="/admin/settings" element={<AdminDashboard />} />
                 
                 {/* Original delivery dashboard (will be removed later) */}
                 <Route path="/delivery" element={<DeliveryDashboard />} />

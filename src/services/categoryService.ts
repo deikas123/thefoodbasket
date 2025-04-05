@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Category } from "@/services/productService";
-import { Database } from "@/types/database.types";
 
 // Get all categories
 export const getCategories = async (): Promise<Category[]> => {
@@ -140,7 +139,7 @@ export const getCategoryById = async (id: string): Promise<Category | null> => {
     // Get product count for this category
     const { count, error: countError } = await supabase
       .from('products')
-      .select('id', { count: 'exact' })
+      .select('id', { count: 'exact', head: true })
       .eq('category_id', data.id);
     
     if (countError) {
@@ -177,7 +176,7 @@ export const getCategoriesWithCounts = async (): Promise<Category[]> => {
       categories.map(async (category) => {
         const { count, error: countError } = await supabase
           .from('products')
-          .select('id', { count: 'exact' })
+          .select('id', { count: 'exact', head: true })
           .eq('category_id', category.id);
         
         if (countError) {
