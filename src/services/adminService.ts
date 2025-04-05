@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { KYCVerification } from "@/types/kyc";
+import { Database } from "@/types/database.types";
 
 // Get all KYC verifications (for admin)
 export const getKYCVerificationsForAdmin = async (): Promise<KYCVerification[]> => {

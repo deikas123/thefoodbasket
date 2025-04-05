@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Category } from "@/services/productService";
+import { Database } from "@/types/database.types";
 
 // Get all categories
 export const getCategories = async (): Promise<Category[]> => {

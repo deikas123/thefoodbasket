@@ -160,6 +160,88 @@ export interface Database {
           updated_at: string;
         };
       };
+      products: {
+        Row: {
+          id: string;
+          name: string;
+          description: string;
+          price: number;
+          image: string;
+          category_id: string;
+          stock: number;
+          featured: boolean;
+          rating: number;
+          num_reviews: number;
+          discount_percentage: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      categories: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          image: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      banners: {
+        Row: {
+          id: string;
+          title: string;
+          subtitle: string | null;
+          image: string;
+          link: string | null;
+          active: boolean;
+          start_date: string;
+          end_date: string;
+          priority: number;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      product_tags: {
+        Row: {
+          id: string;
+          name: string;
+          created_at: string;
+        };
+      };
+      product_tag_relations: {
+        Row: {
+          product_id: string;
+          tag_id: string;
+          created_at: string;
+        };
+      };
+      daily_offers: {
+        Row: {
+          id: string;
+          product_id: string | null;
+          discount_percentage: number;
+          start_date: string;
+          end_date: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      delivery_zones: {
+        Row: {
+          id: string;
+          name: string;
+          base_fee: number;
+          per_km_fee: number;
+          min_delivery_time: number;
+          max_delivery_time: number;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+      };
     };
     Views: {};
     Functions: {};
