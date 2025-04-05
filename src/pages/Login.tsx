@@ -35,15 +35,9 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const user = await login(formData.email, formData.password);
-      
-      // Check if the user is logging in as admin
-      if (user.role === "admin") {
-        navigate("/admin");
-      } else {
-        // Navigate to the previous page or home
-        navigate(from);
-      }
+      await login(formData.email, formData.password);
+      // Navigate to the previous page or home
+      navigate(from);
     } catch (error: any) {
       setError(error.message || "Login failed. Please check your credentials and try again.");
       console.error("Login failed", error);
