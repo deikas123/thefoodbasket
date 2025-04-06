@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,21 +8,40 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { products } from "@/data/products";
-import { Product } from "@/types";
+import { ProductType } from "@/types/supabase";
 import ProductFormDialog from "./ProductFormDialog";
+import { getProducts, deleteProduct } from "@/services/productService";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 const AdminProductsTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showDialog, setShowDialog] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductType | null>(null);
+  const queryClient = useQueryClient();
   
-  // In a real application, this would fetch data from an API
+  // Fetch products from Supabase
   const { data: allProducts, isLoading } = useQuery({
     queryKey: ["admin-products"],
-    queryFn: () => {
-      // This is using mock data, but would be a fetch call in a real app
-      return Promise.resolve(products);
+    queryFn: () => getProducts()
+  });
+  
+  // Delete product mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      toast({
+        title: "Product deleted",
+        description: "The product has been removed successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete product. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Error deleting product:", error);
     }
   });
   
@@ -36,17 +55,13 @@ const AdminProductsTable = () => {
     setShowDialog(true);
   };
   
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = (product: ProductType) => {
     setEditingProduct(product);
     setShowDialog(true);
   };
   
   const handleDeleteProduct = (productId: string) => {
-    // In a real app, this would call an API to delete the product
-    toast({
-      title: "Product deleted",
-      description: "The product has been removed successfully.",
-    });
+    deleteMutation.mutate(productId);
   };
   
   return (
@@ -80,7 +95,7 @@ const AdminProductsTable = () => {
                 <TableRow>
                   <TableHead>Product</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Price (KSh)</TableHead>
+                  <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -100,7 +115,7 @@ const AdminProductsTable = () => {
                       </div>
                     </TableCell>
                     <TableCell>{product.category}</TableCell>
-                    <TableCell>{(product.price * 130).toFixed(2)}</TableCell>
+                    <TableCell>{formatCurrency(product.price)}</TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>
                       {product.stock > 0 ? (
