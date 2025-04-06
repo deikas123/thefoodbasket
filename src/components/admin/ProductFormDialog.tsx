@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,8 +23,8 @@ import {
   FormMessage 
 } from "@/components/ui/form";
 import { ProductType } from "@/types/supabase";
-import { createProduct, updateProduct } from "@/services/productService";
-import { getCategories } from "@/services/categoryService";
+import { createProduct, updateProduct } from "@/services/product";
+import { getCategories } from "@/services/product/categoryService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
@@ -160,7 +159,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         product: data
       });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(data as Omit<ProductType, 'id' | 'created_at' | 'updated_at'>);
     }
   };
 

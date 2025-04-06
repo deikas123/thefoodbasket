@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { ProductType } from "@/types/supabase";
 import ProductFormDialog from "./ProductFormDialog";
-import { getProducts, deleteProduct } from "@/services/productService";
+import { getProducts, deleteProduct } from "@/services/product";
 import { formatCurrency } from "@/utils/currencyFormatter";
 
 const AdminProductsTable = () => {
