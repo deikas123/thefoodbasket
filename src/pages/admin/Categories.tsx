@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -25,8 +24,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/use-toast";
-import { getCategoriesWithCounts, createCategory, updateCategory, deleteCategory } from "@/services/categoryService";
-import { Category } from "@/services/productService";
+import { 
+  getCategoriesWithCounts, 
+  createCategory, 
+  updateCategory, 
+  deleteCategory, 
+  Category 
+} from "@/services/categoryService";
 import { Pencil, Trash2, PlusCircle, MoreHorizontal } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -93,7 +97,7 @@ const Categories = () => {
   
   // Update category mutation
   const updateMutation = useMutation({
-    mutationFn: (data: { id: string; updates: Partial<Category> & { description?: string, image?: string } }) => 
+    mutationFn: (data: { id: string; updates: Partial<Category> }) => 
       updateCategory(data.id, data.updates),
     onSuccess: () => {
       toast({ 
@@ -157,8 +161,8 @@ const Categories = () => {
     setCurrentCategory(category);
     setFormData({
       name: category.name,
-      description: "",
-      image: ""
+      description: category.description || "",
+      image: category.image || ""
     });
     setIsEditDialogOpen(true);
   };
@@ -270,7 +274,7 @@ const Categories = () => {
                                       <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                       <AlertDialogDescription>
                                         This will permanently delete the category "{category.name}".
-                                        {category.productCount > 0 && (
+                                        {category.productCount && category.productCount > 0 && (
                                           <span className="font-bold text-destructive">
                                             {" "}This will also affect {category.productCount} products!
                                           </span>
