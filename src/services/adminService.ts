@@ -1,100 +1,158 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { KYCVerification } from "@/types/kyc";
+import { toast } from "@/components/ui/use-toast";
+import { Tables } from "@/types/supabase";
 
-// Get all KYC verifications (for admin)
+// Get KYC verifications for admin review
 export const getKYCVerificationsForAdmin = async (): Promise<KYCVerification[]> => {
   try {
     const { data, error } = await supabase
       .from('kyc_verifications')
-      .select('*')
+      .select(`
+        *,
+        profile:user_id (
+          first_name,
+          last_name,
+          phone
+        )
+      `)
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error("Error fetching KYC verifications:", error);
-      return [];
+      throw error;
     }
-    
-    // Map Supabase response to our KYCVerification type
-    return data.map(item => ({
+
+    return (data || []).map(item => ({
       id: item.id,
       userId: item.user_id,
-      status: item.status as "pending" | "approved" | "rejected",
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
       idDocumentUrl: item.id_document_url || undefined,
       addressProofUrl: item.address_proof_url || undefined,
-      adminNotes: item.admin_notes || undefined
+      status: item.status as "pending" | "approved" | "rejected",
+      adminNotes: item.admin_notes || undefined,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+      userDetails: item.profile ? {
+        firstName: item.profile.first_name,
+        lastName: item.profile.last_name,
+        phone: item.profile.phone
+      } : undefined
     }));
   } catch (error) {
-    console.error("Error fetching KYC verifications:", error);
+    console.error("Error in getKYCVerificationsForAdmin:", error);
     return [];
   }
 };
 
-// Update a KYC verification status
+// Update KYC verification status
 export const updateKYCVerification = async (
   id: string,
-  updates: { status: "approved" | "rejected"; adminNotes?: string }
-): Promise<void> => {
+  updateData: {
+    status: "approved" | "rejected";
+    adminNotes?: string;
+  }
+): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('kyc_verifications')
       .update({
-        status: updates.status,
-        admin_notes: updates.adminNotes,
+        status: updateData.status,
+        admin_notes: updateData.adminNotes,
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error("Error updating KYC verification:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update verification status: " + error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Success",
+      description: `Verification ${updateData.status} successfully!`,
+    });
+
+    return true;
   } catch (error) {
-    console.error("Error updating KYC verification:", error);
-    throw error;
+    console.error("Error in updateKYCVerification:", error);
+    return false;
   }
 };
 
-// Get admin dashboard stats
-export const getAdminDashboardStats = async () => {
-  try {
-    // Get total number of users
-    const { count: userCount, error: userError } = await supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true });
-    
-    // Get total number of orders
-    const { count: orderCount, error: orderError } = await supabase
-      .from('orders')
-      .select('id', { count: 'exact', head: true });
-    
-    // Get total number of products
-    const { count: productCount, error: productError } = await supabase
-      .from('products')
-      .select('id', { count: 'exact', head: true });
-    
-    // Get pending KYC verifications count
-    const { count: pendingKYCCount, error: kycError } = await supabase
-      .from('kyc_verifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending');
-    
-    if (userError || orderError || productError || kycError) {
-      console.error("Error fetching admin dashboard stats:", { userError, orderError, productError, kycError });
-    }
-    
-    return {
-      userCount: userCount || 0,
-      orderCount: orderCount || 0,
-      productCount: productCount || 0,
-      pendingKYCCount: pendingKYCCount || 0
-    };
-  } catch (error) {
-    console.error("Error fetching admin dashboard stats:", error);
-    return {
-      userCount: 0,
-      orderCount: 0,
-      productCount: 0,
-      pendingKYCCount: 0
-    };
-  }
+// Get statistics for admin dashboard
+export interface AdminStats {
+  revenueToday: number;
+  revenueThisMonth: number;
+  revenueLastMonth: number;
+  ordersToday: number;
+  ordersThisMonth: number;
+  pendingOrders: number;
+  newCustomers: number;
+  activeCustomers: number;
+  topSellingProducts: {
+    id: string;
+    name: string;
+    quantity: number;
+    revenue: number;
+  }[];
+  categorySales: {
+    name: string;
+    value: number;
+  }[];
+  monthlyRevenue: {
+    month: string;
+    value: number;
+  }[];
+  orderStatuses: {
+    status: string;
+    count: number;
+  }[];
+}
+
+export const getAdminDashboardStats = async (): Promise<AdminStats> => {
+  // For now, return mock data until we implement the actual queries
+  return {
+    revenueToday: 12500,
+    revenueThisMonth: 243500,
+    revenueLastMonth: 190000,
+    ordersToday: 18,
+    ordersThisMonth: 211,
+    pendingOrders: 24,
+    newCustomers: 56,
+    activeCustomers: 328,
+    topSellingProducts: [
+      { id: "1", name: "Fresh Tomatoes", quantity: 245, revenue: 24500 },
+      { id: "2", name: "Organic Bananas", quantity: 189, revenue: 18900 },
+      { id: "3", name: "Free Range Eggs", quantity: 156, revenue: 15600 },
+    ],
+    categorySales: [
+      { name: 'Fruits', value: 35 },
+      { name: 'Vegetables', value: 30 },
+      { name: 'Dairy', value: 15 },
+      { name: 'Meat', value: 12 },
+      { name: 'Bakery', value: 8 },
+    ],
+    monthlyRevenue: [
+      { month: 'Jan', value: 125000 },
+      { month: 'Feb', value: 140000 },
+      { month: 'Mar', value: 135000 },
+      { month: 'Apr', value: 160000 },
+      { month: 'May', value: 190000 },
+      { month: 'Jun', value: 243500 },
+    ],
+    orderStatuses: [
+      { status: 'Pending', count: 24 },
+      { status: 'Processing', count: 18 },
+      { status: 'Dispatched', count: 12 },
+      { status: 'Out for Delivery', count: 16 },
+      { status: 'Delivered', count: 187 },
+      { status: 'Cancelled', count: 8 },
+    ]
+  };
 };
