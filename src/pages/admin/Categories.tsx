@@ -1,8 +1,28 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/use-toast";
 import { 
   getCategoriesWithCounts, 
@@ -11,10 +31,26 @@ import {
   deleteCategory, 
   Category 
 } from "@/services/categoryService";
-
-import CategoryHeader from "@/components/admin/categories/CategoryHeader";
-import CategoryList from "@/components/admin/categories/CategoryList";
-import CategoryFormDialog from "@/components/admin/categories/CategoryFormDialog";
+import { Pencil, Trash2, PlusCircle, MoreHorizontal } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -102,6 +138,14 @@ const Categories = () => {
     }
   });
   
+  // Calculate paginated data
+  const paginatedData = categories.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+  
+  const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE);
+  
   // Reset form
   const resetForm = () => {
     setFormData({
@@ -153,10 +197,18 @@ const Categories = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <CategoryHeader 
-          categoriesCount={categories.length}
-          onAddCategory={() => setIsAddDialogOpen(true)}
-        />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+            <p className="text-muted-foreground">
+              Manage product categories for your store
+            </p>
+          </div>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Category
+          </Button>
+        </div>
         
         <Card>
           <CardHeader>
@@ -166,43 +218,233 @@ const Categories = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CategoryList 
-              categories={categories}
-              isLoading={isLoading}
-              error={error}
-              page={page}
-              setPage={setPage}
-              handleEdit={handleEdit}
-              handleDelete={(id) => deleteMutation.mutate(id)}
-              itemsPerPage={ITEMS_PER_PAGE}
-            />
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              </div>
+            ) : error ? (
+              <div className="text-center py-8 text-destructive">
+                Error loading categories. Please try again.
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No categories found. Create your first category to get started.
+              </div>
+            ) : (
+              <>
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>ID (Slug)</TableHead>
+                        <TableHead className="text-right">Products</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedData.map((category) => (
+                        <TableRow key={category.id}>
+                          <TableCell className="font-medium">{category.name}</TableCell>
+                          <TableCell>{category.id}</TableCell>
+                          <TableCell className="text-right">{category.productCount}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Actions</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleEdit(category)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently delete the category "{category.name}".
+                                        {category.productCount && category.productCount > 0 && (
+                                          <span className="font-bold text-destructive">
+                                            {" "}This will also affect {category.productCount} products!
+                                          </span>
+                                        )}
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => deleteMutation.mutate(category.id)}
+                                        className="bg-destructive hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                {totalPages > 1 && (
+                  <Pagination className="mt-4">
+                    <PaginationContent>
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <PaginationItem key={i + 1}>
+                          <PaginationLink
+                            isActive={page === i + 1}
+                            onClick={() => setPage(i + 1)}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                    </PaginationContent>
+                  </Pagination>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
       
       {/* Add Category Dialog */}
-      <CategoryFormDialog
-        isOpen={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSubmit={handleSubmit}
-        formData={formData}
-        setFormData={setFormData}
-        isSubmitting={createMutation.isPending}
-        mode="add"
-        resetForm={resetForm}
-      />
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Category</DialogTitle>
+            <DialogDescription>
+              Create a new category for your products.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Fruits & Vegetables"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Fresh produce from local farms..."
+                  rows={3}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="image">Image URL</Label>
+                <Input
+                  id="image"
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  placeholder="https://example.com/image.jpg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to use a placeholder image
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setIsAddDialogOpen(false);
+                  resetForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create Category"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       
       {/* Edit Category Dialog */}
-      <CategoryFormDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onSubmit={handleSubmit}
-        formData={formData}
-        setFormData={setFormData}
-        isSubmitting={updateMutation.isPending}
-        mode="edit"
-        resetForm={resetForm}
-      />
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>
+              Update the details for this category.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name">Name *</Label>
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-image">Image URL</Label>
+                <Input
+                  id="edit-image"
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to keep existing image
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  resetForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? "Updating..." : "Update Category"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

@@ -37,7 +37,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import DiscountCodes from "./pages/admin/DiscountCodes";
 import Categories from "./pages/admin/Categories";
 import PayLaterVerification from "./pages/admin/PayLaterVerification";
-import DailyOffersPage from "./pages/admin/DailyOffers";
+import DailyOffersPage from "./pages/admin/DailyOffersPage";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +78,7 @@ function App() {
                 <Route path="/auto-replenish" element={<AutoReplenish />} />
                 <Route path="/notifications" element={<Notifications />} />
                 
+                {/* Admin Routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/products" element={<AdminDashboard />} />
@@ -92,8 +93,10 @@ function App() {
                 <Route path="/admin/delivery-zones" element={<AdminDashboard />} />
                 <Route path="/admin/settings" element={<AdminDashboard />} />
                 
+                {/* Original delivery dashboard (will be removed later) */}
                 <Route path="/delivery" element={<DeliveryDashboard />} />
                 
+                {/* New dedicated delivery driver routes with layout */}
                 <Route path="/driver" element={<DeliveryLayout />}>
                   <Route index element={<DeliveryDriverDashboard />} />
                   <Route path="history" element={<DeliveryDriverDashboard />} />
