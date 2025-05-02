@@ -11,12 +11,14 @@ import { useQuery } from "@tanstack/react-query";
 import { getCategoryById } from "@/services/productService";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { Product } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
+  className?: string;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, className }: ProductCardProps) => {
   const { addItem } = useCart();
   const { addItem: addToWishlist, isInWishlist, removeItem } = useWishlist();
   const [isAdding, setIsAdding] = useState(false);
@@ -52,7 +54,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     : null;
   
   return (
-    <Card className="overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow duration-300">
+    <Card className={cn("overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow duration-300", className)}>
       <div className="relative">
         <Link to={`/product/${product.id}`}>
           <div className="aspect-square overflow-hidden bg-gray-100">
