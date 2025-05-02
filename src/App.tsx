@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -37,7 +38,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import DiscountCodes from "./pages/admin/DiscountCodes";
 import Categories from "./pages/admin/Categories";
 import PayLaterVerification from "./pages/admin/PayLaterVerification";
-import DailyOffersPage from "./pages/admin/DailyOffers";
+import DailyOffers from "./pages/admin/DailyOffers";
 
 const queryClient = new QueryClient();
 
@@ -87,7 +88,7 @@ function App() {
                 <Route path="/admin/deliveries" element={<AdminDashboard />} />
                 <Route path="/admin/banners" element={<AdminDashboard />} />
                 <Route path="/admin/discount-codes" element={<DiscountCodes />} />
-                <Route path="/admin/daily-offers" element={<DailyOffersPage />} />
+                <Route path="/admin/daily-offers" element={<DailyOffers />} />
                 <Route path="/admin/pay-later-verification" element={<PayLaterVerification />} />
                 <Route path="/admin/delivery-zones" element={<AdminDashboard />} />
                 <Route path="/admin/settings" element={<AdminDashboard />} />
