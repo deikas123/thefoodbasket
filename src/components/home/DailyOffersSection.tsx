@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ProductCard from "@/components/ProductCard";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getDailyOffersWithProducts } from "@/services/product/offerService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, Tag } from "lucide-react";
+import { Product } from "@/types";
 
 const DailyOffersSection = () => {
   const { data: offers, isLoading, error } = useQuery({
@@ -60,6 +61,10 @@ const DailyOffersSection = () => {
                       product={{
                         ...offer.product,
                         discountPercentage: offer.discount_percentage,
+                        featured: offer.product.featured || false,
+                        rating: offer.product.rating || 0,
+                        numReviews: offer.product.num_reviews || 0,
+                        category: offer.product.category || "",
                       }}
                       className="h-full"
                     />
