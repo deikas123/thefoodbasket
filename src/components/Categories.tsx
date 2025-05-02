@@ -2,33 +2,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCategories, Category } from "@/services/product/categoryService";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
-import { createCategory } from "@/services/product/categoryService";
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    image: ""
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -45,58 +22,6 @@ const Categories = () => {
     fetchCategories();
   }, []);
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name.trim()) {
-      toast({ 
-        title: "Validation Error",
-        description: "Category name is required.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const newCategory = await createCategory(
-        formData.name,
-        formData.description,
-        formData.image
-      );
-      
-      if (newCategory) {
-        toast({ 
-          title: "Success",
-          description: "Category created successfully!"
-        });
-        setCategories([...categories, newCategory]);
-        resetForm();
-        setIsAddDialogOpen(false);
-      } else {
-        throw new Error("Failed to create category");
-      }
-    } catch (error) {
-      console.error("Error creating category:", error);
-      toast({ 
-        title: "Error",
-        description: "Failed to create category. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      description: "",
-      image: ""
-    });
-  };
-  
   return (
     <section className="section-container">
       <div className="mb-12 text-center">
@@ -107,76 +32,6 @@ const Categories = () => {
         <p className="text-muted-foreground max-w-2xl mx-auto">
           Explore our wide range of product categories, from farm-fresh produce to artisanal delights.
         </p>
-        
-        <div className="mt-6">
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Category
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Category</DialogTitle>
-                <DialogDescription>
-                  Create a new product category for your store.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g. Fruits & Vegetables"
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Fresh produce from local farms..."
-                      rows={3}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="image">Image URL</Label>
-                    <Input
-                      id="image"
-                      value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Provide a URL for the category image
-                    </p>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      setIsAddDialogOpen(false);
-                      resetForm();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Creating..." : "Create Category"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
       </div>
       
       {isLoading ? (

@@ -59,12 +59,17 @@ const DailyOffersSection = () => {
                     </div>
                     <ProductCard
                       product={{
-                        ...offer.product,
-                        discountPercentage: offer.discount_percentage,
-                        featured: offer.product.featured || false,
-                        rating: offer.product.rating || 0,
-                        numReviews: offer.product.num_reviews || 0,
-                        category: offer.product.category || "",
+                        id: offer.product.id,
+                        name: offer.product.name,
+                        price: offer.product.price,
+                        image: offer.product.image,
+                        description: offer.product.description || "No description available",
+                        stock: offer.product.stock || 0,
+                        category: "",
+                        featured: false,
+                        rating: 0,
+                        numReviews: 0,
+                        discountPercentage: offer.discount_percentage
                       }}
                       className="h-full"
                     />
