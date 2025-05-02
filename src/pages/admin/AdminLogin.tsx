@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { ShieldCheck } from "lucide-react";
 
 const AdminLogin = () => {
@@ -14,7 +14,6 @@ const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, user } = useAuth();
-  const { toast } = useToast();
 
   // Redirect if already logged in as admin
   useEffect(() => {
@@ -31,26 +30,21 @@ const AdminLogin = () => {
       const loggedInUser = await login(email, password);
       
       if (loggedInUser.role !== 'admin') {
-        toast({
-          title: "Access denied",
-          description: "You don't have admin privileges",
-          variant: "destructive"
+        toast.error("Access denied", {
+          description: "You don't have admin privileges"
         });
         return;
       }
       
-      toast({
-        title: "Login successful",
-        description: "Welcome to admin dashboard",
+      toast.success("Login successful", {
+        description: "Welcome to admin dashboard"
       });
       
       // Navigate to admin dashboard
       navigate("/admin");
     } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid credentials",
-        variant: "destructive",
+      toast.error("Login failed", {
+        description: error.message || "Invalid credentials"
       });
     } finally {
       setIsLoading(false);

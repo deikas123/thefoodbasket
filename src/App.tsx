@@ -1,7 +1,7 @@
 
 import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
@@ -10,11 +10,10 @@ import { useState, useEffect } from "react";
 import Preloader from "@/components/Preloader";
 import AIChatBot from "@/components/AIChatBot";
 import LiveChat from "@/components/LiveChat";
-import DeliveryDashboard from "./pages/DeliveryDashboard";
-import DeliveryDriverDashboard from "./pages/DeliveryDriverDashboard";
-import DeliveryLayout from "./components/delivery/DeliveryLayout";
-import InitialSetup from "./components/setup/InitialSetup";
+import InitialSetup from "@/components/setup/InitialSetup";
+import AdminLayout from "@/layouts/AdminLayout";
 
+// Public pages
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import Category from "./pages/Category";
@@ -33,12 +32,19 @@ import Promotions from "./pages/Promotions";
 import FoodBaskets from "./pages/FoodBaskets";
 import AutoReplenish from "./pages/AutoReplenish";
 import Notifications from "./pages/Notifications";
+
+// Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import DiscountCodes from "./pages/admin/DiscountCodes";
 import Categories from "./pages/admin/Categories";
 import PayLaterVerification from "./pages/admin/PayLaterVerification";
 import DailyOffers from "./pages/admin/DailyOffers";
+
+// Delivery pages
+import DeliveryDashboard from "./pages/DeliveryDashboard";
+import DeliveryDriverDashboard from "./pages/DeliveryDriverDashboard";
+import DeliveryLayout from "./components/delivery/DeliveryLayout";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +67,7 @@ function App() {
             <WishlistProvider>
               {isLoading && <Preloader />}
               <Routes>
+                {/* Public Routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/categories/:categoryId" element={<Category />} />
@@ -79,20 +86,24 @@ function App() {
                 <Route path="/auto-replenish" element={<AutoReplenish />} />
                 <Route path="/notifications" element={<Notifications />} />
                 
-                <Route path="/admin" element={<AdminDashboard />} />
+                {/* Admin Login (outside of admin layout) */}
                 <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin/products" element={<AdminDashboard />} />
-                <Route path="/admin/categories" element={<Categories />} />
-                <Route path="/admin/orders" element={<AdminDashboard />} />
-                <Route path="/admin/users" element={<AdminDashboard />} />
-                <Route path="/admin/deliveries" element={<AdminDashboard />} />
-                <Route path="/admin/banners" element={<AdminDashboard />} />
-                <Route path="/admin/discount-codes" element={<DiscountCodes />} />
-                <Route path="/admin/daily-offers" element={<DailyOffers />} />
-                <Route path="/admin/pay-later-verification" element={<PayLaterVerification />} />
-                <Route path="/admin/delivery-zones" element={<AdminDashboard />} />
-                <Route path="/admin/settings" element={<AdminDashboard />} />
                 
+                {/* Admin Routes with AdminLayout */}
+                <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                <Route path="/admin/products" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                <Route path="/admin/categories" element={<AdminLayout><Categories /></AdminLayout>} />
+                <Route path="/admin/orders" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                <Route path="/admin/users" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                <Route path="/admin/deliveries" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                <Route path="/admin/banners" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                <Route path="/admin/discount-codes" element={<AdminLayout><DiscountCodes /></AdminLayout>} />
+                <Route path="/admin/daily-offers" element={<AdminLayout><DailyOffers /></AdminLayout>} />
+                <Route path="/admin/pay-later-verification" element={<AdminLayout><PayLaterVerification /></AdminLayout>} />
+                <Route path="/admin/delivery-zones" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                <Route path="/admin/settings" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                
+                {/* Delivery Routes */}
                 <Route path="/delivery" element={<DeliveryDashboard />} />
                 
                 <Route path="/driver" element={<DeliveryLayout />}>

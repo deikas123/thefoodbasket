@@ -1,9 +1,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { 
   getCategoriesWithCounts, 
   createCategory, 
@@ -41,8 +40,7 @@ const Categories = () => {
     mutationFn: (data: { name: string; description: string; image: string }) => 
       createCategory(data.name, data.description, data.image),
     onSuccess: () => {
-      toast({ 
-        title: "Category created",
+      toast.success("Category created", {
         description: "The category has been created successfully."
       });
       setIsAddDialogOpen(false);
@@ -50,10 +48,8 @@ const Categories = () => {
       resetForm();
     },
     onError: (error) => {
-      toast({ 
-        title: "Error",
-        description: "Failed to create category. Please try again.",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Failed to create category. Please try again."
       });
       console.error("Error creating category:", error);
     }
@@ -64,8 +60,7 @@ const Categories = () => {
     mutationFn: (data: { id: string; updates: Partial<Category> }) => 
       updateCategory(data.id, data.updates),
     onSuccess: () => {
-      toast({ 
-        title: "Category updated",
+      toast.success("Category updated", {
         description: "The category has been updated successfully."
       });
       setIsEditDialogOpen(false);
@@ -73,10 +68,8 @@ const Categories = () => {
       resetForm();
     },
     onError: (error) => {
-      toast({ 
-        title: "Error",
-        description: "Failed to update category. Please try again.",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Failed to update category. Please try again."
       });
       console.error("Error updating category:", error);
     }
@@ -86,17 +79,14 @@ const Categories = () => {
   const deleteMutation = useMutation({
     mutationFn: deleteCategory,
     onSuccess: () => {
-      toast({ 
-        title: "Category deleted",
+      toast.success("Category deleted", {
         description: "The category has been deleted successfully."
       });
       queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
     },
     onError: (error) => {
-      toast({ 
-        title: "Error",
-        description: "Failed to delete category. Please try again.",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Failed to delete category. Please try again."
       });
       console.error("Error deleting category:", error);
     }
@@ -128,10 +118,8 @@ const Categories = () => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
-      toast({ 
-        title: "Validation Error",
-        description: "Category name is required.",
-        variant: "destructive"
+      toast.error("Validation Error", {
+        description: "Category name is required."
       });
       return;
     }
@@ -151,34 +139,32 @@ const Categories = () => {
   };
   
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <CategoryHeader 
-          categoriesCount={categories.length}
-          onAddCategory={() => setIsAddDialogOpen(true)}
-        />
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>All Categories</CardTitle>
-            <CardDescription>
-              You have {categories.length} categories in total
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CategoryList 
-              categories={categories}
-              isLoading={isLoading}
-              error={error}
-              page={page}
-              setPage={setPage}
-              handleEdit={handleEdit}
-              handleDelete={(id) => deleteMutation.mutate(id)}
-              itemsPerPage={ITEMS_PER_PAGE}
-            />
-          </CardContent>
-        </Card>
-      </div>
+    <div className="space-y-6">
+      <CategoryHeader 
+        categoriesCount={categories.length}
+        onAddCategory={() => setIsAddDialogOpen(true)}
+      />
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>All Categories</CardTitle>
+          <CardDescription>
+            You have {categories.length} categories in total
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CategoryList 
+            categories={categories}
+            isLoading={isLoading}
+            error={error}
+            page={page}
+            setPage={setPage}
+            handleEdit={handleEdit}
+            handleDelete={(id) => deleteMutation.mutate(id)}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
+        </CardContent>
+      </Card>
       
       {/* Add Category Dialog */}
       <CategoryFormDialog
@@ -203,7 +189,7 @@ const Categories = () => {
         mode="edit"
         resetForm={resetForm}
       />
-    </AdminLayout>
+    </div>
   );
 };
 
