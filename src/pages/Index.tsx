@@ -8,8 +8,8 @@ import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Truck, Clock, HeartHandshake } from "lucide-react";
 import AdminBanner from "@/components/AdminBanner";
-import DealsOfTheDay from "@/components/DealsOfTheDay";
 import OtherProducts from "@/components/OtherProducts";
+import DailyOffersSection from "@/components/home/DailyOffersSection";
 
 const Index = () => {
   const { addItem } = useCart();
@@ -74,11 +74,11 @@ const Index = () => {
           </div>
         </section>
         
+        {/* Daily Offers Section - NEW */}
+        <DailyOffersSection />
+        
         {/* Categories Section */}
         <Categories />
-        
-        {/* Deals of the Day Section */}
-        <DealsOfTheDay />
         
         {/* Other Products Section */}
         <OtherProducts />

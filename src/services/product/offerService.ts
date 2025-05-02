@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -16,6 +15,8 @@ export interface DailyOffer {
     name: string;
     price: number;
     image: string;
+    description?: string;
+    stock?: number;
   };
 }
 
@@ -51,6 +52,41 @@ export const getDailyOffers = async (): Promise<DailyOffer[]> => {
     return data || [];
   } catch (error) {
     console.error("Error in getDailyOffers:", error);
+    return [];
+  }
+};
+
+// Get active daily offers with product details for the home page
+export const getDailyOffersWithProducts = async (): Promise<DailyOffer[]> => {
+  try {
+    const currentDate = new Date().toISOString();
+    
+    const { data, error } = await supabase
+      .from('daily_offers')
+      .select(`
+        *,
+        product:product_id (
+          id,
+          name,
+          price,
+          image,
+          description,
+          stock
+        )
+      `)
+      .eq('active', true)
+      .gte('end_date', currentDate)
+      .lte('start_date', currentDate)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching daily offers:", error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error in getDailyOffersWithProducts:", error);
     return [];
   }
 };
