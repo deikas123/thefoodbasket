@@ -17,7 +17,8 @@ export function useOptimizedQuery<TData, TError = Error>(
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10,   // 10 minutes
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Exponential backoff
     // Override with custom options
     ...options,
   });
@@ -33,6 +34,7 @@ export function useProductQuery<TData>(
 ): UseQueryResult<TData, Error> {
   return useOptimizedQuery(queryKey, queryFn, {
     staleTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnMount: true,
     ...options,
   });
 }

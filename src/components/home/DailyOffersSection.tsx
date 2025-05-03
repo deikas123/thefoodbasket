@@ -8,16 +8,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { convertToProduct } from '@/utils/typeConverters';
 import { getDailyOffersWithProducts } from '@/services/product/offerService';
 import { Product } from '@/types';
+import { toast } from '@/components/ui/use-toast';
 
 const DailyOffersSection = memo(() => {
   const [productsWithDiscount, setProductsWithDiscount] = useState<Product[]>([]);
   
   // Fetch daily offers from Supabase with optimized settings
-  const { data: dailyOffers = [], isLoading } = useQuery({
+  const { data: dailyOffers = [], isLoading, error, refetch } = useQuery({
     queryKey: ['daily-offers-active'],
     queryFn: getDailyOffersWithProducts,
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 30,    // 30 minutes
+    retry: 2,
+    onError: (err) => {
+      console.error('Failed to fetch daily offers:', err);
+    }
   });
   
   useEffect(() => {
@@ -48,8 +53,21 @@ const DailyOffersSection = memo(() => {
         .filter(Boolean) as Product[];
       
       setProductsWithDiscount(mapped);
+    } else {
+      setProductsWithDiscount([]);
     }
   }, [dailyOffers]);
+  
+  if (error) {
+    return (
+      <section className="py-6">
+        <div className="container text-center">
+          <h2 className="text-xl font-semibold mb-2">Unable to load daily offers</h2>
+          <Button onClick={() => refetch()} size="sm">Retry</Button>
+        </div>
+      </section>
+    );
+  }
   
   if (isLoading) {
     return (

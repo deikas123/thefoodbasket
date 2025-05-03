@@ -7,11 +7,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/ProductCard';
 import { getFeaturedProducts } from '@/services/product';
 import { convertToProducts } from '@/utils/typeConverters';
+import { toast } from '@/components/ui/use-toast';
 
 const FeaturedProducts = () => {
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading, error, refetch } = useQuery({
     queryKey: ['featuredProducts'],
-    queryFn: getFeaturedProducts
+    queryFn: getFeaturedProducts,
+    onError: (err) => {
+      console.error('Failed to fetch featured products:', err);
+      toast({
+        title: 'Error loading products',
+        description: 'Please try refreshing the page',
+        variant: 'destructive'
+      });
+    },
+    onSettled: (data) => {
+      console.log('Featured products fetch completed', { count: data?.length });
+    }
   });
   
   if (isLoading) {
@@ -30,6 +42,20 @@ const FeaturedProducts = () => {
                 <Skeleton className="h-4 w-1/2" />
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+  
+  if (error) {
+    return (
+      <section className="py-12">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2">Unable to load featured products</h2>
+            <p className="text-muted-foreground mb-4">There was a problem loading the products</p>
+            <Button onClick={() => refetch()}>Retry</Button>
           </div>
         </div>
       </section>
