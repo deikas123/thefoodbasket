@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminProductsTable from "@/components/admin/ProductsTable";
 import { getProducts } from "@/services/product";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Products = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const productsQuery = useQuery({
+  const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
     queryFn: () => getProducts()
   });
@@ -22,7 +22,18 @@ const Products = () => {
         <CardHeader>
           <CardTitle>Manage Products</CardTitle>
         </CardHeader>
-        <AdminProductsTable />
+        {isLoading ? (
+          <div className="p-6 space-y-4">
+            <Skeleton className="h-8 w-full max-w-sm" />
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <AdminProductsTable />
+        )}
       </Card>
     </div>
   );

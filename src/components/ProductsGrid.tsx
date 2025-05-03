@@ -1,6 +1,8 @@
 
+import { memo } from "react";
 import { Product } from "@/types";
 import ProductCard from "./ProductCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProductsGridProps {
   products: Product[];
@@ -10,7 +12,8 @@ interface ProductsGridProps {
   cols?: number;
 }
 
-const ProductsGrid = ({ 
+// Using memo to prevent unnecessary re-renders
+const ProductsGrid = memo(({ 
   products, 
   title, 
   subtitle, 
@@ -49,25 +52,30 @@ const ProductsGrid = ({
           {isLoading ? (
             // Loading skeletons
             Array(8).fill(0).map((_, index) => (
-              <div key={index} className="product-card h-[250px]">
+              <div key={index} className="product-card">
                 <div className="aspect-square bg-gray-200 dark:bg-gray-800 animate-pulse rounded-md"></div>
-                <div className="p-3">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2 animate-pulse"></div>
-                  <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse"></div>
+                <div className="p-3 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-6 w-1/3 mt-2" />
+                  <Skeleton className="h-8 w-full mt-4" />
                 </div>
               </div>
             ))
-          ) : (
+          ) : products.length > 0 ? (
             products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))
+          ) : (
+            <div className="col-span-full text-center py-8">
+              <p className="text-muted-foreground">No products found</p>
+            </div>
           )}
         </div>
       </div>
     </section>
   );
-};
+});
 
+ProductsGrid.displayName = "ProductsGrid";
 export default ProductsGrid;

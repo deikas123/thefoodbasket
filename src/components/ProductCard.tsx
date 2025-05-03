@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -14,10 +14,12 @@ export interface ProductCardProps {
   className?: string;
 }
 
-const ProductCard = ({ product, className }: ProductCardProps) => {
+// Use memo to prevent unnecessary re-renders
+const ProductCard = memo(({ product, className }: ProductCardProps) => {
   const { addItem } = useCart();
   const { isInWishlist, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlist();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   
   // Calculate discounted price if there's a discount percentage
   const discountedPrice = product.discountPercentage
@@ -68,11 +70,19 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
       
       {/* Product image and discount badge */}
       <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        )}
         <Link to={`/product/${product.id}`}>
           <img
             src={product.image}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={cn(
+              "h-full w-full object-cover transition-transform duration-300 group-hover:scale-105",
+              imageLoaded ? "opacity-100" : "opacity-0"
+            )}
+            onLoad={() => setImageLoaded(true)}
+            loading="lazy"
           />
         </Link>
         {product.discountPercentage > 0 && (
@@ -139,6 +149,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
       </div>
     </div>
   );
-};
+});
 
+ProductCard.displayName = "ProductCard";
 export default ProductCard;

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
@@ -9,13 +9,15 @@ import { convertToProduct } from '@/utils/typeConverters';
 import { getDailyOffersWithProducts } from '@/services/product/offerService';
 import { Product } from '@/types';
 
-const DailyOffersSection = () => {
+const DailyOffersSection = memo(() => {
   const [productsWithDiscount, setProductsWithDiscount] = useState<Product[]>([]);
   
-  // Fetch daily offers from Supabase
+  // Fetch daily offers from Supabase with optimized settings
   const { data: dailyOffers = [], isLoading } = useQuery({
     queryKey: ['daily-offers-active'],
     queryFn: getDailyOffersWithProducts,
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 30,    // 30 minutes
   });
   
   useEffect(() => {
@@ -54,7 +56,7 @@ const DailyOffersSection = () => {
       <section className="py-12">
         <div className="container">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold">Daily Special Offers</h2>
+            <Skeleton className="h-8 w-64" />
             <Skeleton className="h-10 w-32" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -63,6 +65,7 @@ const DailyOffersSection = () => {
                 <Skeleton className="h-[200px] w-full rounded-xl" />
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-10 w-full" />
               </div>
             ))}
           </div>
@@ -97,6 +100,7 @@ const DailyOffersSection = () => {
       </div>
     </section>
   );
-};
+});
 
+DailyOffersSection.displayName = "DailyOffersSection";
 export default DailyOffersSection;
