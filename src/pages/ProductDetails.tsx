@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +35,7 @@ import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import AddToAutoReplenishButton from "@/components/product/AddToAutoReplenishButton";
 import { convertToProduct } from "@/utils/typeConverters";
+import ProductReviews from "@/components/product/ProductReviews";
 
 const ProductDetails = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -170,6 +170,7 @@ const ProductDetails = () => {
       <Header />
       <main className="flex-grow pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-7xl">
+          {/* Breadcrumb navigation */}
           <div className="mb-6 flex items-center space-x-2 text-sm text-muted-foreground">
             <Button variant="ghost" size="sm" onClick={goBack} className="-ml-3">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -189,7 +190,9 @@ const ProductDetails = () => {
             <span className="text-foreground">{product.name}</span>
           </div>
           
+          {/* Product details grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {/* Product image section */}
             <div className="relative">
               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                 <img 
@@ -214,30 +217,29 @@ const ProductDetails = () => {
               </div>
             </div>
             
+            {/* Product info section */}
             <div className="space-y-6">
-              <div>
-                {category && (
-                  <Link to={`/shop?category=${category.id}`}>
-                    <Badge variant="outline" className="mb-2">
-                      {category.name}
-                    </Badge>
-                  </Link>
+              {category && (
+                <Link to={`/shop?category=${category.id}`}>
+                  <Badge variant="outline" className="mb-2">
+                    {category.name}
+                  </Badge>
+                </Link>
+              )}
+              
+              <h1 className="text-3xl font-bold">{product.name}</h1>
+              
+              <div className="mt-2 flex items-baseline gap-2">
+                {salePrice ? (
+                  <>
+                    <span className="text-2xl font-bold">${salePrice}</span>
+                    <span className="text-lg text-muted-foreground line-through">
+                      ${product.price.toFixed(2)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
                 )}
-                
-                <h1 className="text-3xl font-bold">{product.name}</h1>
-                
-                <div className="mt-2 flex items-baseline gap-2">
-                  {salePrice ? (
-                    <>
-                      <span className="text-2xl font-bold">${salePrice}</span>
-                      <span className="text-lg text-muted-foreground line-through">
-                        ${product.price.toFixed(2)}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
-                  )}
-                </div>
               </div>
               
               <p className="text-muted-foreground leading-relaxed">
@@ -355,6 +357,15 @@ const ProductDetails = () => {
             </div>
           </div>
           
+          {/* Product reviews section - NEW */}
+          {product && (
+            <div className="mt-16">
+              <Separator className="mb-8" />
+              <ProductReviews productId={product.id} />
+            </div>
+          )}
+          
+          {/* Recommended products section */}
           <div className="mt-16">
             <Separator className="mb-8" />
             {product && (
