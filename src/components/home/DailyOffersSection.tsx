@@ -1,4 +1,3 @@
-
 import { useState, useEffect, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
@@ -20,8 +19,10 @@ const DailyOffersSection = memo(() => {
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 30,    // 30 minutes
     retry: 2,
-    onError: (err) => {
-      console.error('Failed to fetch daily offers:', err);
+    onSettled: (data, error) => {
+      if (error) {
+        console.error('Failed to fetch daily offers:', error);
+      }
     }
   });
   
