@@ -36,6 +36,7 @@ import Notifications from "./pages/Notifications";
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
+import Products from "./pages/admin/Products";
 import DiscountCodes from "./pages/admin/DiscountCodes";
 import Categories from "./pages/admin/Categories";
 import PayLaterVerification from "./pages/admin/PayLaterVerification";
@@ -91,7 +92,7 @@ function App() {
                 
                 {/* Admin Routes with AdminLayout */}
                 <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-                <Route path="/admin/products" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                <Route path="/admin/products" element={<AdminLayout><Products /></AdminLayout>} />
                 <Route path="/admin/categories" element={<AdminLayout><Categories /></AdminLayout>} />
                 <Route path="/admin/orders" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
                 <Route path="/admin/users" element={<AdminLayout><AdminDashboard /></AdminLayout>} />

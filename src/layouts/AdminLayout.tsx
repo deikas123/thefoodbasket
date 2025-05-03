@@ -16,7 +16,6 @@ import {
   BadgePercent,
   Calendar
 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -30,12 +29,16 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is admin
+    // Check if user is authenticated
     if (!user) {
-      navigate("/login", { state: { from: window.location.pathname } });
+      toast.error("Authentication Required", {
+        description: "Please log in to access the admin panel"
+      });
+      navigate("/admin/login", { state: { from: window.location.pathname } });
       return;
     }
     
+    // Check if user is admin
     if (user.role !== "admin") {
       toast.error("Access Denied", {
         description: "You do not have admin privileges"

@@ -1,156 +1,135 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingCart } from "lucide-react";
-import { useCart } from "@/context/CartContext";
-import { useWishlist } from "@/context/WishlistContext";
-import { useQuery } from "@tanstack/react-query";
-import { getCategoryById } from "@/services/productService";
-import { formatCurrency } from "@/utils/currencyFormatter";
-import { Product } from "@/types";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
+import { Button } from '@/components/ui/button';
+import { Heart, ShoppingCart, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/utils/currencyFormatter';
+import { Product } from '@/types';
 
-interface ProductCardProps {
+export interface ProductCardProps {
   product: Product;
   className?: string;
 }
 
 const ProductCard = ({ product, className }: ProductCardProps) => {
-  const { addItem } = useCart();
-  const { addItem: addToWishlist, isInWishlist, removeItem } = useWishlist();
-  const [isAdding, setIsAdding] = useState(false);
+  const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   
-  // Fetch category name
-  const categoryQuery = useQuery({
-    queryKey: ['category', product.category],
-    queryFn: () => getCategoryById(product.category),
-    enabled: !!product.category
-  });
-  
-  const categoryName = categoryQuery.data?.name || '';
-  
-  const handleAddToCart = () => {
-    setIsAdding(true);
-    setTimeout(() => {
-      addItem(product);
-      setIsAdding(false);
-    }, 300);
-  };
-  
-  const toggleWishlist = () => {
-    if (isInWishlist(product.id)) {
-      removeItem(product.id);
-    } else {
-      addToWishlist(product);
-    }
-  };
-  
-  // Calculate sale price if there's a discount
-  const salePrice = product.discountPercentage
-    ? (product.price * (1 - product.discountPercentage / 100)).toFixed(0)
+  // Calculate discounted price if there's a discount percentage
+  const discountedPrice = product.discountPercentage
+    ? product.price * (1 - product.discountPercentage / 100)
     : null;
-  
+
+  const handleAddToCart = () => {
+    setIsAddingToCart(true);
+    
+    addToCart({
+      ...product,
+      quantity: 1
+    });
+    
+    // Reset button after animation
+    setTimeout(() => {
+      setIsAddingToCart(false);
+    }, 600);
+  };
+
+  const isWishlisted = isInWishlist(product.id);
+
   return (
-    <Card className={cn("overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow duration-300", className)}>
-      <div className="relative">
-        <Link to={`/product/${product.id}`}>
-          <div className="aspect-square overflow-hidden bg-gray-100">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-            />
-          </div>
-        </Link>
-        
-        {/* Wishlist button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm hover:bg-white rounded-full"
-          onClick={toggleWishlist}
-        >
-          <Heart 
-            className={`h-5 w-5 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} 
-          />
-        </Button>
-        
-        {/* Badges - Enhanced contrast */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {product.discountPercentage && (
-            <Badge className="bg-red-600 text-white font-medium border-red-600">
-              {product.discountPercentage}% OFF
-            </Badge>
+    <div className={cn("group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow duration-300", className)}>
+      {/* Wishlist button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm dark:bg-gray-950/80 transition-colors hover:text-red-500"
+        onClick={() => toggleWishlist(product)}
+      >
+        <Heart
+          className={cn(
+            "h-4 w-4",
+            isWishlisted ? "fill-red-500 text-red-500" : ""
           )}
-          
-          {product.featured && (
-            <Badge variant="outline" className="bg-primary/90 text-white border-primary font-medium shadow-sm">
-              Featured
-            </Badge>
-          )}
-          
-          {product.stock <= 5 && product.stock > 0 && (
-            <Badge variant="outline" className="bg-amber-500 text-white border-amber-500 font-medium">
-              Low Stock
-            </Badge>
-          )}
-          
-          {product.stock === 0 && (
-            <Badge variant="outline" className="bg-gray-700 text-white border-gray-700 font-medium">
-              Out of Stock
-            </Badge>
-          )}
-        </div>
-      </div>
+        />
+        <span className="sr-only">Add to wishlist</span>
+      </Button>
       
-      <CardContent className="pt-4 flex-grow">
-        {categoryName && (
-          <div className="mb-1">
-            <Badge variant="outline" className="text-xs font-normal">
-              {categoryName}
-            </Badge>
+      {/* Product image and discount badge */}
+      <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
+        <Link to={`/product/${product.id}`}>
+          <img
+            src={product.image}
+            alt={product.name}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </Link>
+        {product.discountPercentage > 0 && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+            {product.discountPercentage}% OFF
           </div>
         )}
-        
-        <Link to={`/product/${product.id}`}>
-          <h3 className="font-medium text-lg mb-1 leading-tight hover:text-primary transition-colors">
+      </div>
+      
+      {/* Product details */}
+      <div className="flex flex-col flex-grow p-4">
+        <Link to={`/product/${product.id}`} className="flex-grow">
+          <h3 className="font-medium text-sm md:text-base line-clamp-2 group-hover:text-primary transition-colors mb-1">
             {product.name}
           </h3>
+          
+          {/* Rating */}
+          <div className="flex items-center gap-1 mt-1 mb-2">
+            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {product.rating} ({product.numReviews})
+            </span>
+          </div>
+          
+          {/* Price section */}
+          <div className="mt-2 flex items-center gap-2">
+            {discountedPrice ? (
+              <>
+                <span className="font-semibold">
+                  {formatCurrency(discountedPrice)}
+                </span>
+                <span className="text-sm text-gray-500 line-through">
+                  {formatCurrency(product.price)}
+                </span>
+              </>
+            ) : (
+              <span className="font-semibold">{formatCurrency(product.price)}</span>
+            )}
+          </div>
+          
+          {/* Stock status */}
+          {product.stock <= 0 && (
+            <div className="mt-2 text-sm text-red-500">Out of stock</div>
+          )}
         </Link>
         
-        <p className="text-muted-foreground text-sm line-clamp-2 mb-2">
-          {product.description}
-        </p>
-      </CardContent>
-      
-      <CardFooter className="pt-0 pb-4 flex items-center justify-between">
-        <div className="flex flex-col">
-          {salePrice ? (
-            <>
-              <span className="font-bold text-lg">KSh {salePrice}</span>
-              <span className="text-sm text-muted-foreground line-through">
-                KSh {product.price}
-              </span>
-            </>
-          ) : (
-            <span className="font-bold text-lg">KSh {product.price}</span>
-          )}
+        {/* Add to cart button */}
+        <div className="mt-4">
+          <Button
+            variant={product.stock > 0 ? "default" : "outline"}
+            size="sm"
+            className="w-full"
+            disabled={product.stock <= 0 || isAddingToCart}
+            onClick={handleAddToCart}
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {product.stock > 0 ? (
+              isAddingToCart ? "Adding..." : "Add to Cart"
+            ) : (
+              "Out of Stock"
+            )}
+          </Button>
         </div>
-        
-        <Button 
-          onClick={handleAddToCart} 
-          disabled={isAdding || product.stock === 0}
-          size="sm"
-          className="gap-1"
-        >
-          <ShoppingCart className="h-4 w-4" />
-          {isAdding ? 'Adding...' : 'Add'}
-        </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
 
