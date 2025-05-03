@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -12,15 +13,16 @@ const FeaturedProducts = () => {
   const { data: products = [], isLoading, error, refetch } = useQuery({
     queryKey: ['featuredProducts'],
     queryFn: getFeaturedProducts,
-    onSettled: (data, error) => {
-      if (error) {
+    meta: {
+      onError: (error) => {
         console.error('Failed to fetch featured products:', error);
         toast({
           title: 'Error loading products',
           description: 'Please try refreshing the page',
           variant: 'destructive'
         });
-      } else {
+      },
+      onSuccess: (data) => {
         console.log('Featured products fetch completed', { count: data?.length });
       }
     }

@@ -11,8 +11,8 @@ const Products = () => {
   const { data: products, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-products"],
     queryFn: () => getProducts(),
-    onSettled: (data, error) => {
-      if (error) {
+    meta: {
+      onError: (error) => {
         console.error('Failed to fetch products:', error);
         toast({
           title: 'Error loading products',
