@@ -9,7 +9,7 @@ const Products = () => {
   const [isLoading, setIsLoading] = useState(false);
   const productsQuery = useQuery({
     queryKey: ["admin-products"],
-    queryFn: getProducts
+    queryFn: () => getProducts()
   });
 
   return (

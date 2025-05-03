@@ -30,20 +30,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const openCart = () => setIsOpen(true);
   const closeCart = () => setIsOpen(false);
 
-  const addItem = (product: Product, quantity = 1) => {
+  const addItem = (productOrCartItem: Product | CartItem, quantity = 1) => {
     setItems((prevItems) => {
+      // Check if we're adding a CartItem or a Product
+      const isCartItem = 'quantity' in productOrCartItem;
+      const product = isCartItem ? (productOrCartItem as CartItem).product : productOrCartItem as Product;
+      const quantityToAdd = isCartItem ? (productOrCartItem as CartItem).quantity : quantity;
+      
       const existingItem = prevItems.find(item => item.product.id === product.id);
       
       if (existingItem) {
         return prevItems.map(item => 
           item.product.id === product.id 
-            ? { ...item, quantity: item.quantity + quantity } 
+            ? { ...item, quantity: item.quantity + quantityToAdd } 
             : item
         );
       } else {
-        return [...prevItems, { product, quantity }];
+        return [...prevItems, { product, quantity: quantityToAdd }];
       }
     });
+    
+    const product = 'quantity' in productOrCartItem 
+      ? (productOrCartItem as CartItem).product 
+      : productOrCartItem as Product;
     
     toast({
       title: "Added to cart",

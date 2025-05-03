@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -43,9 +42,10 @@ const DailyOffersPage = () => {
     queryFn: getDailyOffers
   });
   
+  // Fetch products
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: getProducts
+    queryFn: () => getProducts()
   });
   
   // Create offer mutation

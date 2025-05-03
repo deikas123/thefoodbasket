@@ -15,8 +15,8 @@ export interface ProductCardProps {
 }
 
 const ProductCard = ({ product, className }: ProductCardProps) => {
-  const { addToCart } = useCart();
-  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { addItem } = useCart();
+  const { isInWishlist, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlist();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   
   // Calculate discounted price if there's a discount percentage
@@ -27,7 +27,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
   const handleAddToCart = () => {
     setIsAddingToCart(true);
     
-    addToCart({
+    addItem({
       ...product,
       quantity: 1
     });
@@ -36,6 +36,14 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     setTimeout(() => {
       setIsAddingToCart(false);
     }, 600);
+  };
+
+  const toggleWishlist = (product: Product) => {
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   const isWishlisted = isInWishlist(product.id);
