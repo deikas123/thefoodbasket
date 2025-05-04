@@ -38,7 +38,7 @@ const DiscountCodes = lazy(() => import("./pages/admin/DiscountCodes"));
 const Categories = lazy(() => import("./pages/admin/Categories"));
 const PayLaterVerification = lazy(() => import("./pages/admin/PayLaterVerification"));
 const DailyOffers = lazy(() => import("./pages/admin/DailyOffers"));
-const Notifications = lazy(() => import("./pages/admin/Notifications"));
+const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
 const ContentManagement = lazy(() => import("./pages/admin/ContentManagement"));
 
 // Delivery pages
@@ -278,7 +278,7 @@ function App() {
                 <Route path="/admin/notifications" element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminLayout>
-                      <Notifications />
+                      <AdminNotifications />
                     </AdminLayout>
                   </Suspense>
                 } />
