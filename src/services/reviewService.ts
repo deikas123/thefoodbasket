@@ -10,7 +10,7 @@ export interface ProductReview {
   comment: string | null;
   created_at: string;
   updated_at: string;
-  user?: {
+  user: {
     first_name?: string;
     last_name?: string;
   };
@@ -18,24 +18,39 @@ export interface ProductReview {
 
 export const getProductReviews = async (productId: string): Promise<ProductReview[]> => {
   try {
-    const { data, error } = await supabase
+    // Fixed the query to avoid foreign key relationship error
+    const { data: reviewData, error: reviewError } = await supabase
       .from('product_reviews')
-      .select(`
-        *,
-        user: user_id (
-          first_name,
-          last_name
-        )
-      `)
+      .select('*')
       .eq('product_id', productId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error("Error fetching product reviews:", error);
+    if (reviewError) {
+      console.error("Error fetching product reviews:", reviewError);
       return [];
     }
 
-    return data || [];
+    // Separately fetch users for each review
+    const reviews = await Promise.all(
+      (reviewData || []).map(async (review) => {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('first_name, last_name')
+          .eq('id', review.user_id)
+          .single();
+
+        if (userError && userError.code !== 'PGRST116') {
+          console.error("Error fetching user data:", userError);
+        }
+
+        return {
+          ...review,
+          user: userData || { first_name: 'Anonymous', last_name: 'User' }
+        };
+      })
+    );
+
+    return reviews;
   } catch (error) {
     console.error("Error fetching product reviews:", error);
     return [];

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -134,7 +133,7 @@ const ProductDetails = () => {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow pt-24 pb-16 px-4">
+        <main className="flex-grow pt-32 pb-16 px-4">
           <div className="container mx-auto max-w-7xl">
             <Button variant="ghost" onClick={goBack} className="mb-6">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -187,7 +186,7 @@ const ProductDetails = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow pt-24 pb-16 px-4">
+      <main className="flex-grow pt-32 pb-16 px-4">
         <div className="container mx-auto max-w-7xl">
           {/* Breadcrumb navigation */}
           <div className="mb-6 flex items-center space-x-2 text-sm text-muted-foreground">
@@ -251,13 +250,13 @@ const ProductDetails = () => {
               <div className="mt-2 flex items-baseline gap-2">
                 {salePrice ? (
                   <>
-                    <span className="text-2xl font-bold">${salePrice}</span>
+                    <span className="text-2xl font-bold">{formatCurrency(parseFloat(salePrice))}</span>
                     <span className="text-lg text-muted-foreground line-through">
-                      ${product.price.toFixed(2)}
+                      {formatCurrency(product.price)}
                     </span>
                   </>
                 ) : (
-                  <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
+                  <span className="text-2xl font-bold">{formatCurrency(product.price)}</span>
                 )}
               </div>
               
