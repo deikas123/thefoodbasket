@@ -1,49 +1,32 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/context/AuthContext";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ShieldCheck } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("admin@foodbasket.com"); // Pre-filled for demo
-  const [password, setPassword] = useState("password123"); // Pre-filled for demo
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const location = useLocation();
+  const from = location.state?.from || "/admin";
 
-  // Redirect if already logged in as admin
-  useEffect(() => {
-    if (user && user.role === "admin") {
-      navigate("/admin");
-    }
-  }, [user, navigate]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const loggedInUser = await login(email, password);
+      await signIn(email, password);
       
-      if (loggedInUser.role !== 'admin') {
-        toast.error("Access denied", {
-          description: "You don't have admin privileges"
-        });
-        return;
-      }
-      
-      toast.success("Login successful", {
-        description: "Welcome to admin dashboard"
-      });
-      
-      // Navigate to admin dashboard
-      navigate("/admin");
+      // We'll check user role in the AdminLayout component instead
+      navigate(from);
     } catch (error: any) {
-      toast.error("Login failed", {
+      toast.error("Login Failed", {
         description: error.message || "Invalid credentials"
       });
     } finally {
@@ -52,81 +35,49 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-6">
-          <div className="bg-primary/10 p-3 rounded-full">
-            <ShieldCheck className="h-12 w-12 text-primary" />
-          </div>
-        </div>
-        
-        <Card>
-          <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold">Admin Access</CardTitle>
-            <CardDescription>
-              Use the pre-filled credentials to access the admin dashboard
-            </CardDescription>
-          </CardHeader>
-          
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email" 
-                  placeholder="admin@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </label>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md text-xs text-blue-600 dark:text-blue-300">
-                <p className="font-medium">Demo Credentials:</p>
-                <p>Email: admin@foodbasket.com</p>
-                <p>Password: password123</p>
-              </div>
-            </CardContent>
-            
-            <CardFooter>
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? "Signing in..." : "Sign in"}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
-        
-        <div className="text-center mt-4">
-          <Button 
-            variant="link" 
-            onClick={() => navigate("/")}
-          >
-            Back to store
-          </Button>
-        </div>
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+          <CardDescription className="text-center">
+            Enter your credentials to access the admin panel
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleLogin}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email"
+                type="email" 
+                placeholder="admin@example.com" 
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                id="password"
+                type="password" 
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 };

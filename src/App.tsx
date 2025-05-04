@@ -38,6 +38,8 @@ const DiscountCodes = lazy(() => import("./pages/admin/DiscountCodes"));
 const Categories = lazy(() => import("./pages/admin/Categories"));
 const PayLaterVerification = lazy(() => import("./pages/admin/PayLaterVerification"));
 const DailyOffers = lazy(() => import("./pages/admin/DailyOffers"));
+const Notifications = lazy(() => import("./pages/admin/Notifications"));
+const ContentManagement = lazy(() => import("./pages/admin/ContentManagement"));
 
 // Delivery pages
 const DeliveryDashboard = lazy(() => import("./pages/DeliveryDashboard"));
@@ -270,6 +272,20 @@ function App() {
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminLayout>
                       <AdminDashboard />
+                    </AdminLayout>
+                  </Suspense>
+                } />
+                <Route path="/admin/notifications" element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AdminLayout>
+                      <Notifications />
+                    </AdminLayout>
+                  </Suspense>
+                } />
+                <Route path="/admin/content-management" element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AdminLayout>
+                      <ContentManagement />
                     </AdminLayout>
                   </Suspense>
                 } />
