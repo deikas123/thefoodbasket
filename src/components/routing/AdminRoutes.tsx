@@ -1,6 +1,6 @@
 
 import { Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Fragment } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import LoadingFallback from "@/components/ui/LoadingFallback";
 
@@ -15,9 +15,9 @@ const DailyOffers = lazy(() => import("@/pages/admin/DailyOffers"));
 const AdminNotifications = lazy(() => import("@/pages/admin/Notifications"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 
-export const AdminRoutes = () => {
+const AdminRoutes = () => {
   return (
-    <>
+    <Fragment>
       {/* Admin Login (outside of admin layout) */}
       <Route path="/admin/login" element={
         <Suspense fallback={<LoadingFallback />}>
@@ -124,6 +124,8 @@ export const AdminRoutes = () => {
           </AdminLayout>
         </Suspense>
       } />
-    </>
+    </Fragment>
   );
 };
+
+export default AdminRoutes;

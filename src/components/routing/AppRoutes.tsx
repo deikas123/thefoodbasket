@@ -5,9 +5,9 @@ import LoadingFallback from "@/components/ui/LoadingFallback";
 
 // Public pages import
 import Index from "@/pages/Index";
-import { PublicRoutes } from "./PublicRoutes";
-import { AdminRoutes } from "./AdminRoutes";
-import { DeliveryRoutes } from "./DeliveryRoutes";
+import PublicRoutes from "./PublicRoutes";
+import AdminRoutes from "./AdminRoutes";
+import DeliveryRoutes from "./DeliveryRoutes";
 
 // Lazy load NotFound page
 const NotFound = lazy(() => import("@/pages/NotFound"));
@@ -18,7 +18,7 @@ const AppRoutes = () => {
       {/* Public Routes */}
       <Route path="/" element={<Index />} />
       
-      {/* Include other route components directly */}
+      {/* Include nested routes */}
       <PublicRoutes />
       <AdminRoutes />
       <DeliveryRoutes />

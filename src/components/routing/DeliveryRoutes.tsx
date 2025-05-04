@@ -1,6 +1,6 @@
 
 import { Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Fragment } from "react";
 import LoadingFallback from "@/components/ui/LoadingFallback";
 
 // Lazy load delivery page components
@@ -9,9 +9,9 @@ const DeliveryDriverDashboard = lazy(() => import("@/pages/DeliveryDriverDashboa
 const DeliveryLayout = lazy(() => import("@/components/delivery/DeliveryLayout"));
 const Profile = lazy(() => import("@/pages/Profile"));
 
-export const DeliveryRoutes = () => {
+const DeliveryRoutes = () => {
   return (
-    <>
+    <Fragment>
       <Route path="/delivery" element={
         <Suspense fallback={<LoadingFallback />}>
           <DeliveryDashboard />
@@ -39,6 +39,8 @@ export const DeliveryRoutes = () => {
           </Suspense>
         } />
       </Route>
-    </>
+    </Fragment>
   );
 };
+
+export default DeliveryRoutes;
