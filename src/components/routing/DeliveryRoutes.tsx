@@ -1,6 +1,6 @@
 
 import { Route } from "react-router-dom";
-import { lazy, Suspense, Fragment } from "react";
+import { lazy, Suspense } from "react";
 import LoadingFallback from "@/components/ui/LoadingFallback";
 
 // Lazy load delivery page components
@@ -11,7 +11,7 @@ const Profile = lazy(() => import("@/pages/Profile"));
 
 const DeliveryRoutes = () => {
   return (
-    <Fragment>
+    <>
       <Route path="/delivery" element={
         <Suspense fallback={<LoadingFallback />}>
           <DeliveryDashboard />
@@ -39,7 +39,7 @@ const DeliveryRoutes = () => {
           </Suspense>
         } />
       </Route>
-    </Fragment>
+    </>
   );
 };
 

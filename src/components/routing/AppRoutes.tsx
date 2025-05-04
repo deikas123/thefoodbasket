@@ -9,7 +9,7 @@ import Index from "@/pages/Index";
 // Lazy load NotFound page
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
-// Import route groups
+// Lazy load route components
 import PublicRoutes from "./PublicRoutes";
 import AdminRoutes from "./AdminRoutes";
 import DeliveryRoutes from "./DeliveryRoutes";
@@ -21,9 +21,9 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       
       {/* Include all nested routes */}
-      <PublicRoutes />
-      <AdminRoutes />
-      <DeliveryRoutes />
+      {PublicRoutes()}
+      {AdminRoutes()}
+      {DeliveryRoutes()}
       
       {/* 404 Route */}
       <Route path="*" element={
