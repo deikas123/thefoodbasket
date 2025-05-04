@@ -11,7 +11,7 @@ const Profile = lazy(() => import("@/pages/Profile"));
 
 const DeliveryRoutes = () => {
   return (
-    <Fragment>
+    <>
       <Route path="/delivery" element={
         <Suspense fallback={<LoadingFallback />}>
           <DeliveryDashboard />
@@ -39,7 +39,7 @@ const DeliveryRoutes = () => {
           </Suspense>
         } />
       </Route>
-    </Fragment>
+    </>
   );
 };
 

@@ -18,10 +18,18 @@ const AppRoutes = () => {
       {/* Public Routes */}
       <Route path="/" element={<Index />} />
       
-      {/* Include nested routes */}
-      <PublicRoutes />
-      <AdminRoutes />
-      <DeliveryRoutes />
+      {/* Include route components wrapped in Route elements */}
+      <Route>{/* PublicRoutes will render all its child routes */}
+        <PublicRoutes />
+      </Route>
+      
+      <Route>{/* AdminRoutes will render all its child routes */}
+        <AdminRoutes />
+      </Route>
+      
+      <Route>{/* DeliveryRoutes will render all its child routes */}
+        <DeliveryRoutes />
+      </Route>
       
       {/* 404 Route */}
       <Route path="*" element={

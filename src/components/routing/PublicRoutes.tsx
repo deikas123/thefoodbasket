@@ -1,4 +1,3 @@
-
 import { Route } from "react-router-dom";
 import { lazy, Suspense, Fragment } from "react";
 import LoadingFallback from "@/components/ui/LoadingFallback";
@@ -23,7 +22,7 @@ const Notifications = lazy(() => import("@/pages/Notifications"));
 
 const PublicRoutes = () => {
   return (
-    <Fragment>
+    <>
       <Route path="/shop" element={
         <Suspense fallback={<LoadingFallback />}>
           <Shop />
@@ -104,7 +103,7 @@ const PublicRoutes = () => {
           <Notifications />
         </Suspense>
       } />
-    </Fragment>
+    </>
   );
 };
 

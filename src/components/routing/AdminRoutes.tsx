@@ -1,4 +1,3 @@
-
 import { Route } from "react-router-dom";
 import { lazy, Suspense, Fragment } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -17,7 +16,7 @@ const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 
 const AdminRoutes = () => {
   return (
-    <Fragment>
+    <>
       {/* Admin Login (outside of admin layout) */}
       <Route path="/admin/login" element={
         <Suspense fallback={<LoadingFallback />}>
@@ -124,7 +123,7 @@ const AdminRoutes = () => {
           </AdminLayout>
         </Suspense>
       } />
-    </Fragment>
+    </>
   );
 };
 
