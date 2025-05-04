@@ -1,6 +1,6 @@
 
 import { Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Fragment } from "react";
 import LoadingFallback from "@/components/ui/LoadingFallback";
 
 // Public pages import
@@ -17,13 +17,21 @@ const AppRoutes = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Index />} />
-      <PublicRoutes />
+      
+      {/* Wrap route components with Fragment */}
+      <Fragment>
+        <PublicRoutes />
+      </Fragment>
       
       {/* Admin Routes */}
-      <AdminRoutes />
+      <Fragment>
+        <AdminRoutes />
+      </Fragment>
       
       {/* Delivery Routes */}
-      <DeliveryRoutes />
+      <Fragment>
+        <DeliveryRoutes />
+      </Fragment>
       
       {/* 404 Route */}
       <Route path="*" element={
