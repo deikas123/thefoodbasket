@@ -1,8 +1,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Bell, Trash2, Edit, Clock, Settings } from "lucide-react";
-import { format } from "date-fns";
+import { PlusCircle, Send, Clock, Trash2, Calendar, Users, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,24 +12,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 import { getNotifications, createNotification, updateNotification, deleteNotification, sendPushNotification } from "@/services/notificationService";
-import { Notification, NotificationTrigger } from "@/types/notification";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Notification } from "@/types/notification";
 
 const NotificationsPage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [notification, setNotification] = useState<Partial<Notification>>({
-    title: '',
-    body: '',
-    status: 'draft',
-  });
-  const [isScheduled, setIsScheduled] = useState(false);
-  const [isTriggered, setIsTriggered] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
-  const [trigger, setTrigger] = useState<Partial<NotificationTrigger>>({
-    type: 'order_status',
-    condition: 'equals',
-    value: '',
+    title: "",
+    body: "",
+    status: "draft"
   });
   
   const queryClient = useQueryClient();
@@ -46,89 +38,70 @@ const NotificationsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       setIsDialogOpen(false);
       resetForm();
+      toast.success('Notification created successfully');
     },
-  });
-
-  const updateNotificationMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Notification> }) => 
-      updateNotification(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      setIsDialogOpen(false);
-      resetForm();
-    },
-  });
-
-  const deleteNotificationMutation = useMutation({
-    mutationFn: deleteNotification,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
+    onError: (error) => {
+      toast.error('Error creating notification: ' + error);
+    }
   });
 
   const sendNotificationMutation = useMutation({
     mutationFn: sendPushNotification,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success('Notification sent successfully');
     },
+    onError: (error) => {
+      toast.error('Error sending notification: ' + error);
+    }
+  });
+
+  const deleteNotificationMutation = useMutation({
+    mutationFn: deleteNotification,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success('Notification deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Error deleting notification: ' + error);
+    }
   });
 
   const resetForm = () => {
     setNotification({
-      title: '',
-      body: '',
-      status: 'draft',
+      title: "",
+      body: "",
+      status: "draft"
     });
-    setIsScheduled(false);
-    setIsTriggered(false);
-    setScheduledDate(undefined);
-    setTrigger({
-      type: 'order_status',
-      condition: 'equals',
-      value: '',
-    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNotification((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setNotification((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    let notificationToSave: Partial<Notification> = {
-      ...notification,
-    };
-    
-    if (isScheduled) {
-      notificationToSave.status = 'scheduled';
-      notificationToSave.scheduledFor = scheduledDate?.toISOString();
-    } else if (isTriggered) {
-      notificationToSave.status = 'scheduled';
-      notificationToSave.trigger = trigger as NotificationTrigger;
-    }
-    
-    if (notification.id) {
-      updateNotificationMutation.mutate({ 
-        id: notification.id, 
-        updates: notificationToSave 
-      });
-    } else {
-      createNotificationMutation.mutate(notificationToSave as Omit<Notification, 'id' | 'createdAt'>);
+    createNotificationMutation.mutate(notification as Omit<Notification, 'id' | 'createdAt'>);
+  };
+
+  const handleSendNotification = (notification: Notification) => {
+    sendNotificationMutation.mutate(notification);
+  };
+
+  const handleDeleteNotification = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this notification?')) {
+      deleteNotificationMutation.mutate(id);
     }
   };
 
-  const handleEdit = (item: Notification) => {
-    setNotification(item);
-    setIsScheduled(!!item.scheduledFor);
-    setIsTriggered(!!item.trigger);
-    if (item.scheduledFor) {
-      setScheduledDate(new Date(item.scheduledFor));
-    }
-    if (item.trigger) {
-      setTrigger(item.trigger);
-    }
-    setIsDialogOpen(true);
-  };
-
-  const handleSendNow = (item: Notification) => {
-    sendNotificationMutation.mutate(item);
+  const formatDate = (date: string | undefined) => {
+    if (!date) return 'N/A';
+    return formatDistanceToNow(new Date(date), { addSuffix: true });
   };
 
   return (
@@ -137,23 +110,21 @@ const NotificationsPage = () => {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Notifications</h2>
           <p className="text-muted-foreground">
-            Create and manage push notifications for your customers
+            Manage push notifications for your users
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Bell className="mr-2 h-4 w-4" /> New Notification
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Notification
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>
-                  {notification.id ? 'Edit Notification' : 'Create Notification'}
-                </DialogTitle>
+                <DialogTitle>New Notification</DialogTitle>
                 <DialogDescription>
-                  Compose a notification to send to your customers
+                  Create a notification to send to your users
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -161,134 +132,99 @@ const NotificationsPage = () => {
                   <Label htmlFor="title">Title</Label>
                   <Input
                     id="title"
-                    value={notification.title || ''}
-                    onChange={(e) => setNotification({...notification, title: e.target.value})}
-                    placeholder="Notification title"
+                    name="title"
+                    value={notification.title}
+                    onChange={handleInputChange}
                     required
+                    placeholder="Notification title"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="body">Message</Label>
+                  <Label htmlFor="body">Body</Label>
                   <Textarea
                     id="body"
-                    value={notification.body || ''}
-                    onChange={(e) => setNotification({...notification, body: e.target.value})}
-                    placeholder="Notification message"
+                    name="body"
+                    value={notification.body}
+                    onChange={handleInputChange}
                     required
+                    placeholder="Notification message"
+                    rows={3}
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="image">Image URL (optional)</Label>
                   <Input
                     id="image"
+                    name="image"
                     value={notification.image || ''}
-                    onChange={(e) => setNotification({...notification, image: e.target.value})}
+                    onChange={handleInputChange}
                     placeholder="https://example.com/image.jpg"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="link">Link URL (optional)</Label>
+                  <Label htmlFor="link">Link (optional)</Label>
                   <Input
                     id="link"
+                    name="link"
                     value={notification.link || ''}
-                    onChange={(e) => setNotification({...notification, link: e.target.value})}
-                    placeholder="https://example.com/page"
+                    onChange={handleInputChange}
+                    placeholder="https://yourstore.com/products/123"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="schedule">Schedule for later</Label>
-                    <Switch
-                      id="schedule"
-                      checked={isScheduled}
-                      onCheckedChange={(checked) => {
-                        setIsScheduled(checked);
-                        if (checked) setIsTriggered(false);
-                      }}
-                    />
-                  </div>
-                  {isScheduled && (
-                    <div className="pt-2">
-                      <Label className="mb-2 block">Schedule Date</Label>
-                      <DatePicker
-                        date={scheduledDate}
-                        setDate={setScheduledDate}
-                        showTimePicker
-                      />
-                    </div>
-                  )}
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={notification.status}
+                    onValueChange={(value) => handleSelectChange('status', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="scheduled">Schedule for later</SelectItem>
+                      <SelectItem value="sent">Send immediately</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="grid gap-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="trigger">Based on trigger</Label>
-                    <Switch
-                      id="trigger"
-                      checked={isTriggered}
-                      onCheckedChange={(checked) => {
-                        setIsTriggered(checked);
-                        if (checked) setIsScheduled(false);
-                      }}
+                
+                {notification.status === 'scheduled' && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="scheduledFor">Schedule Date & Time</Label>
+                    <Input
+                      id="scheduledFor"
+                      name="scheduledFor"
+                      type="datetime-local"
+                      value={notification.scheduledFor || ''}
+                      onChange={handleInputChange}
+                      required
                     />
                   </div>
-                  {isTriggered && (
-                    <div className="grid grid-cols-3 gap-4 pt-2">
-                      <div>
-                        <Label className="mb-2 block">Trigger Type</Label>
-                        <Select
-                          value={trigger.type}
-                          onValueChange={(value) => setTrigger({...trigger, type: value as any})}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select trigger" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="order_status">Order Status</SelectItem>
-                            <SelectItem value="product_stock">Product Stock</SelectItem>
-                            <SelectItem value="user_inactivity">User Inactivity</SelectItem>
-                            <SelectItem value="abandoned_cart">Abandoned Cart</SelectItem>
-                            <SelectItem value="special_day">Special Day</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="mb-2 block">Condition</Label>
-                        <Select
-                          value={trigger.condition}
-                          onValueChange={(value) => setTrigger({...trigger, condition: value})}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Condition" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="equals">Equals</SelectItem>
-                            <SelectItem value="not_equals">Not equals</SelectItem>
-                            <SelectItem value="greater_than">Greater than</SelectItem>
-                            <SelectItem value="less_than">Less than</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="mb-2 block">Value</Label>
-                        <Input
-                          value={trigger.value || ''}
-                          onChange={(e) => setTrigger({...trigger, value: e.target.value})}
-                          placeholder="Trigger value"
-                        />
-                      </div>
-                    </div>
-                  )}
+                )}
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="targetUserRole">Target User Role (optional)</Label>
+                  <Select
+                    value={notification.targetUserRole || ''}
+                    onValueChange={(value) => handleSelectChange('targetUserRole', value || undefined)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All users" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All users</SelectItem>
+                      <SelectItem value="customer">Customers only</SelectItem>
+                      <SelectItem value="delivery">Delivery staff only</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsDialogOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {notification.id ? 'Update' : 'Create'}
+                <Button type="submit" disabled={createNotificationMutation.isPending}>
+                  {createNotificationMutation.isPending ? 'Creating...' : 'Create Notification'}
                 </Button>
               </DialogFooter>
             </form>
@@ -310,82 +246,103 @@ const NotificationsPage = () => {
             ) : notificationsQuery.data?.filter(n => tab === 'all' || n.status === tab).length === 0 ? (
               <div className="text-center py-10">No notifications found</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {notificationsQuery.data
                   ?.filter(n => tab === 'all' || n.status === tab)
-                  .map((item) => (
-                    <Card key={item.id}>
+                  .map((notification) => (
+                    <Card key={notification.id}>
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start">
-                          <CardTitle className="text-lg">{item.title}</CardTitle>
+                          <CardTitle className="text-lg">{notification.title}</CardTitle>
                           <div>
-                            {item.status === 'draft' && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            {notification.status === 'draft' && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                 Draft
                               </span>
                             )}
-                            {item.status === 'sent' && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Sent
-                              </span>
-                            )}
-                            {item.status === 'scheduled' && (
+                            {notification.status === 'scheduled' && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                 Scheduled
+                              </span>
+                            )}
+                            {notification.status === 'sent' && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Sent
                               </span>
                             )}
                           </div>
                         </div>
                         <CardDescription className="text-sm">
-                          {item.body}
+                          Created {formatDate(notification.createdAt)}
+                          {notification.sentAt && ` • Sent ${formatDate(notification.sentAt)}`}
+                          {notification.scheduledFor && ` • Scheduled for ${formatDate(notification.scheduledFor)}`}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="pb-2">
-                        {item.trigger && (
-                          <div className="flex items-center text-xs text-muted-foreground mb-2">
-                            <Settings className="h-3 w-3 mr-1" />
-                            Trigger: {item.trigger.type} {item.trigger.condition} {item.trigger.value}
+                        <p className="text-sm">{notification.body}</p>
+                        {notification.image && (
+                          <div className="mt-2">
+                            <img
+                              src={notification.image}
+                              alt="Notification image"
+                              className="h-24 rounded-md object-cover"
+                            />
                           </div>
                         )}
-                        {item.scheduledFor && (
-                          <div className="flex items-center text-xs text-muted-foreground mb-2">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Scheduled for: {format(new Date(item.scheduledFor), 'MMM dd, yyyy HH:mm')}
+                        {notification.link && (
+                          <div className="mt-2">
+                            <a
+                              href={notification.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-blue-600 hover:underline truncate block"
+                            >
+                              {notification.link}
+                            </a>
                           </div>
                         )}
-                        {item.sentAt && (
-                          <div className="flex items-center text-xs text-muted-foreground mb-2">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            Sent: {format(new Date(item.sentAt), 'MMM dd, yyyy HH:mm')}
+                        {notification.targetUserRole && (
+                          <div className="mt-2 flex items-center">
+                            <Users className="h-3 w-3 mr-1 text-gray-500" />
+                            <span className="text-xs text-gray-500">
+                              Target: {notification.targetUserRole === 'customer' ? 'Customers' : 'Delivery Staff'}
+                            </span>
                           </div>
                         )}
                       </CardContent>
                       <CardFooter className="justify-between pt-0">
-                        <div className="flex space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleEdit(item)}
+                        {notification.status === 'draft' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleSendNotification(notification)}
+                            disabled={sendNotificationMutation.isPending}
                           >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={() => deleteNotificationMutation.mutate(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {item.status !== 'sent' && (
-                          <Button 
-                            size="sm" 
-                            variant="secondary"
-                            onClick={() => handleSendNow(item)}
-                          >
-                            Send Now
+                            <Send className="h-4 w-4 mr-2" /> Send Now
                           </Button>
                         )}
+                        {notification.status === 'scheduled' && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleSendNotification(notification)}
+                            disabled={sendNotificationMutation.isPending}
+                          >
+                            <Send className="h-4 w-4 mr-2" /> Send Now
+                          </Button>
+                        )}
+                        {notification.status === 'sent' && (
+                          <Button size="sm" variant="outline" disabled>
+                            <Clock className="h-4 w-4 mr-2" /> Sent
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteNotification(notification.id)}
+                          disabled={deleteNotificationMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </CardFooter>
                     </Card>
                   ))}

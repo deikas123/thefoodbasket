@@ -376,6 +376,51 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          image: string | null
+          link: string | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          target_user_ids: string[] | null
+          target_user_role: string | null
+          title: string
+          trigger: Json | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          image?: string | null
+          link?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status: string
+          target_user_ids?: string[] | null
+          target_user_role?: string | null
+          title: string
+          trigger?: Json | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          image?: string | null
+          link?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          target_user_ids?: string[] | null
+          target_user_role?: string | null
+          title?: string
+          trigger?: Json | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -741,6 +786,48 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      website_sections: {
+        Row: {
+          active: boolean
+          content: string | null
+          id: string
+          image: string | null
+          name: string
+          position: number
+          settings: Json | null
+          subtitle: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          content?: string | null
+          id?: string
+          image?: string | null
+          name: string
+          position?: number
+          settings?: Json | null
+          subtitle?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          content?: string | null
+          id?: string
+          image?: string | null
+          name?: string
+          position?: number
+          settings?: Json | null
+          subtitle?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -9,7 +9,7 @@ export const getNotifications = async (): Promise<Notification[]> => {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .order('createdAt', { ascending: false });
+      .order('created_at', { ascending: false });
       
     if (error) throw error;
     return data || [];
@@ -26,7 +26,7 @@ export const createNotification = async (notification: Omit<Notification, 'id' |
       .from('notifications')
       .insert({
         ...notification,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -95,7 +95,7 @@ export const sendPushNotification = async (notification: Notification): Promise<
       .from('notifications')
       .update({ 
         status: 'sent',
-        sentAt: new Date().toISOString()
+        sent_at: new Date().toISOString()
       })
       .eq('id', notification.id);
       
