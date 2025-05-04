@@ -1,6 +1,6 @@
 
-import { Route, Fragment } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { Route } from "react-router-dom";
+import { lazy, Suspense, Fragment } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import LoadingFallback from "@/components/ui/LoadingFallback";
 
