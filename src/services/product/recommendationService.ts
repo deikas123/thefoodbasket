@@ -1,10 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
-import { ProductType } from "@/types/supabase";
 import { convertToProducts } from "@/utils/typeConverters";
 
-// Add additional helper function for recommended products
+// Get products frequently purchased together with a specific product
 export const getFrequentlyPurchasedTogether = async (productId: string): Promise<Product[]> => {
   try {
     // Get the product to find its category
@@ -19,10 +18,11 @@ export const getFrequentlyPurchasedTogether = async (productId: string): Promise
       return [];
     }
     
-    // Find other products in the same category
+    // Find other products in the same category (for demonstration)
+    // In a real application, you might want to analyze order history to find actual frequently purchased together products
     const { data: relatedProducts, error } = await supabase
       .from('products')
-      .select('*, categories(name, slug)')
+      .select('*')
       .eq('category_id', product.category_id)
       .neq('id', productId)
       .limit(4);
@@ -32,24 +32,7 @@ export const getFrequentlyPurchasedTogether = async (productId: string): Promise
       return [];
     }
     
-    const relatedProductTypes = relatedProducts.map(item => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      image: item.image,
-      category: item.categories?.slug || '',
-      stock: item.stock,
-      featured: item.featured,
-      rating: item.rating,
-      num_reviews: item.num_reviews,
-      numReviews: item.num_reviews,
-      discountPercentage: item.discount_percentage,
-      created_at: item.created_at,
-      updated_at: item.updated_at
-    }));
-    
-    return convertToProducts(relatedProductTypes);
+    return convertToProducts(relatedProducts);
   } catch (error) {
     console.error("Error fetching related products:", error);
     return [];

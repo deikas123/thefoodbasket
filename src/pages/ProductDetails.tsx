@@ -1,15 +1,15 @@
+
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getProductById, getCategoryById, getFrequentlyPurchasedTogether } from "@/services/productService";
+import { getProductById, getCategoryById } from "@/services/productService";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import RecommendedProducts from "@/components/RecommendedProducts";
 import { Button } from "@/components/ui/button";
 import { 
-  Card, 
+  Card,
   CardContent,
   CardFooter
 } from "@/components/ui/card";
@@ -25,9 +25,8 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertCircle,
-  Zap,
+  HeartOff,
   Loader2,
-  HeartOff
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -36,14 +35,16 @@ import { formatCurrency } from "@/utils/currencyFormatter";
 import AddToAutoReplenishButton from "@/components/product/AddToAutoReplenishButton";
 import { convertToProduct } from "@/utils/typeConverters";
 import ProductReviews from "@/components/product/ProductReviews";
+import FrequentlyPurchasedTogether from "@/components/product/FrequentlyPurchasedTogether";
 
 const ProductDetails = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   
   const { addItem } = useCart();
-  const { addItem: addToWishlist, isInWishlist, removeItem } = useWishlist();
+  const { addItem: addToWishlist, isInWishlist, removeItem: removeFromWishlist } = useWishlist();
   
   const productQuery = useQuery({
     queryKey: ["product", productId],
@@ -82,9 +83,19 @@ const ProductDetails = () => {
     }
   };
   
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product) {
-      addItem(convertToProduct(product), quantity);
+      setIsAddingToCart(true);
+      try {
+        addItem(convertToProduct(product), quantity);
+        toast({
+          title: "Added to cart",
+          description: `${quantity} × ${product.name} added to your cart`,
+          variant: "default",
+        });
+      } finally {
+        setIsAddingToCart(false);
+      }
     }
   };
   
@@ -99,9 +110,19 @@ const ProductDetails = () => {
     if (!product) return;
     
     if (isInWishlist(product.id)) {
-      removeItem(product.id);
+      removeFromWishlist(product.id);
+      toast({
+        title: "Removed from wishlist",
+        description: `${product.name} has been removed from your wishlist`,
+        variant: "default",
+      });
     } else {
       addToWishlist(convertToProduct(product));
+      toast({
+        title: "Added to wishlist",
+        description: `${product.name} has been added to your wishlist`,
+        variant: "default",
+      });
     }
   };
   
@@ -109,8 +130,6 @@ const ProductDetails = () => {
     navigate(-1);
   };
   
-  const isAddingToCart = productQuery.isLoading || productQuery.isError || !product;
-
   if (productQuery.isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -312,11 +331,20 @@ const ProductDetails = () => {
                 </Button>
 
                 <Button
-                  variant={isInWishlist ? "default" : "outline"}
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={handleBuyNow}
+                  disabled={product.stock === 0}
+                >
+                  Buy Now
+                </Button>
+
+                <Button
+                  variant={isInWishlist(product.id) ? "default" : "outline"}
                   className="gap-2"
                   onClick={toggleWishlist}
                 >
-                  {isInWishlist ? (
+                  {isInWishlist(product.id) ? (
                     <>
                       <HeartOff className="h-4 w-4" />
                       Remove from Wishlist
@@ -357,7 +385,7 @@ const ProductDetails = () => {
             </div>
           </div>
           
-          {/* Product reviews section - NEW */}
+          {/* Product reviews section */}
           {product && (
             <div className="mt-16">
               <Separator className="mb-8" />
@@ -365,16 +393,13 @@ const ProductDetails = () => {
             </div>
           )}
           
-          {/* Recommended products section */}
-          <div className="mt-16">
-            <Separator className="mb-8" />
-            {product && (
-              <RecommendedProducts 
-                currentProductId={product.id} 
-                currentProductCategory={product.category} 
-              />
-            )}
-          </div>
+          {/* Frequently purchased together section */}
+          {product && (
+            <div className="mt-16">
+              <Separator className="mb-8" />
+              <FrequentlyPurchasedTogether productId={product.id} />
+            </div>
+          )}
         </div>
       </main>
       <Footer />
