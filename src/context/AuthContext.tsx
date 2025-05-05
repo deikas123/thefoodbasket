@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
+import { getUserRole } from "@/services/roleService";
 
 export interface User {
   id: string;
@@ -83,6 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUserProfile = async (authUser: SupabaseUser) => {
     try {
+      // Get user profile
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -93,12 +95,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Error fetching profile:', error);
       }
 
+      // Get user role
+      const userRole = await getUserRole(authUser.id);
+      console.log("User role from database:", userRole);
+
       const userData: User = {
         id: authUser.id,
         email: authUser.email || '',
         first_name: profile?.first_name || '',
         last_name: profile?.last_name || '',
-        role: profile?.role || 'customer',
+        role: userRole || 'customer',
         // Add compatibility fields
         firstName: profile?.first_name || '',
         lastName: profile?.last_name || '',
@@ -108,6 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         addresses: profile?.addresses || [],
       };
 
+      console.log("Setting user with role:", userData.role);
       setUser(userData);
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);

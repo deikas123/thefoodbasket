@@ -15,6 +15,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("AdminLayout mounting, user:", user);
+    
     // Check if user is authenticated
     if (!user) {
       toast.error("Authentication Required", {

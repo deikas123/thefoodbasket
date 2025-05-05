@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/supabase";
 
 export const getUserRole = async (userId: string): Promise<UserRole | null> => {
+  console.log("Fetching role for user:", userId);
   const { data, error } = await supabase
     .from('user_roles')
     .select('role')
@@ -19,6 +20,7 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
     throw error;
   }
   
+  console.log("Role found in database:", data.role);
   return data.role as UserRole;
 };
 
