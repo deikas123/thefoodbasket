@@ -15,13 +15,11 @@ import { useWishlist } from "@/context/WishlistContext";
 import { toast } from "@/hooks/use-toast";
 import { convertToProduct } from "@/utils/typeConverters";
 import AddToAutoReplenishButton from "@/components/product/AddToAutoReplenishButton";
+import { ProductType } from "@/types/supabase";
+import { Product } from "@/types";
 
 interface ProductActionsProps {
-  product: {
-    id: string;
-    name: string;
-    stock: number;
-  } & Record<string, any>;
+  product: ProductType;
 }
 
 const ProductActions = ({ product }: ProductActionsProps) => {
@@ -54,7 +52,22 @@ const ProductActions = ({ product }: ProductActionsProps) => {
     if (product) {
       setIsAddingToCart(true);
       try {
-        addItem(convertToProduct(product), quantity);
+        // Create a full Product object that meets all requirements
+        const fullProduct: Product = {
+          id: product.id,
+          name: product.name,
+          description: product.description || "",
+          price: product.price || 0,
+          image: product.image || "",
+          category: product.category || "",
+          stock: product.stock || 0,
+          featured: product.featured || false,
+          rating: product.rating || 0,
+          numReviews: product.numReviews || product.num_reviews || 0,
+          discountPercentage: product.discountPercentage || 0
+        };
+        
+        addItem(fullProduct, quantity);
         toast({
           title: "Added to cart",
           description: `${quantity} × ${product.name} added to your cart`,
@@ -68,7 +81,22 @@ const ProductActions = ({ product }: ProductActionsProps) => {
   
   const handleBuyNow = () => {
     if (product) {
-      addItem(convertToProduct(product), quantity);
+      // Create a full Product object that meets all requirements
+      const fullProduct: Product = {
+        id: product.id,
+        name: product.name,
+        description: product.description || "",
+        price: product.price || 0,
+        image: product.image || "",
+        category: product.category || "",
+        stock: product.stock || 0,
+        featured: product.featured || false,
+        rating: product.rating || 0,
+        numReviews: product.numReviews || product.num_reviews || 0,
+        discountPercentage: product.discountPercentage || 0
+      };
+      
+      addItem(fullProduct, quantity);
       navigate('/checkout');
     }
   };
@@ -84,7 +112,22 @@ const ProductActions = ({ product }: ProductActionsProps) => {
         variant: "default",
       });
     } else {
-      addToWishlist(convertToProduct(product));
+      // Create a full Product object that meets all requirements
+      const fullProduct: Product = {
+        id: product.id,
+        name: product.name,
+        description: product.description || "",
+        price: product.price || 0,
+        image: product.image || "",
+        category: product.category || "",
+        stock: product.stock || 0,
+        featured: product.featured || false,
+        rating: product.rating || 0,
+        numReviews: product.numReviews || product.num_reviews || 0,
+        discountPercentage: product.discountPercentage || 0
+      };
+      
+      addToWishlist(fullProduct);
       toast({
         title: "Added to wishlist",
         description: `${product.name} has been added to your wishlist`,
