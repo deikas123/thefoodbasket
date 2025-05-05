@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/utils/currencyFormatter";
@@ -30,6 +30,28 @@ const ProductInfo = ({ product, category }: ProductInfoProps) => {
       )}
       
       <h1 className="text-3xl font-bold">{product.name}</h1>
+      
+      {/* Product Rating */}
+      <div className="flex items-center gap-1">
+        <div className="flex">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              className={`h-4 w-4 ${
+                star <= Math.round(product.rating || 0)
+                  ? 'text-yellow-400 fill-yellow-400'
+                  : 'text-gray-300'
+              }`}
+            />
+          ))}
+        </div>
+        <span className="text-sm text-muted-foreground ml-1">
+          ({product.rating ? product.rating.toFixed(1) : '0'}/5)
+        </span>
+        <span className="text-sm text-muted-foreground ml-1">
+          {product.numReviews || 0} reviews
+        </span>
+      </div>
       
       <div className="mt-2 flex items-baseline gap-2">
         {salePrice ? (

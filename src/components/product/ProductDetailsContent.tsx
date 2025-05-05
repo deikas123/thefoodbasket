@@ -3,6 +3,7 @@ import ProductImageGallery from "@/components/product/ProductImageGallery";
 import ProductInfo from "@/components/product/ProductInfo";
 import ProductActions from "@/components/product/ProductActions";
 import ProductShippingInfo from "@/components/product/ProductShippingInfo";
+import ProductReviews from "@/components/product/ProductReviews";
 import { ProductType } from "@/types/supabase";
 
 interface ProductDetailsContentProps {
@@ -29,6 +30,11 @@ const ProductDetailsContent = ({ product, category }: ProductDetailsContentProps
         <ProductInfo product={product} category={category} />
         <ProductActions product={product} />
         <ProductShippingInfo />
+      </div>
+
+      {/* Product reviews section - Full width */}
+      <div className="col-span-1 md:col-span-2">
+        <ProductReviews productId={product.id} />
       </div>
     </div>
   );

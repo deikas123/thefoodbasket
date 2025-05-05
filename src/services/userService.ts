@@ -229,27 +229,32 @@ export const addUserAddress = async (userId: string, addressData: {
   zip_code: string;
   is_default: boolean;
 }) => {
-  // If this is the default address, unset other defaults
-  if (addressData.is_default) {
-    await supabase
-      .from('addresses')
-      .update({ is_default: false })
-      .eq('user_id', userId);
-  }
-  
-  // Add new address
-  const { data, error } = await supabase
-    .from('addresses')
-    .insert([{ user_id: userId, ...addressData }])
-    .select()
-    .single();
+  try {
+    // If this is the default address, unset other defaults
+    if (addressData.is_default) {
+      await supabase
+        .from('addresses')
+        .update({ is_default: false })
+        .eq('user_id', userId);
+    }
     
-  if (error) {
-    console.error("Error adding address:", error);
+    // Add new address
+    const { data, error } = await supabase
+      .from('addresses')
+      .insert([{ user_id: userId, ...addressData }])
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error adding address:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in addUserAddress:", error);
     throw error;
   }
-  
-  return data;
 };
 
 export const updateUserAddress = async (addressId: string, addressData: {
@@ -259,28 +264,33 @@ export const updateUserAddress = async (addressId: string, addressData: {
   zip_code?: string;
   is_default?: boolean;
 }, userId: string) => {
-  // If this is being set as default, unset other defaults
-  if (addressData.is_default) {
-    await supabase
-      .from('addresses')
-      .update({ is_default: false })
-      .eq('user_id', userId);
-  }
-  
-  // Update address
-  const { data, error } = await supabase
-    .from('addresses')
-    .update(addressData)
-    .eq('id', addressId)
-    .select()
-    .single();
+  try {
+    // If this is being set as default, unset other defaults
+    if (addressData.is_default) {
+      await supabase
+        .from('addresses')
+        .update({ is_default: false })
+        .eq('user_id', userId);
+    }
     
-  if (error) {
-    console.error("Error updating address:", error);
+    // Update address
+    const { data, error } = await supabase
+      .from('addresses')
+      .update(addressData)
+      .eq('id', addressId)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error updating address:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in updateUserAddress:", error);
     throw error;
   }
-  
-  return data;
 };
 
 export const deleteUserAddress = async (addressId: string) => {

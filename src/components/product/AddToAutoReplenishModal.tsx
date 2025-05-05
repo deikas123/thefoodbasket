@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { addToAutoReplenish } from '@/services/autoReplenishService';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 interface AddToAutoReplenishModalProps {
   isOpen: boolean;
@@ -34,14 +35,26 @@ const AddToAutoReplenishModal = ({ isOpen, onClose, productId, productName }: Ad
     
     setIsSubmitting(true);
     try {
-      await addToAutoReplenish(
+      const success = await addToAutoReplenish(
         productId,
         quantity,
         parseInt(frequency)
       );
-      onClose();
+      
+      if (success) {
+        toast({
+          title: "Success!",
+          description: `${productName} has been added to your Auto-Replenish schedule.`,
+        });
+        onClose();
+      }
     } catch (error) {
       console.error("Error adding to auto replenish:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem setting up Auto-Replenish. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -75,7 +88,7 @@ const AddToAutoReplenishModal = ({ isOpen, onClose, productId, productName }: Ad
                 type="number"
                 min={1}
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value))}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                 className="col-span-3"
               />
             </div>

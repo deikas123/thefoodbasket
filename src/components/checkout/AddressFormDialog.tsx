@@ -152,6 +152,7 @@ const AddressFormDialog = ({
       
       onOpenChange(false);
     } catch (error: any) {
+      console.error("Error saving address:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save the address. Please try again.",
