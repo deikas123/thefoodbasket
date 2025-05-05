@@ -3,18 +3,10 @@ import ProductImageGallery from "@/components/product/ProductImageGallery";
 import ProductInfo from "@/components/product/ProductInfo";
 import ProductActions from "@/components/product/ProductActions";
 import ProductShippingInfo from "@/components/product/ProductShippingInfo";
+import { ProductType } from "@/types/supabase";
 
 interface ProductDetailsContentProps {
-  product: {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    image: string;
-    stock: number;
-    discountPercentage?: number;
-    featured?: boolean;
-  };
+  product: ProductType;
   category?: {
     id: string;
     name: string;

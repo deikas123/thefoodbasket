@@ -4,16 +4,10 @@ import { AlertCircle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/utils/currencyFormatter";
+import { ProductType } from "@/types/supabase";
 
 interface ProductInfoProps {
-  product: {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    discountPercentage?: number;
-    stock: number;
-  };
+  product: ProductType;
   category?: {
     id: string;
     name: string;
