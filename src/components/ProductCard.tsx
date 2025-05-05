@@ -50,6 +50,9 @@ const ProductCard = memo(({ product, className }: ProductCardProps) => {
 
   const isWishlisted = isInWishlist(product.id);
 
+  // Format rating display with the same rounding logic across all components
+  const formattedRating = product.rating ? Number(product.rating).toFixed(1) : '0.0';
+
   return (
     <div className={cn("group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow duration-300", className)}>
       {/* Wishlist button */}
@@ -103,7 +106,7 @@ const ProductCard = memo(({ product, className }: ProductCardProps) => {
           <div className="flex items-center gap-1 mt-1 mb-2">
             <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {product.rating} ({product.numReviews})
+              {formattedRating} ({product.numReviews || 0})
             </span>
           </div>
           

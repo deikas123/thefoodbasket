@@ -2,21 +2,6 @@
 import React, { ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  LayoutGrid, 
-  ShoppingBag, 
-  Tag, 
-  Users, 
-  Truck, 
-  FileCheck, 
-  Settings,
-  Package,
-  Image,
-  Ticket,
-  BadgePercent,
-  Calendar,
-  Bell
-} from "lucide-react";
 import { toast } from "sonner";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -35,9 +20,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       toast.error("Authentication Required", {
         description: "Please log in to access the admin panel"
       });
-      navigate("/admin/login", { state: { from: window.location.pathname } });
+      navigate("/login", { state: { from: window.location.pathname } });
       return;
     }
+    
+    console.log("Current user role:", user.role);
     
     // Check if user is admin
     if (user.role !== "admin") {
@@ -49,7 +36,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   }, [user, navigate]);
 
   // Don't render the admin layout if no user or not an admin
-  if (!user || user.role !== "admin") {
+  if (!user) {
+    return null;
+  }
+  
+  // Additional check to prevent non-admin users from seeing the admin layout
+  if (user.role !== "admin") {
     return null;
   }
 
