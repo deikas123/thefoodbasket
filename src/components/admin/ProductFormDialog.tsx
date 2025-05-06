@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -171,8 +170,10 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       // Upload image if there's a new file
       let imageUrl = values.image;
       if (imageFile) {
+        console.log("Uploading image file:", imageFile.name);
         const uploadedUrl = await uploadProductImage(imageFile);
         if (uploadedUrl) {
+          console.log("Image uploaded successfully:", uploadedUrl);
           imageUrl = uploadedUrl;
         } else {
           // If upload failed and we don't have an existing image
@@ -182,6 +183,10 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             return;
           }
         }
+      } else if (!values.image && !product?.image) {
+        toast.error("Please upload a product image");
+        setIsSubmitting(false);
+        return;
       }
       
       if (product) {
@@ -224,7 +229,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
           if (tagError) console.error("Error updating product tags:", tagError);
         }
         
-        toast("Product updated successfully");
+        toast.success("Product updated successfully");
       } else {
         // Create new product
         const { data, error } = await supabase
@@ -262,7 +267,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
           if (tagError) console.error("Error adding product tags:", tagError);
         }
         
-        toast("Product created successfully");
+        toast.success("Product created successfully");
       }
 
       // Invalidate queries to refresh product data
@@ -273,7 +278,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error saving product:", error);
-      toast("Failed to save product");
+      toast.error("Failed to save product: " + (error.message || "Unknown error"));
     } finally {
       setIsSubmitting(false);
     }

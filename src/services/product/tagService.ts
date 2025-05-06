@@ -1,6 +1,88 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ProductTag } from "@/components/admin/tags/TagsManager";
+import { toast } from "sonner";
+
+export interface ProductTag {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export const createTag = async (name: string): Promise<ProductTag | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('product_tags')
+      .insert([{ name }])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating tag:", error);
+      toast.error("Failed to create tag");
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      createdAt: data.created_at
+    };
+  } catch (error) {
+    console.error("Error in createTag:", error);
+    toast.error("An error occurred while creating the tag");
+    return null;
+  }
+};
+
+export const updateTag = async (id: string, name: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('product_tags')
+      .update({ name })
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error updating tag:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in updateTag:", error);
+    return false;
+  }
+};
+
+export const deleteTag = async (id: string): Promise<boolean> => {
+  try {
+    // First delete all relations to this tag
+    const { error: relationError } = await supabase
+      .from('product_tag_relations')
+      .delete()
+      .eq('tag_id', id);
+    
+    if (relationError) {
+      console.error("Error deleting tag relations:", relationError);
+      return false;
+    }
+    
+    // Then delete the tag itself
+    const { error } = await supabase
+      .from('product_tags')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error deleting tag:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in deleteTag:", error);
+    return false;
+  }
+};
 
 export const getAllTags = async (): Promise<ProductTag[]> => {
   try {
@@ -14,47 +96,18 @@ export const getAllTags = async (): Promise<ProductTag[]> => {
       return [];
     }
     
-    return data;
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    return data.map(tag => ({
+      id: tag.id,
+      name: tag.name,
+      createdAt: tag.created_at
+    }));
   } catch (error) {
-    console.error("Error fetching tags:", error);
+    console.error("Error in getAllTags:", error);
     return [];
-  }
-};
-
-export const createTag = async (name: string): Promise<ProductTag | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('product_tags')
-      .insert([{ name }])
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error creating tag:", error);
-      throw error;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error("Error creating tag:", error);
-    throw error;
-  }
-};
-
-export const deleteTag = async (id: string): Promise<void> => {
-  try {
-    const { error } = await supabase
-      .from('product_tags')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error("Error deleting tag:", error);
-      throw error;
-    }
-  } catch (error) {
-    console.error("Error deleting tag:", error);
-    throw error;
   }
 };
 
@@ -62,7 +115,7 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
   try {
     const { data, error } = await supabase
       .from('product_tag_relations')
-      .select('tag_id, product_tags(*)')
+      .select('product_tags(*)')
       .eq('product_id', productId);
     
     if (error) {
@@ -70,80 +123,25 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
       return [];
     }
     
-    // Log the structure for debugging
-    console.log("Product tags data structure:", JSON.stringify(data, null, 2));
+    if (!data || data.length === 0) {
+      return [];
+    }
     
-    // Map the data properly based on the structure
-    return data.map(item => {
-      // Handle the case where product_tags might be an array or object
-      if (item && item.product_tags) {
-        // If it's an array, take the first element (assuming it contains our tag)
-        if (Array.isArray(item.product_tags)) {
-          const tag = item.product_tags[0];
-          if (tag && typeof tag === 'object' && 'id' in tag && 'name' in tag) {
-            return {
-              id: tag.id,
-              name: tag.name,
-              created_at: tag.created_at || new Date().toISOString()
-            } as ProductTag;
-          }
-          return null;
-        }
+    return data
+      .filter(item => item.product_tags)
+      .map(item => {
+        const tagData = item.product_tags;
+        if (!tagData) return null;
         
-        // If it's an object (the expected case)
-        const tagObj = item.product_tags as Record<string, any>;
-        if (typeof tagObj === 'object' && 'id' in tagObj && 'name' in tagObj) {
-          return {
-            id: tagObj.id,
-            name: tagObj.name,
-            created_at: tagObj.created_at || new Date().toISOString()
-          } as ProductTag;
-        }
-      }
-      
-      // Fallback in case structure is unexpected
-      console.warn("Unexpected structure for product tag:", item);
-      return null;
-    }).filter((tag): tag is ProductTag => tag !== null); // Filter out any null values
+        return {
+          id: tagData.id,
+          name: tagData.name,
+          createdAt: tagData.created_at
+        };
+      })
+      .filter((tag): tag is ProductTag => tag !== null);
   } catch (error) {
-    console.error("Error fetching product tags:", error);
+    console.error("Error in getProductTags:", error);
     return [];
-  }
-};
-
-export const addTagToProduct = async (productId: string, tagId: string): Promise<void> => {
-  try {
-    const { error } = await supabase
-      .from('product_tag_relations')
-      .insert([{ product_id: productId, tag_id: tagId }]);
-    
-    if (error) {
-      if (error.code === '23505') { // Unique constraint violation
-        console.log("Tag already associated with product");
-        return;
-      }
-      console.error("Error adding tag to product:", error);
-      throw error;
-    }
-  } catch (error) {
-    console.error("Error adding tag to product:", error);
-    throw error;
-  }
-};
-
-export const removeTagFromProduct = async (productId: string, tagId: string): Promise<void> => {
-  try {
-    const { error } = await supabase
-      .from('product_tag_relations')
-      .delete()
-      .match({ product_id: productId, tag_id: tagId });
-    
-    if (error) {
-      console.error("Error removing tag from product:", error);
-      throw error;
-    }
-  } catch (error) {
-    console.error("Error removing tag from product:", error);
-    throw error;
   }
 };
