@@ -1,104 +1,216 @@
 
 import { useState } from "react";
-import { Separator } from "@/components/ui/separator";
-import { Star } from "lucide-react";
-import { formatCurrency } from "@/utils/currencyFormatter";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Minus, Plus, ShoppingCart, Heart, Star, Package, Truck, Clock } from "lucide-react";
 import { ProductType } from "@/types/supabase";
+import { formatCurrency } from "@/utils/currencyFormatter";
+import { toast } from "sonner";
+import AddToAutoReplenishButton from "./AddToAutoReplenishButton";
 
 interface ProductInfoProps {
   product: ProductType;
-  category?: {
-    id: string;
-    name: string;
-  } | null;
 }
 
-const ProductInfo = ({ product, category }: ProductInfoProps) => {
-  // Format the rating consistently with other components
-  const formattedRating = product.rating ? Number(product.rating).toFixed(1) : '0.0';
+const ProductInfo = ({ product }: ProductInfoProps) => {
+  const [quantity, setQuantity] = useState(1);
+  const { addItem } = useCart();
+  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
+  const isProductInWishlist = isInWishlist(product.id);
   
-  // Calculate the discounted price if there is a discount
-  const discountedPrice = product.discountPercentage
-    ? product.price * (1 - product.discountPercentage / 100)
+  // Calculate discounted price if applicable
+  const discountedPrice = product.discountPercentage 
+    ? product.price * (1 - product.discountPercentage / 100) 
     : null;
-
+  
+  const increaseQuantity = () => {
+    if (quantity < (product.stock || 10)) {
+      setQuantity(quantity + 1);
+    } else {
+      toast.info("Quantity limit reached", {
+        description: "You've reached the maximum available quantity for this product."
+      });
+    }
+  };
+  
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
+  
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 1 && value <= (product.stock || 10)) {
+      setQuantity(value);
+    }
+  };
+  
+  const handleAddToCart = () => {
+    if (product.stock <= 0) {
+      toast.error("Product out of stock", {
+        description: "This product is currently unavailable"
+      });
+      return;
+    }
+    
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: discountedPrice || product.price,
+      image: product.image ? product.image.split(',')[0].trim() : '',
+      quantity: quantity
+    });
+    
+    toast.success("Added to cart", {
+      description: `${product.name} has been added to your cart`
+    });
+  };
+  
+  const toggleWishlist = () => {
+    if (isProductInWishlist) {
+      removeFromWishlist(product.id);
+      toast.success("Removed from wishlist", {
+        description: `${product.name} has been removed from your wishlist`
+      });
+    } else {
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: discountedPrice || product.price,
+        image: product.image ? product.image.split(',')[0].trim() : ''
+      });
+      toast.success("Added to wishlist", {
+        description: `${product.name} has been added to your wishlist`
+      });
+    }
+  };
+  
   return (
-    <div className="space-y-4">
-      {/* Product Name */}
-      <h1 className="text-2xl md:text-3xl font-bold">{product.name}</h1>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">{product.name}</h1>
       
-      {/* Product Rating */}
-      <div className="flex items-center space-x-2">
-        <div className="flex">
-          {[1, 2, 3, 4, 5].map((star) => (
+      {/* Rating */}
+      <div className="flex items-center">
+        <div className="flex mr-2">
+          {[...Array(5)].map((_, i) => (
             <Star
-              key={star}
+              key={i}
               className={`h-5 w-5 ${
-                star <= Math.round(product.rating)
-                  ? 'text-yellow-400 fill-yellow-400'
-                  : 'text-gray-300'
+                i < Math.round(product.rating)
+                  ? "text-yellow-400 fill-yellow-400"
+                  : "text-gray-300"
               }`}
             />
           ))}
         </div>
-        <span className="font-medium">{formattedRating}/5</span>
-        <span className="text-muted-foreground">
-          ({product.numReviews} {product.numReviews === 1 ? 'review' : 'reviews'})
+        <span className="text-sm text-gray-500">
+          {product.rating.toFixed(1)} ({product.numReviews || product.num_reviews || 0} reviews)
         </span>
       </div>
       
-      {/* Product Price */}
-      <div className="flex items-center space-x-3 mt-2">
+      {/* Price */}
+      <div>
         {discountedPrice ? (
-          <>
-            <span className="text-2xl font-bold">
-              {formatCurrency(discountedPrice)}
-            </span>
-            <span className="text-lg text-muted-foreground line-through">
-              {formatCurrency(product.price)}
-            </span>
-            <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold">{formatCurrency(discountedPrice)}</span>
+            <span className="text-gray-500 line-through">{formatCurrency(product.price)}</span>
+            <span className="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">
               {product.discountPercentage}% OFF
             </span>
-          </>
+          </div>
         ) : (
-          <span className="text-2xl font-bold">
-            {formatCurrency(product.price)}
-          </span>
+          <span className="text-2xl font-bold">{formatCurrency(product.price)}</span>
         )}
       </div>
       
-      {/* Stock Status */}
-      <div className="mt-2">
-        {product.stock > 0 ? (
-          <span className="text-green-600 font-medium">In Stock ({product.stock} available)</span>
-        ) : (
-          <span className="text-red-600 font-medium">Out of Stock</span>
-        )}
-      </div>
-      
-      <Separator />
-      
-      {/* Product Description */}
+      {/* Stock status */}
       <div>
-        <h2 className="text-lg font-semibold mb-2">Description</h2>
-        <p className="text-muted-foreground whitespace-pre-line">
-          {product.description}
+        {product.stock > 0 ? (
+          <p className="text-green-600 flex items-center">
+            <Package className="mr-1 h-4 w-4" />
+            In Stock ({product.stock} available)
+          </p>
+        ) : (
+          <p className="text-red-600 flex items-center">
+            <Package className="mr-1 h-4 w-4" />
+            Out of Stock
+          </p>
+        )}
+      </div>
+      
+      {/* Description */}
+      <p className="text-gray-700">{product.description}</p>
+      
+      {/* Shipping info */}
+      <div className="space-y-2">
+        <p className="flex items-center text-sm text-gray-600">
+          <Truck className="mr-2 h-4 w-4" />
+          Free delivery for orders over KSh 2,000
+        </p>
+        <p className="flex items-center text-sm text-gray-600">
+          <Clock className="mr-2 h-4 w-4" />
+          Usually dispatched within 24 hours
         </p>
       </div>
       
-      <Separator />
-      
-      {/* Additional Info */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <h3 className="text-sm font-medium text-muted-foreground">Category</h3>
-          <p>{category?.name || 'Uncategorized'}</p>
+      {/* Quantity selector and buttons */}
+      <div className="space-y-4">
+        <div className="flex items-center">
+          <span className="mr-4">Quantity:</span>
+          <div className="flex items-center">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={decreaseQuantity}
+              disabled={quantity <= 1}
+              className="h-9 w-9"
+            >
+              <Minus className="h-3 w-3" />
+            </Button>
+            <Input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={handleQuantityChange}
+              className="w-16 h-9 mx-1 text-center"
+            />
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={increaseQuantity}
+              disabled={quantity >= (product.stock || 10)}
+              className="h-9 w-9"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
         
-        <div>
-          <h3 className="text-sm font-medium text-muted-foreground">Product ID</h3>
-          <p>{product.id.substring(0, 8)}</p>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            size="lg"
+            onClick={handleAddToCart}
+            disabled={product.stock <= 0}
+            className="flex-1"
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Add to Cart
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={toggleWishlist}
+            className="flex-1"
+          >
+            <Heart className={`mr-2 h-4 w-4 ${isProductInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
+            {isProductInWishlist ? "In Wishlist" : "Add to Wishlist"}
+          </Button>
+          
+          <AddToAutoReplenishButton product={product} />
         </div>
       </div>
     </div>

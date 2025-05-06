@@ -29,7 +29,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { convertToProducts } from "@/utils/typeConverters";
 import { ProductType } from "@/types/supabase";
 
 const Shop = () => {
@@ -143,7 +142,7 @@ const Shop = () => {
                 onCheckedChange={() => setSelectedCategory(category.id)}
               />
               <Label htmlFor={`category-${category.id}`}>
-                {category.name} ({category.productCount})
+                {category.name} ({category.productCount || 0})
               </Label>
             </div>
           ))}

@@ -1,48 +1,55 @@
-import { useState, useEffect } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { ProductType } from "@/types/supabase";
+import { z } from "zod";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { createProduct, updateProduct } from "@/services/product";
 import { getCategories } from "@/services/product/categoryService";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { toast } from "@/components/ui/use-toast";
 
-// Form validation schema
-const productSchema = z.object({
-  name: z.string().min(2, { message: "Product name must be at least 2 characters" }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
-  price: z.coerce.number().positive({ message: "Price must be a positive number" }),
-  image: z.string().url({ message: "Please enter a valid image URL" }),
-  category: z.string().min(1, { message: "Please select a category" }),
-  stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer" }),
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ProductType } from "@/types/supabase";
+import { Trash2, Upload, X } from "lucide-react";
+
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(1, "Description is required"),
+  price: z.coerce.number().positive("Price must be positive"),
+  category: z.string().min(1, "Category is required"),
+  stock: z.coerce.number().int().nonnegative("Stock must be a non-negative integer"),
   featured: z.boolean().default(false),
-  rating: z.coerce.number().min(0).max(5).optional().default(0),
-  numReviews: z.coerce.number().int().nonnegative().optional().default(0),
-  discountPercentage: z.coerce.number().min(0).max(100).optional()
+  discount: z.coerce.number().min(0).max(100).optional(),
+  // Handle images in component state instead of form state
 });
 
-type ProductFormValues = z.infer<typeof productSchema>;
+type FormValues = z.infer<typeof formSchema>;
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -51,70 +58,91 @@ interface ProductFormDialogProps {
 }
 
 const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogProps) => {
+  const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  
   const queryClient = useQueryClient();
-  const isEditing = !!product;
-
-  // Fetch categories
-  const { data: categories = [] } = useQuery({
+  
+  const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: getCategories
   });
-
-  // Create form with validation
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
       price: 0,
-      image: "",
       category: "",
       stock: 0,
       featured: false,
-      rating: 0,
-      numReviews: 0,
-      discountPercentage: 0
+      discount: 0
     }
   });
-
-  // Set form values when editing an existing product
+  
   useEffect(() => {
-    if (isEditing && product) {
+    if (product) {
       form.reset({
         name: product.name,
         description: product.description,
         price: product.price,
-        image: product.image,
         category: product.category,
         stock: product.stock,
         featured: product.featured,
-        rating: product.rating,
-        numReviews: product.numReviews || 0,
-        discountPercentage: product.discountPercentage || 0
+        discount: product.discountPercentage || 0
       });
+      
+      // Set current image
+      if (product.image) {
+        const images = product.image.split(',').map(img => img.trim());
+        setImages(images);
+      } else {
+        setImages([]);
+      }
     } else {
       form.reset({
         name: "",
         description: "",
         price: 0,
-        image: "",
         category: "",
         stock: 0,
         featured: false,
-        rating: 0,
-        numReviews: 0,
-        discountPercentage: 0
+        discount: 0
+      });
+      setImages([]);
+      setImageFiles([]);
+    }
+  }, [product, form]);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setImageFiles(prev => [...prev, ...newFiles]);
+      
+      // Create preview URLs
+      newFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImages(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
       });
     }
-  }, [product, isEditing, form]);
-
-  // Create product mutation
+  };
+  
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+  };
+  
   const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: () => {
       toast({
         title: "Product created",
-        description: "The product has been created successfully."
+        description: "The product has been created successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       onOpenChange(false);
@@ -128,15 +156,13 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       console.error("Error creating product:", error);
     }
   });
-
-  // Update product mutation
+  
   const updateMutation = useMutation({
-    mutationFn: (data: { id: string; product: Partial<ProductType> }) => 
-      updateProduct(data.id, data.product),
+    mutationFn: updateProduct,
     onSuccess: () => {
       toast({
         title: "Product updated",
-        description: "The product has been updated successfully."
+        description: "The product has been updated successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       onOpenChange(false);
@@ -150,80 +176,78 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       console.error("Error updating product:", error);
     }
   });
-
-  // Form submission handler
-  const onSubmit = (data: ProductFormValues) => {
-    if (isEditing && product) {
-      updateMutation.mutate({
-        id: product.id,
-        product: data
-      });
-    } else {
-      createMutation.mutate(data as Omit<ProductType, 'id' | 'created_at' | 'updated_at'>);
+  
+  const onSubmit = async (values: FormValues) => {
+    try {
+      setIsUploading(true);
+      
+      // Handle image uploads here if needed
+      // For this example, we'll just use the image URLs directly
+      
+      const productData = {
+        name: values.name,
+        description: values.description,
+        price: values.price,
+        category: values.category,
+        stock: values.stock,
+        featured: values.featured,
+        discountPercentage: values.discount || 0,
+        image: images.join(', ') // Join multiple image URLs with comma
+      };
+      
+      if (product) {
+        await updateMutation.mutateAsync({ id: product.id, ...productData });
+      } else {
+        await createMutation.mutateAsync(productData);
+      }
+      
+      setIsUploading(false);
+    } catch (error) {
+      setIsUploading(false);
+      console.error("Error submitting form:", error);
     }
   };
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Product" : "Add New Product"}</DialogTitle>
+          <DialogTitle>{product ? "Edit Product" : "Add New Product"}</DialogTitle>
+          <DialogDescription>
+            {product 
+              ? "Update the product details below."
+              : "Fill out the form below to add a new product."}
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Name*</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category*</FormLabel>
-                    <Select 
-                      value={field.value} 
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map(category => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Product Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter product name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description*</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea rows={3} {...field} />
+                    <Textarea 
+                      placeholder="Enter product description"
+                      className="min-h-[100px]"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -236,9 +260,13 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price*</FormLabel>
+                    <FormLabel>Price (KSh)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -250,9 +278,13 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
                 name="stock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock*</FormLabel>
+                    <FormLabel>Stock</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input
+                        type="number" 
+                        placeholder="0"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -260,57 +292,48 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
               />
             </div>
             
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image URL*</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="discountPercentage"
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories?.map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="discount"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Discount (%)</FormLabel>
                     <FormControl>
-                      <Input type="number" min="0" max="100" step="1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="rating"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rating (0-5)</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="0" max="5" step="0.1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="numReviews"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Reviews</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="0" {...field} />
+                      <Input
+                        type="number" 
+                        placeholder="0"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -322,19 +345,59 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
               control={form.control}
               name="featured"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Featured Product</FormLabel>
-                  </div>
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                   <FormControl>
-                    <Switch
+                    <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Featured Product</FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      Featured products appear on the homepage.
+                    </p>
+                  </div>
                 </FormItem>
               )}
             />
+            
+            {/* Image Upload */}
+            <div>
+              <FormLabel>Product Images</FormLabel>
+              <div className="flex flex-wrap gap-2 my-2">
+                {images.map((img, index) => (
+                  <div key={index} className="relative w-20 h-20 border rounded-md overflow-hidden group">
+                    <img 
+                      src={img} 
+                      alt={`Product image ${index}`} 
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                <label className="w-20 h-20 border border-dashed rounded-md flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
+                  <Upload className="h-6 w-6 text-gray-400" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    multiple
+                  />
+                </label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Upload one or more product images. First image will be used as the main product image.
+              </p>
+            </div>
             
             <DialogFooter>
               <Button 
@@ -344,13 +407,12 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {createMutation.isPending || updateMutation.isPending
-                  ? "Saving..."
-                  : isEditing ? "Update Product" : "Add Product"
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending || isUploading}>
+                {isUploading 
+                  ? "Uploading..." 
+                  : createMutation.isPending || updateMutation.isPending 
+                    ? "Saving..." 
+                    : product ? "Update Product" : "Add Product"
                 }
               </Button>
             </DialogFooter>

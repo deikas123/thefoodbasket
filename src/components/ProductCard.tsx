@@ -1,158 +1,164 @@
 
-import { useState, memo } from 'react';
-import { Link } from 'react-router-dom';
-import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
-import { Button } from '@/components/ui/button';
-import { Heart, ShoppingCart, Star } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/utils/currencyFormatter';
-import { Product } from '@/types';
+import { Link } from "react-router-dom";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ProductType } from "@/types/supabase";
+import { formatCurrency } from "@/utils/currencyFormatter";
+import { ShoppingCart, Heart, Star } from "lucide-react";
+import { toast } from "sonner";
 
-export interface ProductCardProps {
-  product: Product;
-  className?: string;
+interface ProductCardProps {
+  product: ProductType;
 }
 
-// Use memo to prevent unnecessary re-renders
-const ProductCard = memo(({ product, className }: ProductCardProps) => {
+const ProductCard = ({ product }: ProductCardProps) => {
   const { addItem } = useCart();
-  const { isInWishlist, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlist();
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
-  // Calculate discounted price if there's a discount percentage
-  const discountedPrice = product.discountPercentage
-    ? product.price * (1 - product.discountPercentage / 100)
-    : null;
+  const { addToWishlist, isInWishlist } = useWishlist();
 
-  const handleAddToCart = () => {
-    setIsAddingToCart(true);
+  // First image if multiple images
+  const mainImage = product.image ? product.image.split(',')[0].trim() : '/placeholder.svg';
+  
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (product.stock <= 0) {
+      toast.error("Product out of stock", {
+        description: "This product is currently unavailable"
+      });
+      return;
+    }
     
     addItem({
-      ...product,
-      quantity: 1
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: mainImage
     });
     
-    // Reset button after animation
-    setTimeout(() => {
-      setIsAddingToCart(false);
-    }, 600);
+    toast.success("Added to cart", {
+      description: `${product.name} has been added to your cart`
+    });
   };
-
-  const toggleWishlist = (product: Product) => {
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
-    } else {
-      addToWishlist(product);
-    }
+  
+  const handleAddToWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    addToWishlist({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: mainImage
+    });
+    
+    toast.success("Added to wishlist", {
+      description: `${product.name} has been added to your wishlist`
+    });
   };
-
-  const isWishlisted = isInWishlist(product.id);
-
-  // Format rating display with the same rounding logic across all components
-  const formattedRating = product.rating ? Number(product.rating).toFixed(1) : '0.0';
-
+  
+  const wishlistActive = isInWishlist(product.id);
+  
   return (
-    <div className={cn("group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow duration-300", className)}>
-      {/* Wishlist button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm dark:bg-gray-950/80 transition-colors hover:text-red-500"
-        onClick={() => toggleWishlist(product)}
-      >
-        <Heart
-          className={cn(
-            "h-4 w-4",
-            isWishlisted ? "fill-red-500 text-red-500" : ""
-          )}
-        />
-        <span className="sr-only">Add to wishlist</span>
-      </Button>
-      
-      {/* Product image and discount badge */}
-      <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
-        {!imageLoaded && (
-          <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
-        )}
-        <Link to={`/product/${product.id}`}>
+    <Link to={`/products/${product.id}`} className="group">
+      <div className="border rounded-lg overflow-hidden transition-all hover:shadow-md">
+        <div className="relative h-48 bg-gray-100">
+          {/* Product image */}
           <img
-            src={product.image}
+            src={mainImage}
             alt={product.name}
-            className={cn(
-              "h-full w-full object-cover transition-transform duration-300 group-hover:scale-105",
-              imageLoaded ? "opacity-100" : "opacity-0"
-            )}
-            onLoad={() => setImageLoaded(true)}
-            loading="lazy"
+            className="w-full h-full object-cover object-center"
           />
-        </Link>
-        {product.discountPercentage > 0 && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-            {product.discountPercentage}% OFF
+          
+          {/* Discount badge */}
+          {product.discountPercentage && product.discountPercentage > 0 && (
+            <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600">
+              {product.discountPercentage}% OFF
+            </Badge>
+          )}
+          
+          {/* Wishlist button */}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleAddToWishlist}
+            className="absolute top-2 right-2 bg-white/80 hover:bg-white h-8 w-8 rounded-full"
+          >
+            <Heart 
+              className={`h-4 w-4 ${wishlistActive ? 'fill-red-500 text-red-500' : ''}`} 
+            />
+          </Button>
+          
+          {/* Out of stock overlay */}
+          {product.stock <= 0 && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <span className="bg-black px-3 py-1 text-white text-sm font-medium rounded">
+                Out of Stock
+              </span>
+            </div>
+          )}
+        </div>
+        
+        <div className="p-4">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="font-medium text-lg line-clamp-1 group-hover:text-primary transition-colors">
+              {product.name}
+            </h3>
           </div>
-        )}
-      </div>
-      
-      {/* Product details */}
-      <div className="flex flex-col flex-grow p-4">
-        <Link to={`/product/${product.id}`} className="flex-grow">
-          <h3 className="font-medium text-sm md:text-base line-clamp-2 group-hover:text-primary transition-colors mb-1">
-            {product.name}
-          </h3>
           
           {/* Rating */}
-          <div className="flex items-center gap-1 mt-1 mb-2">
-            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {formattedRating} ({product.numReviews || 0})
+          <div className="flex items-center mb-2">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`h-3.5 w-3.5 ${
+                  i < Math.round(product.rating)
+                    ? "text-yellow-400 fill-yellow-400"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
+            <span className="text-xs text-gray-500 ml-1">
+              ({product.numReviews || product.num_reviews || 0})
             </span>
           </div>
           
-          {/* Price section */}
-          <div className="mt-2 flex items-center gap-2">
-            {discountedPrice ? (
-              <>
-                <span className="font-semibold">
-                  {formatCurrency(discountedPrice)}
-                </span>
-                <span className="text-sm text-gray-500 line-through">
-                  {formatCurrency(product.price)}
-                </span>
-              </>
-            ) : (
-              <span className="font-semibold">{formatCurrency(product.price)}</span>
-            )}
+          {/* Price */}
+          <div className="flex items-center justify-between">
+            <div>
+              {product.discountPercentage && product.discountPercentage > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold">
+                    {formatCurrency(product.price * (1 - product.discountPercentage / 100))}
+                  </span>
+                  <span className="text-sm text-gray-500 line-through">
+                    {formatCurrency(product.price)}
+                  </span>
+                </div>
+              ) : (
+                <span className="font-bold">{formatCurrency(product.price)}</span>
+              )}
+            </div>
+            
+            {/* Add to cart button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              onClick={handleAddToCart}
+              disabled={product.stock <= 0}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span className="sr-only">Add to cart</span>
+            </Button>
           </div>
-          
-          {/* Stock status */}
-          {product.stock <= 0 && (
-            <div className="mt-2 text-sm text-red-500">Out of stock</div>
-          )}
-        </Link>
-        
-        {/* Add to cart button */}
-        <div className="mt-4">
-          <Button
-            variant={product.stock > 0 ? "default" : "outline"}
-            size="sm"
-            className="w-full"
-            disabled={product.stock <= 0 || isAddingToCart}
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            {product.stock > 0 ? (
-              isAddingToCart ? "Adding..." : "Add to Cart"
-            ) : (
-              "Out of Stock"
-            )}
-          </Button>
         </div>
       </div>
-    </div>
+    </Link>
   );
-});
+};
 
-ProductCard.displayName = "ProductCard";
 export default ProductCard;

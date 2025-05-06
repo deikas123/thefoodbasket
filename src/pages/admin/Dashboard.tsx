@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, LineChart, PieChart } from "@/components/ui/chart";
@@ -11,24 +11,41 @@ import {
   ArrowUpRight, 
   DollarSign
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getAdminDashboardStats } from "@/services/adminService";
 import AdminProductsTable from "@/components/admin/ProductsTable";
 import AdminOrdersTable from "@/components/admin/OrdersTable";
 import AdminUsersTable from "@/components/admin/UsersTable";
 import AdminDeliveriesTable from "@/components/admin/DeliveriesTable";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   
-  const metrics = {
-    totalRevenue: "KSh 243,500",
-    salesGrowth: "+12.5%",
-    newCustomers: 56,
-    customerGrowth: "+8.2%",
-    pendingOrders: 24,
-    orderGrowth: "+18.3%",
-    deliveredOrders: 187,
-    deliveryGrowth: "+5.7%"
-  };
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["admin-dashboard-stats"],
+    queryFn: getAdminDashboardStats,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  if (isLoading || !stats) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="h-12 pb-2" />
+              <CardContent>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-2" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card className="animate-pulse h-64" />
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -39,11 +56,17 @@ const AdminDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalRevenue}</div>
+            <div className="text-2xl font-bold">{formatCurrency(stats.revenueThisMonth)}</div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="text-green-500 flex items-center">
-                {metrics.salesGrowth} <ArrowUpRight className="h-3 w-3" />
-              </span>
+              {stats.revenueThisMonth > stats.revenueLastMonth ? (
+                <span className="text-green-500 flex items-center">
+                  +{Math.round((stats.revenueThisMonth - stats.revenueLastMonth) / stats.revenueLastMonth * 100)}% <ArrowUpRight className="h-3 w-3" />
+                </span>
+              ) : (
+                <span className="text-red-500 flex items-center">
+                  -{Math.round((stats.revenueLastMonth - stats.revenueThisMonth) / stats.revenueLastMonth * 100)}% <ArrowUpRight className="h-3 w-3 rotate-90" />
+                </span>
+              )}
               from last month
             </p>
           </CardContent>
@@ -55,12 +78,12 @@ const AdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.newCustomers}</div>
+            <div className="text-2xl font-bold">{stats.newCustomers}</div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <span className="text-green-500 flex items-center">
-                {metrics.customerGrowth} <ArrowUpRight className="h-3 w-3" />
+                +{Math.round(stats.newCustomers / stats.activeCustomers * 100)}% <ArrowUpRight className="h-3 w-3" />
               </span>
-              from last month
+              of active users
             </p>
           </CardContent>
         </Card>
@@ -71,28 +94,28 @@ const AdminDashboard = () => {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.pendingOrders}</div>
+            <div className="text-2xl font-bold">{stats.pendingOrders}</div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="text-green-500 flex items-center">
-                {metrics.orderGrowth} <ArrowUpRight className="h-3 w-3" />
+              <span className="text-blue-500 flex items-center">
+                {Math.round(stats.pendingOrders / stats.ordersThisMonth * 100)}% <ArrowUpRight className="h-3 w-3 rotate-45" />
               </span>
-              from last month
+              of this month's orders
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Delivered Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">Today's Orders</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.deliveredOrders}</div>
+            <div className="text-2xl font-bold">{stats.ordersToday}</div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <span className="text-green-500 flex items-center">
-                {metrics.deliveryGrowth} <ArrowUpRight className="h-3 w-3" />
+                {Math.round(stats.ordersToday / stats.ordersThisMonth * 100)}% <ArrowUpRight className="h-3 w-3" />
               </span>
-              from last month
+              of monthly orders
             </p>
           </CardContent>
         </Card>
@@ -113,20 +136,13 @@ const AdminDashboard = () => {
               <CardHeader>
                 <CardTitle>Revenue Over Time</CardTitle>
                 <CardDescription>
-                  Monthly revenue in KSh for the last 6 months
+                  Monthly revenue for the last 6 months
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <LineChart 
-                  data={[
-                    { name: 'Jan', value: 125000 },
-                    { name: 'Feb', value: 140000 },
-                    { name: 'Mar', value: 135000 },
-                    { name: 'Apr', value: 160000 },
-                    { name: 'May', value: 190000 },
-                    { name: 'Jun', value: 243500 },
-                  ]}
-                  xAxisKey="name"
+                  data={stats.monthlyRevenue}
+                  xAxisKey="month"
                   yAxisKey="value"
                   height={300}
                 />
@@ -142,13 +158,7 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <PieChart 
-                  data={[
-                    { name: 'Fruits', value: 35 },
-                    { name: 'Vegetables', value: 30 },
-                    { name: 'Dairy', value: 15 },
-                    { name: 'Meat', value: 12 },
-                    { name: 'Bakery', value: 8 },
-                  ]}
+                  data={stats.categorySales}
                   nameKey="name"
                   dataKey="value"
                   height={300}
@@ -166,14 +176,10 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <BarChart 
-                data={[
-                  { name: 'Pending', value: 24 },
-                  { name: 'Processing', value: 18 },
-                  { name: 'Dispatched', value: 12 },
-                  { name: 'Out for Delivery', value: 16 },
-                  { name: 'Delivered', value: 187 },
-                  { name: 'Cancelled', value: 8 },
-                ]}
+                data={stats.orderStatuses.map(item => ({
+                  name: item.status,
+                  value: item.count
+                }))}
                 xAxisKey="name"
                 yAxisKey="value"
                 height={300}
