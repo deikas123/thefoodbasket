@@ -1,4 +1,3 @@
-
 import { Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -8,6 +7,7 @@ import LoadingFallback from "@/components/ui/LoadingFallback";
 const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
 const AdminLogin = lazy(() => import("@/pages/admin/AdminLogin"));
 const Products = lazy(() => import("@/pages/admin/Products"));
+const Tags = lazy(() => import("@/pages/admin/Tags"));
 const DiscountCodes = lazy(() => import("@/pages/admin/DiscountCodes"));
 const Categories = lazy(() => import("@/pages/admin/Categories"));
 const PayLaterVerification = lazy(() => import("@/pages/admin/PayLaterVerification"));
@@ -44,6 +44,13 @@ const AdminRoutes = () => {
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <Categories />
+          </AdminLayout>
+        </Suspense>
+      } />
+      <Route path="/admin/tags" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminLayout>
+            <Tags />
           </AdminLayout>
         </Suspense>
       } />
