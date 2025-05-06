@@ -138,7 +138,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
   };
   
   const createMutation = useMutation({
-    mutationFn: createProduct,
+    mutationFn: (data: Omit<ProductType, "id" | "created_at" | "updated_at">) => createProduct(data),
     onSuccess: () => {
       toast({
         title: "Product created",
@@ -158,7 +158,8 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
   });
   
   const updateMutation = useMutation({
-    mutationFn: updateProduct,
+    mutationFn: (data: { id: string, product: Partial<ProductType> }) => 
+      updateProduct(data.id, data.product),
     onSuccess: () => {
       toast({
         title: "Product updated",
@@ -192,11 +193,16 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         stock: values.stock,
         featured: values.featured,
         discountPercentage: values.discount || 0,
-        image: images.join(', ') // Join multiple image URLs with comma
+        image: images.join(', '), // Join multiple image URLs with comma
+        rating: product?.rating || 0,
+        numReviews: product?.numReviews || product?.num_reviews || 0
       };
       
       if (product) {
-        await updateMutation.mutateAsync({ id: product.id, ...productData });
+        await updateMutation.mutateAsync({ 
+          id: product.id, 
+          product: productData 
+        });
       } else {
         await createMutation.mutateAsync(productData);
       }

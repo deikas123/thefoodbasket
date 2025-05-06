@@ -1,15 +1,18 @@
 
 import { memo } from "react";
 import { Product } from "@/types";
+import { ProductType } from "@/types/supabase";
 import ProductCard from "./ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProductsGridProps {
-  products: Product[];
+  products: ProductType[];
   title?: string;
   subtitle?: string;
   isLoading?: boolean;
   cols?: number;
+  error?: Error | null;
+  emptyMessage?: string;
 }
 
 // Using memo to prevent unnecessary re-renders
@@ -18,7 +21,9 @@ const ProductsGrid = memo(({
   title, 
   subtitle, 
   isLoading = false, 
-  cols = 4 
+  cols = 4,
+  error = null,
+  emptyMessage = "No products found"
 }: ProductsGridProps) => {
   // Create a column class based on the cols prop
   const getColsClass = () => {
@@ -31,6 +36,19 @@ const ProductsGrid = memo(({
       default: return "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
     }
   };
+
+  if (error) {
+    return (
+      <section className="py-10 px-4">
+        <div className="container mx-auto">
+          <div className="text-center py-8">
+            <h2 className="text-xl font-semibold mb-2 text-red-600">Error loading products</h2>
+            <p className="text-muted-foreground">{error.message}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-10 px-4">
@@ -68,7 +86,7 @@ const ProductsGrid = memo(({
             ))
           ) : (
             <div className="col-span-full text-center py-8">
-              <p className="text-muted-foreground">No products found</p>
+              <p className="text-muted-foreground">{emptyMessage}</p>
             </div>
           )}
         </div>

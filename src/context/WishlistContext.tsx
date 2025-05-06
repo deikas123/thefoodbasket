@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { WishlistContextType, Product, WishlistItem } from "../types";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
@@ -40,8 +40,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       toast({
         title: "Added to wishlist",
-        description: `${product.name} has been added to your wishlist`,
-        duration: 3000,
+        description: `${product.name} has been added to your wishlist`
       });
       
       return [...prevItems, newItem];
@@ -55,8 +54,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (filteredItems.length < prevItems.length) {
         toast({
           title: "Removed from wishlist",
-          description: "Item has been removed from your wishlist",
-          duration: 3000,
+          description: "Item has been removed from your wishlist"
         });
       }
       
@@ -72,8 +70,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setItems([]);
     toast({
       title: "Wishlist cleared",
-      description: "All items have been removed from your wishlist",
-      duration: 3000,
+      description: "All items have been removed from your wishlist"
     });
   };
 

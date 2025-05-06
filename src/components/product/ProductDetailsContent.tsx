@@ -27,7 +27,7 @@ const ProductDetailsContent = ({ product, category }: ProductDetailsContentProps
       
       {/* Product info section */}
       <div className="space-y-6">
-        <ProductInfo product={product} category={category} />
+        <ProductInfo product={product} />
         <ProductActions product={product} />
         <ProductShippingInfo />
       </div>

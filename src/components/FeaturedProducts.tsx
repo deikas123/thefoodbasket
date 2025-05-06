@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/ProductCard';
 import { getFeaturedProducts } from '@/services/product';
-import { convertToProducts } from '@/utils/typeConverters';
 import { toast } from '@/components/ui/use-toast';
 
 const FeaturedProducts = () => {
@@ -64,10 +63,7 @@ const FeaturedProducts = () => {
     );
   }
   
-  // Convert product types if needed
-  const convertedProducts = convertToProducts(products);
-  
-  if (convertedProducts.length === 0) {
+  if (products.length === 0) {
     return null;
   }
   
@@ -84,7 +80,7 @@ const FeaturedProducts = () => {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {convertedProducts.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

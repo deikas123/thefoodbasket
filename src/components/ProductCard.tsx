@@ -8,14 +8,16 @@ import { ProductType } from "@/types/supabase";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { ShoppingCart, Heart, Star } from "lucide-react";
 import { toast } from "sonner";
+import { Product } from "@/types";
 
 interface ProductCardProps {
   product: ProductType;
+  className?: string;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, className }: ProductCardProps) => {
   const { addItem } = useCart();
-  const { addToWishlist, isInWishlist } = useWishlist();
+  const { addItem: addToWishlist, isInWishlist } = useWishlist();
 
   // First image if multiple images
   const mainImage = product.image ? product.image.split(',')[0].trim() : '/placeholder.svg';
@@ -31,13 +33,22 @@ const ProductCard = ({ product }: ProductCardProps) => {
       return;
     }
     
-    addItem({
+    // Convert to Product type expected by cart
+    const cartProduct: Product = {
       id: product.id,
       name: product.name,
       price: product.price,
-      quantity: 1,
-      image: mainImage
-    });
+      image: mainImage,
+      description: product.description || "",
+      category: product.category || "",
+      stock: product.stock || 0,
+      featured: product.featured || false,
+      rating: product.rating || 0,
+      numReviews: product.numReviews || product.num_reviews || 0,
+      discountPercentage: product.discountPercentage || 0
+    };
+    
+    addItem(cartProduct, 1);
     
     toast.success("Added to cart", {
       description: `${product.name} has been added to your cart`
@@ -48,12 +59,22 @@ const ProductCard = ({ product }: ProductCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     
-    addToWishlist({
+    // Convert to Product type expected by wishlist
+    const wishlistProduct: Product = {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: mainImage
-    });
+      image: mainImage,
+      description: product.description || "",
+      category: product.category || "",
+      stock: product.stock || 0,
+      featured: product.featured || false,
+      rating: product.rating || 0,
+      numReviews: product.numReviews || product.num_reviews || 0,
+      discountPercentage: product.discountPercentage || 0
+    };
+    
+    addToWishlist(wishlistProduct);
     
     toast.success("Added to wishlist", {
       description: `${product.name} has been added to your wishlist`
@@ -63,7 +84,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const wishlistActive = isInWishlist(product.id);
   
   return (
-    <Link to={`/products/${product.id}`} className="group">
+    <Link to={`/products/${product.id}`} className={`group ${className || ''}`}>
       <div className="border rounded-lg overflow-hidden transition-all hover:shadow-md">
         <div className="relative h-48 bg-gray-100">
           {/* Product image */}

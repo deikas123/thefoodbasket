@@ -8,6 +8,7 @@ import { Minus, Plus, ShoppingCart, Heart, Star, Package, Truck, Clock } from "l
 import { ProductType } from "@/types/supabase";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { toast } from "sonner";
+import { Product } from "@/types";
 import AddToAutoReplenishButton from "./AddToAutoReplenishButton";
 
 interface ProductInfoProps {
@@ -17,7 +18,7 @@ interface ProductInfoProps {
 const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
-  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
+  const { addItem: addToWishlist, isInWishlist, removeItem: removeFromWishlist } = useWishlist();
   const isProductInWishlist = isInWishlist(product.id);
   
   // Calculate discounted price if applicable
@@ -56,13 +57,22 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       return;
     }
     
-    addItem({
+    // Convert to Product type expected by cart
+    const cartProduct: Product = {
       id: product.id,
       name: product.name,
+      description: product.description || "",
       price: discountedPrice || product.price,
       image: product.image ? product.image.split(',')[0].trim() : '',
-      quantity: quantity
-    });
+      category: product.category || "",
+      stock: product.stock || 0,
+      featured: product.featured || false,
+      rating: product.rating || 0,
+      numReviews: product.numReviews || product.num_reviews || 0,
+      discountPercentage: product.discountPercentage || 0,
+    };
+    
+    addItem(cartProduct, quantity);
     
     toast.success("Added to cart", {
       description: `${product.name} has been added to your cart`
@@ -76,12 +86,22 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         description: `${product.name} has been removed from your wishlist`
       });
     } else {
-      addToWishlist({
+      // Convert to Product type expected by wishlist
+      const wishlistProduct: Product = {
         id: product.id,
         name: product.name,
+        description: product.description || "",
         price: discountedPrice || product.price,
-        image: product.image ? product.image.split(',')[0].trim() : ''
-      });
+        image: product.image ? product.image.split(',')[0].trim() : '',
+        category: product.category || "",
+        stock: product.stock || 0,
+        featured: product.featured || false,
+        rating: product.rating || 0,
+        numReviews: product.numReviews || product.num_reviews || 0,
+        discountPercentage: product.discountPercentage || 0
+      };
+      
+      addToWishlist(wishlistProduct);
       toast.success("Added to wishlist", {
         description: `${product.name} has been added to your wishlist`
       });
@@ -210,7 +230,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
             {isProductInWishlist ? "In Wishlist" : "Add to Wishlist"}
           </Button>
           
-          <AddToAutoReplenishButton product={product} />
+          <AddToAutoReplenishButton productId={product.id} productName={product.name} />
         </div>
       </div>
     </div>

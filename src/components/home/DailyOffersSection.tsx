@@ -5,15 +5,52 @@ import { ArrowRight } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { convertToProduct } from '@/utils/typeConverters';
+import { ProductType } from '@/types/supabase';
 import { getDailyOffersWithProducts } from '@/services/product/offerService';
-import { Product } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 
+interface TimeLeft {
+  hours: string;
+  minutes: string;
+  seconds: string;
+}
+
 const DailyOffersSection = memo(() => {
-  const [productsWithDiscount, setProductsWithDiscount] = useState<Product[]>([]);
+  const [productsWithDiscount, setProductsWithDiscount] = useState<ProductType[]>([]);
   
-  // Fetch daily offers from Supabase with optimized settings
+  // Set end time to midnight
+  const calculateEndTime = () => {
+    const now = new Date();
+    const endTime = new Date(now);
+    endTime.setHours(23, 59, 59, 999);
+    return endTime;
+  };
+  
+  // Calculate time left until end of day
+  const calculateTimeLeft = () => {
+    const difference = calculateEndTime().getTime() - new Date().getTime();
+    
+    if (difference <= 0) {
+      // It's a new day, reset the deals
+      fetchDeals();
+      return { hours: "00", minutes: "00", seconds: "00" };
+    }
+    
+    const hours = Math.floor(difference / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+    
+    return {
+      hours: hours.toString().padStart(2, "0"),
+      minutes: minutes.toString().padStart(2, "0"),
+      seconds: seconds.toString().padStart(2, "0"),
+    };
+  };
+  
+  // Initial state for the countdown
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft);
+  
+  // Fetch deals from the product service
   const { data: dailyOffers = [], isLoading, error, refetch } = useQuery({
     queryKey: ['daily-offers-active'],
     queryFn: getDailyOffersWithProducts,
@@ -27,38 +64,40 @@ const DailyOffersSection = memo(() => {
     }
   });
   
+  // Helper function to fetch deals
+  const fetchDeals = () => {
+    refetch();
+  };
+  
   useEffect(() => {
-    // Convert the offers to product type with the discount applied
+    // Convert the offers to products with the discount applied
     if (dailyOffers.length > 0) {
       const mapped = dailyOffers
         .filter(offer => offer.product) // filter out offers without products
         .map(offer => {
           if (!offer.product) return null;
-          
-          // Convert to our Product type
-          const baseProduct = {
-            id: offer.product.id,
-            name: offer.product.name,
-            description: offer.product.description || '',
-            price: offer.product.price,
-            image: offer.product.image,
-            category: '',
-            stock: offer.product.stock || 0,
-            featured: false,
-            rating: 0,
-            numReviews: 0,
+          // Apply discount to product
+          return {
+            ...offer.product,
             discountPercentage: offer.discount_percentage
           };
-          
-          return baseProduct;
         })
-        .filter(Boolean) as Product[];
+        .filter(Boolean) as ProductType[];
       
-      setProductsWithDiscount(mapped);
+      setProductsWithDiscount(mapped.slice(0, 4)); // Take up to 4 products
     } else {
       setProductsWithDiscount([]);
     }
   }, [dailyOffers]);
+  
+  useEffect(() => {
+    // Update countdown timer every second
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
   
   if (error) {
     return (
@@ -103,9 +142,29 @@ const DailyOffersSection = memo(() => {
       <div className="container">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Daily Special Offers</h2>
-          <Button variant="outline" className="gap-2">
-            View All <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center">
+              <div className="flex items-center">
+                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+                  {timeLeft.hours}
+                </div>
+                <span className="mx-1 text-primary font-medium">:</span>
+                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+                  {timeLeft.minutes}
+                </div>
+                <span className="mx-1 text-primary font-medium">:</span>
+                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+                  {timeLeft.seconds}
+                </div>
+              </div>
+            </div>
+            
+            <Link to="/shop?deals=true">
+              <Button variant="outline" size="sm" className="gap-2">
+                View All <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
