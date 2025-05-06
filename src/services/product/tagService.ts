@@ -80,19 +80,25 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
         // If it's an array, take the first element (assuming it contains our tag)
         if (Array.isArray(item.product_tags)) {
           const tag = item.product_tags[0];
-          return tag ? {
-            id: tag.id,
-            name: tag.name,
-            created_at: tag.created_at
-          } as ProductTag : null;
+          if (tag && typeof tag === 'object' && 'id' in tag && 'name' in tag) {
+            return {
+              id: tag.id,
+              name: tag.name,
+              created_at: tag.created_at || new Date().toISOString()
+            } as ProductTag;
+          }
+          return null;
         }
         
         // If it's an object (the expected case)
-        return {
-          id: item.product_tags.id,
-          name: item.product_tags.name,
-          created_at: item.product_tags.created_at
-        } as ProductTag;
+        const tagObj = item.product_tags as Record<string, any>;
+        if (typeof tagObj === 'object' && 'id' in tagObj && 'name' in tagObj) {
+          return {
+            id: tagObj.id,
+            name: tagObj.name,
+            created_at: tagObj.created_at || new Date().toISOString()
+          } as ProductTag;
+        }
       }
       
       // Fallback in case structure is unexpected
