@@ -72,8 +72,16 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
     
     // Fix the type conversion issue by properly mapping the results
     // Each item contains a product_tags object with the tag data
-    // Use proper type assertion for each item in the array
-    return data.map(item => item.product_tags as ProductTag);
+    // Ensure we extract the object correctly and match the ProductTag interface
+    return data.map(item => {
+      // Explicitly extract the fields we need to ensure correct typing
+      const tagData = item.product_tags;
+      return {
+        id: tagData.id,
+        name: tagData.name,
+        created_at: tagData.created_at
+      } as ProductTag;
+    });
   } catch (error) {
     console.error("Error fetching product tags:", error);
     return [];
