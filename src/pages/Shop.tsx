@@ -38,7 +38,7 @@ const Shop = () => {
   const initialCategory = searchParams.get("category") || "";
   const initialSearch = searchParams.get("search") || "";
   const initialMinPrice = Number(searchParams.get("minPrice")) || 0;
-  const initialMaxPrice = Number(searchParams.get("maxPrice")) || 100;
+  const initialMaxPrice = Number(searchParams.get("maxPrice")) || 1000; // Increased max price
   const initialInStock = searchParams.get("inStock") === "true";
   const initialSort = searchParams.get("sort") || "name_asc";
   
@@ -56,7 +56,7 @@ const Shop = () => {
     queryFn: getCategories
   });
   
-  // Fetch products with filters
+  // Fetch products with filters - fixed to ensure all products are fetched
   const productsQuery = useQuery({
     queryKey: ["products", selectedCategory, searchTerm, priceRange, inStockOnly],
     queryFn: () => getProducts(
@@ -75,7 +75,7 @@ const Shop = () => {
     if (selectedCategory) params.set("category", selectedCategory);
     if (searchTerm) params.set("search", searchTerm);
     if (priceRange[0] > 0) params.set("minPrice", priceRange[0].toString());
-    if (priceRange[1] < 100) params.set("maxPrice", priceRange[1].toString());
+    if (priceRange[1] < 1000) params.set("maxPrice", priceRange[1].toString());
     if (inStockOnly) params.set("inStock", "true");
     params.set("sort", sortOption);
     
@@ -156,8 +156,8 @@ const Shop = () => {
         <Slider
           defaultValue={priceRange}
           value={priceRange}
-          max={100}
-          step={1}
+          max={1000} // Increased max price slider range
+          step={10}
           onValueChange={(value) => setPriceRange(value as [number, number])}
           className="mb-6"
         />

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -17,6 +18,8 @@ export interface DailyOffer {
     image: string;
     description?: string;
     stock?: number;
+    rating?: number;
+    num_reviews?: number;
   };
 }
 
@@ -39,7 +42,9 @@ export const getDailyOffers = async (): Promise<DailyOffer[]> => {
           id,
           name,
           price,
-          image
+          image,
+          rating,
+          num_reviews
         )
       `)
       .order('created_at', { ascending: false });
@@ -71,7 +76,9 @@ export const getDailyOffersWithProducts = async (): Promise<DailyOffer[]> => {
           price,
           image,
           description,
-          stock
+          stock,
+          rating,
+          num_reviews
         )
       `)
       .eq('active', true)

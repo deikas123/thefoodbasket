@@ -93,7 +93,7 @@ export const register = async (userData: RegisterFormData): Promise<User> => {
     email: data.user.email || '',
     firstName: userData.firstName,
     lastName: userData.lastName,
-    role: 'customer',
+    role: 'customer', // Always set role to customer by default
     addresses: [],
     loyaltyPoints: 0,
     createdAt: data.user.created_at || new Date().toISOString()
