@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCard from "@/components/ProductCard"; 
 import { getFrequentlyPurchasedTogether } from "@/services/productService";
+import { ProductType } from "@/types/supabase";
 
 interface RecommendedProductsProps {
   currentProductId: string;
@@ -12,7 +13,15 @@ interface RecommendedProductsProps {
 const RecommendedProducts = ({ currentProductId }: RecommendedProductsProps) => {
   const { data: recommendedProducts, isLoading } = useQuery({
     queryKey: ["recommended-products", currentProductId],
-    queryFn: () => getFrequentlyPurchasedTogether(currentProductId),
+    queryFn: async () => {
+      const products = await getFrequentlyPurchasedTogether(currentProductId);
+      // Add the missing required fields for ProductType
+      return products.map(product => ({
+        ...product,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as ProductType));
+    },
     enabled: !!currentProductId,
   });
 

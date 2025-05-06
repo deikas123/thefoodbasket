@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -27,9 +26,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     e.stopPropagation();
     
     if (product.stock <= 0) {
-      toast({
-        description: "This product is currently unavailable"
-      });
+      toast("This product is currently unavailable");
       return;
     }
     
@@ -50,9 +47,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     
     addItem(cartProduct, 1);
     
-    toast({
-      description: `${product.name} has been added to your cart`
-    });
+    toast(`${product.name} has been added to your cart`);
   };
   
   const handleAddToWishlist = (e: React.MouseEvent) => {
@@ -76,9 +71,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     
     addToWishlist(wishlistProduct);
     
-    toast({
-      description: `${product.name} has been added to your wishlist`
-    });
+    toast(`${product.name} has been added to your wishlist`);
   };
   
   const wishlistActive = isInWishlist(product.id);

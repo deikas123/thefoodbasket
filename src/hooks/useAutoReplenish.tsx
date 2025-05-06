@@ -20,14 +20,11 @@ export const useAutoReplenish = () => {
         props.quantity,
         props.frequencyDays
       );
+      toast("Auto-replenishment set up successfully");
       return true;
     } catch (error) {
       console.error("Error adding to auto-replenish:", error);
-      toast({
-        title: "Error",
-        description: "Could not set up auto-replenishment. Please try again.",
-        variant: "destructive",
-      });
+      toast("Could not set up auto-replenishment. Please try again.");
       return false;
     } finally {
       setIsLoading(false);

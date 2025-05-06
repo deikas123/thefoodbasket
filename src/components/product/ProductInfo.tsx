@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -30,9 +29,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     if (quantity < (product.stock || 10)) {
       setQuantity(quantity + 1);
     } else {
-      toast({
-        description: "You've reached the maximum available quantity for this product."
-      });
+      toast("You've reached the maximum available quantity for this product.");
     }
   };
   
@@ -51,9 +48,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   
   const handleAddToCart = () => {
     if (product.stock <= 0) {
-      toast({
-        description: "This product is currently unavailable"
-      });
+      toast("This product is currently unavailable");
       return;
     }
     
@@ -74,17 +69,13 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     
     addItem(cartProduct, quantity);
     
-    toast({
-      description: `${product.name} has been added to your cart`
-    });
+    toast(`${product.name} has been added to your cart`);
   };
   
   const toggleWishlist = () => {
     if (isProductInWishlist) {
       removeFromWishlist(product.id);
-      toast({
-        description: `${product.name} has been removed from your wishlist`
-      });
+      toast(`${product.name} has been removed from your wishlist`);
     } else {
       // Convert to Product type expected by wishlist
       const wishlistProduct: Product = {
@@ -102,9 +93,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       };
       
       addToWishlist(wishlistProduct);
-      toast({
-        description: `${product.name} has been added to your wishlist`
-      });
+      toast(`${product.name} has been added to your wishlist`);
     }
   };
   

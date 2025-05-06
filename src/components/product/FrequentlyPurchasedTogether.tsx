@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ProductCard from "@/components/ProductCard"; 
 import { getFrequentlyPurchasedTogether } from "@/services/product/recommendationService";
 import { ShoppingBag } from "lucide-react";
+import { ProductType } from "@/types/supabase";
 
 interface FrequentlyPurchasedTogetherProps {
   productId: string;
@@ -12,7 +13,15 @@ interface FrequentlyPurchasedTogetherProps {
 const FrequentlyPurchasedTogether = ({ productId }: FrequentlyPurchasedTogetherProps) => {
   const { data: recommendedProducts, isLoading } = useQuery({
     queryKey: ["frequently-purchased", productId],
-    queryFn: () => getFrequentlyPurchasedTogether(productId),
+    queryFn: async () => {
+      const products = await getFrequentlyPurchasedTogether(productId);
+      // Add the missing required fields for ProductType
+      return products.map(product => ({
+        ...product,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as ProductType));
+    },
     enabled: !!productId,
   });
 

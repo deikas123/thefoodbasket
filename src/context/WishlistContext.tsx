@@ -38,9 +38,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         addedAt: new Date().toISOString()
       };
       
-      toast({
-        description: `${product.name} has been added to your wishlist`
-      });
+      toast(`${product.name} has been added to your wishlist`);
       
       return [...prevItems, newItem];
     });
@@ -51,9 +49,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const filteredItems = prevItems.filter(item => item.product.id !== productId);
       
       if (filteredItems.length < prevItems.length) {
-        toast({
-          description: "Item has been removed from your wishlist"
-        });
+        toast("Item has been removed from your wishlist");
       }
       
       return filteredItems;
@@ -66,9 +62,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const clearWishlist = () => {
     setItems([]);
-    toast({
-      description: "All items have been removed from your wishlist"
-    });
+    toast("All items have been removed from your wishlist");
   };
 
   return (
