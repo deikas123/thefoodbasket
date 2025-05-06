@@ -70,10 +70,14 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
       return [];
     }
     
-    // Fix the type conversion issue by properly mapping the results
+    // Log the structure for debugging
+    console.log("Product tags data structure:", JSON.stringify(data, null, 2));
+    
+    // Map the data properly based on the structure
     return data.map(item => {
-      // Check if product_tags exists and is an object, not an array
-      if (item && item.product_tags) {
+      // Check if product_tags exists
+      if (item && typeof item.product_tags === 'object' && item.product_tags !== null) {
+        // Handle single object response case
         return {
           id: item.product_tags.id,
           name: item.product_tags.name,
