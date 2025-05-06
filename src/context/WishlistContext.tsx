@@ -39,7 +39,6 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       };
       
       toast({
-        title: "Added to wishlist",
         description: `${product.name} has been added to your wishlist`
       });
       
@@ -53,7 +52,6 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       if (filteredItems.length < prevItems.length) {
         toast({
-          title: "Removed from wishlist",
           description: "Item has been removed from your wishlist"
         });
       }
@@ -69,7 +67,6 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const clearWishlist = () => {
     setItems([]);
     toast({
-      title: "Wishlist cleared",
       description: "All items have been removed from your wishlist"
     });
   };

@@ -2,6 +2,7 @@
 import { useState, useEffect, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';

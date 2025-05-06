@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Product } from "@/types";
 import { Clock, ArrowRight } from "lucide-react";
 import ProductCard from "./ProductCard";
 import { getProducts } from "@/services/productService";
+import { ProductType } from "@/types/supabase";
 import { convertToProducts } from "@/utils/typeConverters";
 
 interface TimeLeft {
@@ -15,7 +14,7 @@ interface TimeLeft {
 }
 
 const DealsOfTheDay = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: "00", minutes: "00", seconds: "00" });
   
@@ -55,8 +54,7 @@ const DealsOfTheDay = () => {
       const allProducts = await getProducts();
       // Filter products with discount percentage
       const discountedProducts = allProducts.filter(p => p.discountPercentage);
-      const convertedProducts = convertToProducts(discountedProducts);
-      setProducts(convertedProducts.slice(0, 4)); // Take up to 4 products
+      setProducts(discountedProducts.slice(0, 4)); // Take up to 4 products
     } catch (error) {
       console.error("Error fetching deals:", error);
     } finally {

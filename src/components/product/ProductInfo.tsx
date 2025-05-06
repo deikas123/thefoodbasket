@@ -30,7 +30,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     if (quantity < (product.stock || 10)) {
       setQuantity(quantity + 1);
     } else {
-      toast.info("Quantity limit reached", {
+      toast({
         description: "You've reached the maximum available quantity for this product."
       });
     }
@@ -51,7 +51,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   
   const handleAddToCart = () => {
     if (product.stock <= 0) {
-      toast.error("Product out of stock", {
+      toast({
         description: "This product is currently unavailable"
       });
       return;
@@ -74,7 +74,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     
     addItem(cartProduct, quantity);
     
-    toast.success("Added to cart", {
+    toast({
       description: `${product.name} has been added to your cart`
     });
   };
@@ -82,7 +82,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   const toggleWishlist = () => {
     if (isProductInWishlist) {
       removeFromWishlist(product.id);
-      toast.success("Removed from wishlist", {
+      toast({
         description: `${product.name} has been removed from your wishlist`
       });
     } else {
@@ -102,7 +102,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       };
       
       addToWishlist(wishlistProduct);
-      toast.success("Added to wishlist", {
+      toast({
         description: `${product.name} has been added to your wishlist`
       });
     }

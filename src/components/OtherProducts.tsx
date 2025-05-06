@@ -3,13 +3,12 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { Product } from "@/types";
+import { ProductType } from "@/types/supabase";
 import { getProducts } from "@/services/productService";
-import { convertToProducts } from "@/utils/typeConverters";
 import ProductsGrid from "./ProductsGrid";
 
 const OtherProducts = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -27,7 +26,7 @@ const OtherProducts = () => {
           .sort(() => 0.5 - Math.random())
           .slice(0, 8);
         
-        setProducts(convertToProducts(randomProducts));
+        setProducts(randomProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
