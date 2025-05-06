@@ -1,13 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductType } from "@/types/supabase";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, Image } from "lucide-react";
+import { uploadProductImage } from "@/services/storageService";
 
 import {
   Dialog,
@@ -24,9 +25,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -34,6 +32,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getAllTags } from "@/services/product/tagService";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,9 @@ const categories = [
 const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch all available tags
   const { data: availableTags } = useQuery({
@@ -124,6 +128,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         discountPercentage: product.discountPercentage || 0,
         tags: productTags || [],
       });
+      setImagePreview(product.image);
     } else {
       form.reset({
         name: "",
@@ -136,13 +141,49 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         discountPercentage: 0,
         tags: [],
       });
+      setImagePreview(null);
+      setImageFile(null);
     }
   }, [product, form, productTags]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setImageFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
 
   // Handle form submission
   const onSubmit = async (values: ProductFormValues) => {
     setIsSubmitting(true);
     try {
+      // Upload image if there's a new file
+      let imageUrl = values.image;
+      if (imageFile) {
+        const uploadedUrl = await uploadProductImage(imageFile);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          // If upload failed and we don't have an existing image
+          if (!product?.image) {
+            toast.error("Image upload failed");
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+      
       if (product) {
         // Update existing product
         const { error } = await supabase
@@ -151,11 +192,11 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             name: values.name,
             description: values.description,
             price: values.price,
-            image: values.image,
+            image: imageUrl,
             category: values.category,
             stock: values.stock,
             featured: values.featured,
-            discountPercentage: values.discountPercentage || null,
+            discount_percentage: values.discountPercentage || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', product.id);
@@ -192,11 +233,11 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             name: values.name,
             description: values.description,
             price: values.price,
-            image: values.image,
+            image: imageUrl,
             category: values.category,
             stock: values.stock,
             featured: values.featured,
-            discountPercentage: values.discountPercentage || null,
+            discount_percentage: values.discountPercentage || null,
             rating: 0,
             num_reviews: 0,
             created_at: new Date().toISOString(),
@@ -334,10 +375,46 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter image URL" {...field} />
-                  </FormControl>
+                  <FormLabel>Product Image</FormLabel>
+                  <div className="space-y-2">
+                    {/* Hidden file input */}
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleImageChange} 
+                    />
+                    
+                    {/* Image preview */}
+                    {imagePreview && (
+                      <div className="relative w-32 h-32 rounded-md overflow-hidden border mb-2">
+                        <img 
+                          src={imagePreview} 
+                          alt="Product preview" 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Upload button */}
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={triggerFileInput} 
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" /> 
+                      {imagePreview ? 'Change Image' : 'Upload Image'}
+                    </Button>
+                    
+                    {/* Hidden input for form validation */}
+                    <Input 
+                      type="hidden" 
+                      {...field}
+                      value={imagePreview || field.value} 
+                    />
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
