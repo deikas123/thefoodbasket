@@ -75,9 +75,19 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
     
     // Map the data properly based on the structure
     return data.map(item => {
-      // Check if product_tags exists
-      if (item && typeof item.product_tags === 'object' && item.product_tags !== null) {
-        // Handle single object response case
+      // Handle the case where product_tags might be an array or object
+      if (item && item.product_tags) {
+        // If it's an array, take the first element (assuming it contains our tag)
+        if (Array.isArray(item.product_tags)) {
+          const tag = item.product_tags[0];
+          return tag ? {
+            id: tag.id,
+            name: tag.name,
+            created_at: tag.created_at
+          } as ProductTag : null;
+        }
+        
+        // If it's an object (the expected case)
         return {
           id: item.product_tags.id,
           name: item.product_tags.name,
