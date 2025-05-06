@@ -12,6 +12,7 @@ import { Heart, ShoppingBag, Check, Timer, TruckIcon } from "lucide-react";
 import { toast } from "sonner";
 import AddToAutoReplenishButton from "./AddToAutoReplenishButton";
 import ProductTags from "./ProductTags";
+import { Product } from "@/types";
 
 interface ProductInfoProps {
   product: ProductType;
@@ -20,7 +21,7 @@ interface ProductInfoProps {
 const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
   
   const isProductInWishlist = isInWishlist(product.id);
@@ -32,30 +33,46 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   };
 
   const handleAddToCart = () => {
-    addItem({
+    // Convert to Product type for cart
+    const cartProduct: Product = {
       id: product.id,
       name: product.name,
       price: getDiscountedPrice(),
       image: product.image.split(',')[0].trim(),
-      quantity
-    });
+      description: product.description,
+      category: product.category,
+      featured: product.featured,
+      rating: product.rating,
+      numReviews: product.num_reviews || 0,
+      stock: product.stock,
+      discountPercentage: product.discountPercentage
+    };
     
+    addItem(cartProduct, quantity);
     toast("Item added to cart");
   };
 
   const handleToggleWishlist = () => {
+    // Convert to Product type for wishlist
+    const wishlistProduct: Product = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image.split(',')[0].trim(),
+      description: product.description,
+      category: product.category,
+      featured: product.featured,
+      rating: product.rating,
+      numReviews: product.num_reviews || 0,
+      stock: product.stock,
+      discountPercentage: product.discountPercentage
+    };
+    
     if (isProductInWishlist) {
       removeFromWishlist(product.id);
       toast("Removed from wishlist");
     } else {
-      addToWishlist({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image.split(',')[0].trim(),
-        discountPercentage: product.discountPercentage,
-        rating: product.rating
-      });
+      addToWishlist(wishlistProduct);
       toast("Added to wishlist");
     }
   };
@@ -211,7 +228,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           </span>
         </Button>
         
-        <AddToAutoReplenishButton productId={product.id} />
+        <AddToAutoReplenishButton productId={product.id} productName={product.name} />
       </div>
     </div>
   );
