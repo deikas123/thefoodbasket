@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -111,6 +110,16 @@ export const getAllTags = async (): Promise<ProductTag[]> => {
   }
 };
 
+// Define interface for the joined data structure returned by Supabase
+interface ProductTagRelation {
+  tag_id: string;
+  product_tags: {
+    id: string;
+    name: string;
+    created_at: string;
+  } | null;
+}
+
 export const getProductTags = async (productId: string): Promise<ProductTag[]> => {
   try {
     const { data, error } = await supabase
@@ -130,10 +139,10 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
     // Debug log to see what structure we're getting
     console.log("Tag data from supabase:", data);
     
-    return data
+    // Properly typed as an array of ProductTagRelation
+    return (data as ProductTagRelation[])
       .filter(item => item.product_tags !== null)
       .map(item => {
-        // Type-safe access to properties
         const tagData = item.product_tags;
         
         if (!tagData) {
