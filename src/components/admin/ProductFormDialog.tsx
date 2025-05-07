@@ -314,7 +314,12 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
           })
           .eq('id', product.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating product:", error);
+          toast.error("Failed to update product");
+          setIsSubmitting(false);
+          return;
+        }
         
         // Update product tags
         // First delete all existing relations
@@ -334,42 +339,32 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             .from('product_tag_relations')
             .insert(tagRelations);
             
-          if (tagError) console.error("Error updating product tags:", tagError);
+          if (tagError) {
+            console.error("Error updating product tags:", tagError);
+            toast.error("Failed to update product tags");
+          }
         }
         
-        // Update additional images
-        // First check if product_images table exists
-        const { error: tableCheckError } = await supabase
+        // First delete existing additional images
+        await supabase
           .from('product_images')
-          .select('id')
-          .limit(1);
+          .delete()
+          .eq('product_id', product.id);
           
-        if (tableCheckError) {
-          console.error("Error checking product_images table:", tableCheckError);
-          // Table doesn't exist, create it
-          console.log("product_images table does not exist, creating it...");
-          // We can't create tables from the client, so we'll skip this part
-          // and just store the first image in the products table
-        } else {
-          // Table exists, proceed with updating images
-          // First delete existing additional images
-          await supabase
+        // Then insert new ones
+        if (additionalImageUrls.length > 0) {
+          const imageRecords = additionalImageUrls.map(url => ({
+            product_id: product.id,
+            image_url: url
+          }));
+          
+          const { error: imagesError } = await supabase
             .from('product_images')
-            .delete()
-            .eq('product_id', product.id);
+            .insert(imageRecords);
             
-          // Then insert new ones
-          if (additionalImageUrls.length > 0) {
-            const imageRecords = additionalImageUrls.map(url => ({
-              product_id: product.id,
-              image_url: url
-            }));
-            
-            const { error: imagesError } = await supabase
-              .from('product_images')
-              .insert(imageRecords);
-              
-            if (imagesError) console.error("Error updating additional images:", imagesError);
+          if (imagesError) {
+            console.error("Error updating additional images:", imagesError);
+            toast.error("Failed to update additional images");
           }
         }
         
@@ -395,7 +390,12 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating product:", error);
+          toast.error("Failed to create product");
+          setIsSubmitting(false);
+          return;
+        }
         
         // Add product tags if any selected
         if (values.tags.length > 0) {
@@ -408,17 +408,14 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             .from('product_tag_relations')
             .insert(tagRelations);
             
-          if (tagError) console.error("Error adding product tags:", tagError);
+          if (tagError) {
+            console.error("Error adding product tags:", tagError);
+            toast.error("Failed to add product tags");
+          }
         }
         
-        // Check if product_images table exists before adding additional images
-        const { error: tableCheckError } = await supabase
-          .from('product_images')
-          .select('id')
-          .limit(1);
-          
-        if (!tableCheckError && additionalImageUrls.length > 0) {
-          // Table exists, add additional images
+        // Add additional images
+        if (additionalImageUrls.length > 0) {
           const imageRecords = additionalImageUrls.map(url => ({
             product_id: data.id,
             image_url: url
@@ -428,7 +425,10 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             .from('product_images')
             .insert(imageRecords);
             
-          if (imagesError) console.error("Error adding additional images:", imagesError);
+          if (imagesError) {
+            console.error("Error adding additional images:", imagesError);
+            toast.error("Failed to add additional images");
+          }
         }
         
         toast.success("Product created successfully");

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { ProductType } from "@/types/supabase";
 import ProductFormDialog from "./ProductFormDialog";
 import { getProducts, deleteProduct } from "@/services/product";
@@ -29,18 +29,11 @@ const AdminProductsTable = () => {
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
     onSuccess: () => {
-      toast({
-        title: "Product deleted",
-        description: "The product has been removed successfully.",
-      });
+      toast.success("Product deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete product. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Failed to delete product. Please try again.");
       console.error("Error deleting product:", error);
     }
   });
@@ -61,7 +54,9 @@ const AdminProductsTable = () => {
   };
   
   const handleDeleteProduct = (productId: string) => {
-    deleteMutation.mutate(productId);
+    if (confirm("Are you sure you want to delete this product?")) {
+      deleteMutation.mutate(productId);
+    }
   };
   
   return (
