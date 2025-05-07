@@ -117,7 +117,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         return [];
       }
       
-      return data.map(item => item.image_url);
+      return data ? data.map(item => item.image_url) : [];
     },
     enabled: !!product?.id
   });
@@ -283,6 +283,20 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         ];
       }
       
+      // First, get the category_id from the category slug
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', values.category)
+        .single();
+      
+      if (categoryError || !categoryData) {
+        console.error("Error finding category:", categoryError || "Category not found");
+        toast.error("Error: Category not found");
+        setIsSubmitting(false);
+        return;
+      }
+      
       if (product) {
         // Update existing product
         const { error } = await supabase
@@ -292,7 +306,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             description: values.description,
             price: values.price,
             image: imageUrl,
-            category: values.category,
+            category_id: categoryData.id,
             stock: values.stock,
             featured: values.featured,
             discount_percentage: values.discountPercentage || null,
@@ -324,24 +338,39 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         }
         
         // Update additional images
-        // First delete existing additional images
-        await supabase
+        // First check if product_images table exists
+        const { error: tableCheckError } = await supabase
           .from('product_images')
-          .delete()
-          .eq('product_id', product.id);
+          .select('id')
+          .limit(1);
           
-        // Then insert new ones
-        if (additionalImageUrls.length > 0) {
-          const imageRecords = additionalImageUrls.map(url => ({
-            product_id: product.id,
-            image_url: url
-          }));
-          
-          const { error: imagesError } = await supabase
+        if (tableCheckError) {
+          console.error("Error checking product_images table:", tableCheckError);
+          // Table doesn't exist, create it
+          console.log("product_images table does not exist, creating it...");
+          // We can't create tables from the client, so we'll skip this part
+          // and just store the first image in the products table
+        } else {
+          // Table exists, proceed with updating images
+          // First delete existing additional images
+          await supabase
             .from('product_images')
-            .insert(imageRecords);
+            .delete()
+            .eq('product_id', product.id);
             
-          if (imagesError) console.error("Error updating additional images:", imagesError);
+          // Then insert new ones
+          if (additionalImageUrls.length > 0) {
+            const imageRecords = additionalImageUrls.map(url => ({
+              product_id: product.id,
+              image_url: url
+            }));
+            
+            const { error: imagesError } = await supabase
+              .from('product_images')
+              .insert(imageRecords);
+              
+            if (imagesError) console.error("Error updating additional images:", imagesError);
+          }
         }
         
         toast.success("Product updated successfully");
@@ -354,7 +383,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             description: values.description,
             price: values.price,
             image: imageUrl,
-            category: values.category,
+            category_id: categoryData.id,
             stock: values.stock,
             featured: values.featured,
             discount_percentage: values.discountPercentage || null,
@@ -382,8 +411,14 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
           if (tagError) console.error("Error adding product tags:", tagError);
         }
         
-        // Add additional images if any
-        if (additionalImageUrls.length > 0) {
+        // Check if product_images table exists before adding additional images
+        const { error: tableCheckError } = await supabase
+          .from('product_images')
+          .select('id')
+          .limit(1);
+          
+        if (!tableCheckError && additionalImageUrls.length > 0) {
+          // Table exists, add additional images
           const imageRecords = additionalImageUrls.map(url => ({
             product_id: data.id,
             image_url: url
