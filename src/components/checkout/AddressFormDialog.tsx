@@ -15,8 +15,9 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { formatAddressFromDb } from "@/services/addressService";
 
 interface AddressFormDialogProps {
   open: boolean;
@@ -74,14 +75,13 @@ const AddressFormDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) return;
+    if (!user) {
+      toast.error("You must be logged in to save addresses");
+      return;
+    }
     
     if (!formData.street || !formData.city || !formData.state || !formData.zipCode) {
-      toast({
-        title: "Please fill in all fields",
-        description: "All address fields are required.",
-        variant: "destructive"
-      });
+      toast.error("Please fill in all required fields");
       return;
     }
     
@@ -108,9 +108,11 @@ const AddressFormDialog = ({
             is_default: formData.isDefault
           })
           .eq('id', address.id);
+        
+        toast.success("Address updated successfully");
       } else {
         // Add new address
-        await supabase
+        const { data, error } = await supabase
           .from('addresses')
           .insert({
             user_id: user.id,
@@ -119,45 +121,38 @@ const AddressFormDialog = ({
             state: formData.state,
             zip_code: formData.zipCode,
             is_default: formData.isDefault || user.addresses.length === 0 // Make default if first address
-          });
+          })
+          .select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        toast.success("Address added successfully");
       }
       
       // Fetch updated addresses to refresh UI
-      const { data: addresses } = await supabase
+      const { data: addresses, error: fetchError } = await supabase
         .from('addresses')
         .select('*')
         .eq('user_id', user.id);
         
+      if (fetchError) {
+        throw fetchError;
+      }
+      
       if (addresses) {
         // Convert from database format to app format
-        const formattedAddresses = addresses.map(addr => ({
-          id: addr.id,
-          street: addr.street,
-          city: addr.city,
-          state: addr.state,
-          zipCode: addr.zip_code,
-          isDefault: addr.is_default
-        }));
+        const formattedAddresses = addresses.map(addr => formatAddressFromDb(addr));
         
         // Update the user context with new addresses
         await updateProfile({ addresses: formattedAddresses });
       }
       
-      toast({
-        title: address ? "Address updated" : "Address added",
-        description: address 
-          ? "Your address has been updated successfully." 
-          : "Your address has been added successfully."
-      });
-      
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error saving address:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save the address. Please try again.",
-        variant: "destructive"
-      });
+      toast.error(error.message || "Failed to save address");
     } finally {
       setIsSubmitting(false);
     }

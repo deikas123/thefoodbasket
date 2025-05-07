@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PayLaterOrder } from "@/types/payLater";
 import { Order } from "@/types/order";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { isEligibleForPayLater } from "./kycService";
 import { format, addDays } from "date-fns";
 import { Database } from "@/types/database.types";
@@ -11,16 +11,15 @@ import { Database } from "@/types/database.types";
 export const createPayLaterOrder = async (order: Order): Promise<boolean> => {
   const isEligible = await isEligibleForPayLater();
   if (!isEligible) {
-    toast({
-      title: "Not eligible for Pay Later",
-      description: "Your identity verification must be approved first",
-      variant: "destructive",
-    });
+    toast.error("Not eligible for Pay Later. Your identity verification must be approved first");
     return false;
   }
   
   const { data: user } = await supabase.auth.getUser();
-  if (!user.user) return false;
+  if (!user.user) {
+    toast.error("You must be logged in to use Pay Later");
+    return false;
+  }
   
   // Set due date to 30 days from now
   const dueDate = addDays(new Date(), 30).toISOString();
@@ -36,18 +35,11 @@ export const createPayLaterOrder = async (order: Order): Promise<boolean> => {
   
   if (error) {
     console.error("Error creating pay later order:", error);
-    toast({
-      title: "Failed to create pay later order",
-      description: "Please try again later",
-      variant: "destructive",
-    });
+    toast.error("Failed to create pay later order. Please try again later");
     return false;
   }
   
-  toast({
-    title: "Pay Later order created",
-    description: `Payment due by ${format(new Date(dueDate), 'PP')}`,
-  });
+  toast.success(`Pay Later order created. Payment due by ${format(new Date(dueDate), 'PP')}`);
   
   return true;
 };
@@ -92,6 +84,7 @@ export const makePayLaterPayment = async (
   
   if (orderError) {
     console.error("Error fetching pay later order:", orderError);
+    toast.error("Error processing payment. Please try again later");
     return false;
   }
   
@@ -110,20 +103,15 @@ export const makePayLaterPayment = async (
   
   if (error) {
     console.error("Error making payment:", error);
-    toast({
-      title: "Payment failed",
-      description: "Please try again later",
-      variant: "destructive",
-    });
+    toast.error("Payment failed. Please try again later");
     return false;
   }
   
-  toast({
-    title: "Payment successful",
-    description: newStatus === "completed" 
-      ? "Your pay later order has been fully paid" 
-      : `${((newPaidAmount / payLaterOrder.total_amount) * 100).toFixed(0)}% paid`,
-  });
+  const message = newStatus === "completed" 
+    ? "Your pay later order has been fully paid" 
+    : `${((newPaidAmount / payLaterOrder.total_amount) * 100).toFixed(0)}% paid`;
+  
+  toast.success(`Payment successful. ${message}`);
   
   return true;
 };

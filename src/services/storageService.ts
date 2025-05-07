@@ -42,6 +42,12 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
   }
 };
 
+export const uploadProductImages = async (files: File[]): Promise<string[]> => {
+  const uploadPromises = files.map(file => uploadProductImage(file));
+  const results = await Promise.all(uploadPromises);
+  return results.filter((url): url is string => url !== null);
+};
+
 export const deleteProductImage = async (imageUrl: string): Promise<boolean> => {
   try {
     // Extract file path from URL

@@ -6,8 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductType } from "@/types/supabase";
 import { toast } from "sonner";
-import { Loader2, Upload, Image } from "lucide-react";
-import { uploadProductImage } from "@/services/storageService";
+import { Loader2, Upload, Image, X, Plus } from "lucide-react";
+import { uploadProductImage, uploadProductImages } from "@/services/storageService";
 
 import {
   Dialog,
@@ -43,6 +43,7 @@ const productSchema = z.object({
   description: z.string().min(10, { message: "Description must be at least 10 characters" }),
   price: z.coerce.number().positive({ message: "Price must be positive" }),
   image: z.string().min(1, { message: "Image URL is required" }),
+  additionalImages: z.array(z.string()).optional(),
   category: z.string().min(1, { message: "Category is required" }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer" }),
   featured: z.boolean().default(false),
@@ -67,8 +68,11 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const additionalFileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch all available tags
   const { data: availableTags } = useQuery({
@@ -97,6 +101,27 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
     enabled: !!product?.id
   });
 
+  // Get additional images if editing
+  const { data: additionalImages } = useQuery({
+    queryKey: ["product-additional-images", product?.id],
+    queryFn: async () => {
+      if (!product?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('product_images')
+        .select('image_url')
+        .eq('product_id', product.id);
+      
+      if (error) {
+        console.error("Error fetching additional images:", error);
+        return [];
+      }
+      
+      return data.map(item => item.image_url);
+    },
+    enabled: !!product?.id
+  });
+
   // Form setup
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -105,6 +130,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       description: "",
       price: 0,
       image: "",
+      additionalImages: [],
       category: "",
       stock: 0,
       featured: false,
@@ -121,6 +147,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         description: product.description,
         price: product.price,
         image: product.image,
+        additionalImages: additionalImages || [],
         category: product.category,
         stock: product.stock,
         featured: product.featured,
@@ -128,12 +155,14 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         tags: productTags || [],
       });
       setImagePreview(product.image);
+      setAdditionalImagePreviews(additionalImages || []);
     } else {
       form.reset({
         name: "",
         description: "",
         price: 0,
         image: "",
+        additionalImages: [],
         category: "",
         stock: 0,
         featured: false,
@@ -142,8 +171,10 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       });
       setImagePreview(null);
       setImageFile(null);
+      setAdditionalImageFiles([]);
+      setAdditionalImagePreviews([]);
     }
-  }, [product, form, productTags]);
+  }, [product, form, productTags, additionalImages]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -157,20 +188,65 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       setImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
+    
+    // Auto-set the form value
+    form.setValue("image", "uploaded-image-pending");
+  };
+
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
+    
+    const newFiles = Array.from(selectedFiles);
+    setAdditionalImageFiles(prev => [...prev, ...newFiles]);
+    
+    // Create previews
+    newFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAdditionalImagePreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // Update form value
+    const currentAdditionalImages = form.getValues("additionalImages") || [];
+    form.setValue("additionalImages", [
+      ...currentAdditionalImages,
+      ...Array(newFiles.length).fill("uploaded-image-pending")
+    ]);
+  };
+
+  const removeAdditionalImage = (index: number) => {
+    // Remove from previews
+    setAdditionalImagePreviews(prev => prev.filter((_, i) => i !== index));
+    
+    // Remove from files if it's a new upload
+    if (index < additionalImageFiles.length) {
+      setAdditionalImageFiles(prev => prev.filter((_, i) => i !== index));
+    }
+    
+    // Remove from form values
+    const currentImages = form.getValues("additionalImages") || [];
+    form.setValue("additionalImages", currentImages.filter((_, i) => i !== index));
   };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
+  const triggerAdditionalFileInput = () => {
+    additionalFileInputRef.current?.click();
+  };
+
   // Handle form submission
   const onSubmit = async (values: ProductFormValues) => {
     setIsSubmitting(true);
     try {
-      // Upload image if there's a new file
+      // Upload main image if there's a new file
       let imageUrl = values.image;
       if (imageFile) {
-        console.log("Uploading image file:", imageFile.name);
+        console.log("Uploading main image file:", imageFile.name);
         const uploadedUrl = await uploadProductImage(imageFile);
         if (uploadedUrl) {
           console.log("Image uploaded successfully:", uploadedUrl);
@@ -178,7 +254,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         } else {
           // If upload failed and we don't have an existing image
           if (!product?.image) {
-            toast.error("Image upload failed");
+            toast.error("Main image upload failed");
             setIsSubmitting(false);
             return;
           }
@@ -187,6 +263,24 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         toast.error("Please upload a product image");
         setIsSubmitting(false);
         return;
+      }
+      
+      // Upload additional images
+      let additionalImageUrls: string[] = [];
+      if (additionalImageFiles.length > 0) {
+        const uploadedUrls = await uploadProductImages(additionalImageFiles);
+        additionalImageUrls = uploadedUrls;
+        if (additionalImageUrls.length !== additionalImageFiles.length) {
+          toast.warning("Some additional images failed to upload");
+        }
+      }
+      
+      // Combine with existing additional images
+      if (values.additionalImages) {
+        additionalImageUrls = [
+          ...values.additionalImages.filter(url => url !== "uploaded-image-pending"),
+          ...additionalImageUrls
+        ];
       }
       
       if (product) {
@@ -229,6 +323,27 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
           if (tagError) console.error("Error updating product tags:", tagError);
         }
         
+        // Update additional images
+        // First delete existing additional images
+        await supabase
+          .from('product_images')
+          .delete()
+          .eq('product_id', product.id);
+          
+        // Then insert new ones
+        if (additionalImageUrls.length > 0) {
+          const imageRecords = additionalImageUrls.map(url => ({
+            product_id: product.id,
+            image_url: url
+          }));
+          
+          const { error: imagesError } = await supabase
+            .from('product_images')
+            .insert(imageRecords);
+            
+          if (imagesError) console.error("Error updating additional images:", imagesError);
+        }
+        
         toast.success("Product updated successfully");
       } else {
         // Create new product
@@ -265,6 +380,20 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             .insert(tagRelations);
             
           if (tagError) console.error("Error adding product tags:", tagError);
+        }
+        
+        // Add additional images if any
+        if (additionalImageUrls.length > 0) {
+          const imageRecords = additionalImageUrls.map(url => ({
+            product_id: data.id,
+            image_url: url
+          }));
+          
+          const { error: imagesError } = await supabase
+            .from('product_images')
+            .insert(imageRecords);
+            
+          if (imagesError) console.error("Error adding additional images:", imagesError);
         }
         
         toast.success("Product created successfully");
@@ -380,7 +509,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Image</FormLabel>
+                  <FormLabel>Main Product Image</FormLabel>
                   <div className="space-y-2">
                     {/* Hidden file input */}
                     <input 
@@ -417,8 +546,68 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
                     <Input 
                       type="hidden" 
                       {...field}
-                      value={imagePreview || field.value} 
+                      value={imagePreview ? field.value || "uploaded-image" : ""} 
                     />
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="additionalImages"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Additional Images</FormLabel>
+                  <div className="space-y-2">
+                    {/* Hidden file input */}
+                    <input 
+                      type="file" 
+                      multiple
+                      ref={additionalFileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleAdditionalImagesChange} 
+                    />
+                    
+                    {/* Images preview */}
+                    {additionalImagePreviews.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {additionalImagePreviews.map((preview, index) => (
+                          <div key={index} className="relative w-24 h-24 rounded-md overflow-hidden border">
+                            <img 
+                              src={preview} 
+                              alt={`Additional image ${index + 1}`} 
+                              className="w-full h-full object-cover"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-0 right-0 h-6 w-6 rounded-full"
+                              onClick={() => removeAdditionalImage(index)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Upload button */}
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={triggerAdditionalFileInput} 
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" /> 
+                      Add More Images
+                    </Button>
+                    
+                    {/* Hidden input for form validation */}
+                    <Input type="hidden" {...field} />
                   </div>
                   <FormMessage />
                 </FormItem>
