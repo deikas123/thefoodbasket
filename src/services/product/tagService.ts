@@ -115,7 +115,7 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
   try {
     const { data, error } = await supabase
       .from('product_tag_relations')
-      .select('product_tags(*)')
+      .select('tag_id, product_tags(*)')
       .eq('product_id', productId);
     
     if (error) {
@@ -130,9 +130,27 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
     return data
       .filter(item => item.product_tags)
       .map(item => {
+        // The response structure might be different from what we expected
+        // Let's handle both possible cases
         const tagData = item.product_tags;
+        
+        // Debug log to see the actual structure
+        console.log("Tag data structure:", tagData);
+        
         if (!tagData) return null;
         
+        // If tagData is an array, we need to take the first element
+        if (Array.isArray(tagData)) {
+          if (tagData.length === 0) return null;
+          const firstTag = tagData[0];
+          return {
+            id: firstTag.id,
+            name: firstTag.name,
+            createdAt: firstTag.created_at
+          };
+        }
+        
+        // If tagData is an object, use it directly
         return {
           id: tagData.id,
           name: tagData.name,
