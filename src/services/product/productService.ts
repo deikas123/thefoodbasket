@@ -44,7 +44,11 @@ export const getProducts = async (
       return [];
     }
     
-    // Map the data to our ProductType
+    if (!data) {
+      return [];
+    }
+    
+    // Map the data to our ProductType, ensure we handle potential null values
     return data.map(item => ({
       id: item.id,
       name: item.name,
@@ -79,6 +83,10 @@ export const getFeaturedProducts = async (): Promise<ProductType[]> => {
     
     if (error) {
       console.error("Error fetching featured products:", error);
+      return [];
+    }
+    
+    if (!data) {
       return [];
     }
     
