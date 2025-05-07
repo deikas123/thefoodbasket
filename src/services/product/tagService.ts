@@ -111,6 +111,16 @@ export const getAllTags = async (): Promise<ProductTag[]> => {
   }
 };
 
+// Define an interface that matches the actual structure from Supabase
+interface ProductTagRelation {
+  tag_id: string;
+  product_tags: {
+    id: string;
+    name: string;
+    created_at: string;
+  } | null;
+}
+
 export const getProductTags = async (productId: string): Promise<ProductTag[]> => {
   try {
     const { data, error } = await supabase
@@ -127,30 +137,23 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
       return [];
     }
     
-    return data
-      .filter(item => item.product_tags)
+    // Cast data to ProductTagRelation[] to get proper type checking
+    const typedData = data as ProductTagRelation[];
+    
+    return typedData
+      .filter(item => item.product_tags !== null)
       .map(item => {
-        // The response structure might be different from what we expected
-        // Let's handle both possible cases
+        // Since we've filtered out nulls, we can safely access properties
         const tagData = item.product_tags;
         
-        // Debug log to see the actual structure
+        // Log to debug
         console.log("Tag data structure:", tagData);
         
-        if (!tagData) return null;
-        
-        // If tagData is an array, we need to take the first element
-        if (Array.isArray(tagData)) {
-          if (tagData.length === 0) return null;
-          const firstTag = tagData[0];
-          return {
-            id: firstTag.id,
-            name: firstTag.name,
-            createdAt: firstTag.created_at
-          };
+        if (!tagData) {
+          // This should never happen due to our filter, but TypeScript needs this check
+          return null;
         }
         
-        // If tagData is an object, use it directly
         return {
           id: tagData.id,
           name: tagData.name,
