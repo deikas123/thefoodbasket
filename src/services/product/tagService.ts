@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -139,8 +140,10 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
     // Debug log to see what structure we're getting
     console.log("Tag data from supabase:", data);
     
-    // Properly typed as an array of ProductTagRelation
-    return (data as ProductTagRelation[])
+    // First, cast to unknown, then to our expected type to avoid direct casting errors
+    const typedData = data as unknown as ProductTagRelation[];
+    
+    return typedData
       .filter(item => item.product_tags !== null)
       .map(item => {
         const tagData = item.product_tags;
