@@ -2,7 +2,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { FoodBasket, FoodBasketItem } from "@/types/foodBasket";
 import { Product } from "@/types";
+import { ProductType } from "@/types/supabase";
 import { getProductById } from "@/services/product";
+import { convertToProduct } from "@/utils/typeConverters";
 
 // Get all food baskets
 export const getAllFoodBaskets = async (): Promise<FoodBasket[]> => {
@@ -78,18 +80,23 @@ export const getFoodBasketWithProducts = async (basketId: string): Promise<{bask
     
     // Get full product details for each item
     const productsPromises = basketItems.map(async (item) => {
-      const product = await getProductById(item.productId);
-      return product ? {
-        ...product,
-        quantity: item.quantity
-      } : null;
+      const productData = await getProductById(item.productId);
+      if (productData) {
+        // Convert ProductType to Product and add quantity
+        const product = convertToProduct(productData);
+        return {
+          ...product,
+          quantity: item.quantity
+        };
+      }
+      return null;
     });
     
     const productsWithQuantity = await Promise.all(productsPromises);
     
     // Filter out any null products with a corrected type predicate
     const products = productsWithQuantity.filter((product): product is (Product & { quantity: number }) => 
-      product !== null && typeof product === 'object'
+      product !== null
     );
     
     return { basket, products };
