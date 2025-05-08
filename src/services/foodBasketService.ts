@@ -87,8 +87,8 @@ export const getFoodBasketWithProducts = async (basketId: string): Promise<{bask
     
     const productsWithQuantity = await Promise.all(productsPromises);
     
-    // Filter out any null products
-    const products = productsWithQuantity.filter((product): product is Product & { quantity: number } => 
+    // Filter out any null products - fixed type predicate here
+    const products = productsWithQuantity.filter((product): product is (Product & { quantity: number }) => 
       product !== null
     );
     
