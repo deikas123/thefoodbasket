@@ -82,6 +82,50 @@ export const getUserAutoReplenishItems = async () => {
   }
 };
 
+// Toggle auto-replenish item status
+export const toggleAutoReplenishStatus = async (
+  id: string,
+  active: boolean
+): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('auto_replenish_items')
+      .update({ active })
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error updating auto-replenish status:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in toggleAutoReplenishStatus:", error);
+    return false;
+  }
+};
+
+// Delete an auto-replenish item
+export const removeFromAutoReplenish = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('auto_replenish_items')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error deleting auto-replenish item:", error);
+      return false;
+    }
+    
+    toast("Auto-replenishment removed");
+    return true;
+  } catch (error) {
+    console.error("Error in removeFromAutoReplenish:", error);
+    return false;
+  }
+};
+
 // Update an auto-replenish item
 export const updateAutoReplenishItem = async (
   id: string,
@@ -133,27 +177,6 @@ export const updateAutoReplenishItem = async (
     return true;
   } catch (error) {
     console.error("Error in updateAutoReplenishItem:", error);
-    return false;
-  }
-};
-
-// Delete an auto-replenish item
-export const deleteAutoReplenishItem = async (id: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('auto_replenish_items')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error("Error deleting auto-replenish item:", error);
-      return false;
-    }
-    
-    toast("Auto-replenishment removed");
-    return true;
-  } catch (error) {
-    console.error("Error in deleteAutoReplenishItem:", error);
     return false;
   }
 };

@@ -78,7 +78,7 @@ export const getFoodBasketWithProducts = async (basketId: string): Promise<{bask
     
     // Get full product details for each item
     const productsPromises = basketItems.map(async (item) => {
-      const product = await getProductById(item.product_id);
+      const product = await getProductById(item.productId);
       return product ? {
         ...product,
         quantity: item.quantity
