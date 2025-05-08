@@ -65,7 +65,7 @@ export const getFoodBasketItems = async (basketId: string): Promise<FoodBasketIt
 };
 
 // Get food basket with full product details
-export const getFoodBasketWithProducts = async (basketId: string): Promise<{basket: FoodBasket | null, products: Product[]}> => {
+export const getFoodBasketWithProducts = async (basketId: string): Promise<{basket: FoodBasket | null, products: (Product & { quantity: number })[]}> => {
   try {
     // Get the basket
     const basket = await getFoodBasketById(basketId);

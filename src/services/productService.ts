@@ -6,3 +6,5 @@ export * from './product/tagService';
 export * from './product/offerService';
 export * from './product/recommendationService';
 
+// Override getCategoryById from product.ts with the one from categoryService.ts
+export { getCategoryById } from './product/categoryService';
