@@ -1,178 +1,100 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { FoodBasket, FoodBasketItem } from "@/types/foodBasket";
 import { Product } from "@/types";
-import { getProductById } from "@/services/productService";
-import { convertToProduct, convertFromProduct } from "@/utils/typeConverters";
-import { FoodBasket } from "@/types/foodBasket";
+import { getProductById } from "@/services/product";
 
-export const getAllFoodBaskets = async (): Promise<FoodBasket[] | null> => {
+// Get all food baskets
+export const getAllFoodBaskets = async (): Promise<FoodBasket[]> => {
   try {
     const { data, error } = await supabase
       .from('food_baskets')
-      .select('*, food_basket_items(*)');
-
+      .select('*');
+    
     if (error) {
       console.error("Error fetching food baskets:", error);
-      throw error;
+      return [];
     }
-
-    // Map the data to our FoodBasket type
-    const foodBaskets: FoodBasket[] = data.map(basket => ({
-      id: basket.id,
-      name: basket.name,
-      description: basket.description || undefined,
-      recipe: basket.recipe,
-      image: basket.image || undefined,
-      totalPrice: parseFloat(basket.total_price.toString()),
-      createdAt: basket.created_at,
-      updatedAt: basket.updated_at,
-      items: (basket.food_basket_items || []).map((item: any) => ({
-        id: item.id,
-        basketId: item.basket_id,
-        productId: item.product_id,
-        quantity: item.quantity,
-        createdAt: item.created_at,
-      }))
-    }));
-
-    return foodBaskets;
+    
+    return data || [];
   } catch (error) {
-    console.error("Error fetching food baskets:", error);
-    throw error;
+    console.error("Error in getAllFoodBaskets:", error);
+    return [];
   }
 };
 
+// Get food basket by ID
 export const getFoodBasketById = async (id: string): Promise<FoodBasket | null> => {
   try {
     const { data, error } = await supabase
       .from('food_baskets')
-      .select('*, food_basket_items(*)')
+      .select('*')
       .eq('id', id)
       .single();
-
+    
     if (error) {
       console.error("Error fetching food basket:", error);
-      throw error;
+      return null;
     }
-
-    // Map the data to our FoodBasket type
-    const foodBasket: FoodBasket = {
-      id: data.id,
-      name: data.name,
-      description: data.description || undefined,
-      recipe: data.recipe,
-      image: data.image || undefined,
-      totalPrice: parseFloat(data.total_price.toString()),
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      items: (data.food_basket_items || []).map((item: any) => ({
-        id: item.id,
-        basketId: item.basket_id,
-        productId: item.product_id,
-        quantity: item.quantity,
-        createdAt: item.created_at,
-      }))
-    };
-
-    return foodBasket;
-  } catch (error) {
-    console.error("Error fetching food basket:", error);
-    throw error;
-  }
-};
-
-export const getFoodBasketWithProducts = async (id: string) => {
-  try {
-    // Fetch the food basket
-    const basket = await getFoodBasketById(id);
-
-    if (!basket) {
-      throw new Error("Food basket not found");
-    }
-
-    // Fetch products for each basket item
-    const products: Product[] = [];
     
-    for (const item of basket.items) {
-      const productData = await getProductById(item.productId);
-      if (productData) {
-        // Convert ProductType to Product
-        const product = convertToProduct(productData);
-        // Create a new object with quantity instead of modifying the product
-        products.push({
-          ...product,
-          // We can't add quantity directly to Product objects
-          // Instead we'll handle this at rendering time
-        });
-      }
-    }
-
-    return {
-      ...basket,
-      products
-    };
+    return data;
   } catch (error) {
-    console.error("Error fetching food basket with products:", error);
-    throw error;
+    console.error("Error in getFoodBasketById:", error);
+    return null;
   }
 };
 
-export const createFoodBasket = async (foodBasket: any) => {
+// Get food basket items by basket ID
+export const getFoodBasketItems = async (basketId: string): Promise<FoodBasketItem[]> => {
   try {
     const { data, error } = await supabase
-      .from('food_baskets')
-      .insert([foodBasket])
-      .select()
-      .single();
-
+      .from('food_basket_items')
+      .select('*')
+      .eq('basket_id', basketId);
+    
     if (error) {
-      console.error("Error creating food basket:", error);
-      throw error;
+      console.error("Error fetching food basket items:", error);
+      return [];
     }
-
-    return data;
+    
+    return data || [];
   } catch (error) {
-    console.error("Error creating food basket:", error);
-    throw error;
+    console.error("Error in getFoodBasketItems:", error);
+    return [];
   }
 };
 
-export const updateFoodBasket = async (id: string, updates: any) => {
+// Get food basket with full product details
+export const getFoodBasketWithProducts = async (basketId: string): Promise<{basket: FoodBasket | null, products: Product[]}> => {
   try {
-    const { data, error } = await supabase
-      .from('food_baskets')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error updating food basket:", error);
-      throw error;
+    // Get the basket
+    const basket = await getFoodBasketById(basketId);
+    if (!basket) {
+      return { basket: null, products: [] };
     }
-
-    return data;
+    
+    // Get the basket items
+    const basketItems = await getFoodBasketItems(basketId);
+    
+    // Get full product details for each item
+    const productsPromises = basketItems.map(async (item) => {
+      const product = await getProductById(item.product_id);
+      return product ? {
+        ...product,
+        quantity: item.quantity
+      } : null;
+    });
+    
+    const productsWithQuantity = await Promise.all(productsPromises);
+    
+    // Filter out any null products
+    const products = productsWithQuantity.filter((product): product is Product & { quantity: number } => 
+      product !== null
+    );
+    
+    return { basket, products };
   } catch (error) {
-    console.error("Error updating food basket:", error);
-    throw error;
-  }
-};
-
-export const deleteFoodBasket = async (id: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('food_baskets')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error("Error deleting food basket:", error);
-      throw error;
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Error deleting food basket:", error);
-    throw error;
+    console.error("Error in getFoodBasketWithProducts:", error);
+    return { basket: null, products: [] };
   }
 };
