@@ -10,6 +10,8 @@ export interface ProductTag {
 
 export const createTag = async (name: string): Promise<ProductTag | null> => {
   try {
+    console.log("Creating new tag:", name);
+    
     const { data, error } = await supabase
       .from('product_tags')
       .insert([{ name }])
@@ -21,6 +23,8 @@ export const createTag = async (name: string): Promise<ProductTag | null> => {
       toast.error("Failed to create tag");
       return null;
     }
+    
+    console.log("Tag created successfully:", data);
     
     return {
       id: data.id,
@@ -55,6 +59,8 @@ export const updateTag = async (id: string, name: string): Promise<boolean> => {
 
 export const deleteTag = async (id: string): Promise<boolean> => {
   try {
+    console.log("Deleting tag with ID:", id);
+    
     // First delete all relations to this tag
     const { error: relationError } = await supabase
       .from('product_tag_relations')
@@ -77,6 +83,7 @@ export const deleteTag = async (id: string): Promise<boolean> => {
       return false;
     }
     
+    console.log("Tag deleted successfully");
     return true;
   } catch (error) {
     console.error("Error in deleteTag:", error);
@@ -86,6 +93,8 @@ export const deleteTag = async (id: string): Promise<boolean> => {
 
 export const getAllTags = async (): Promise<ProductTag[]> => {
   try {
+    console.log("Fetching all tags");
+    
     const { data, error } = await supabase
       .from('product_tags')
       .select('*')
@@ -95,6 +104,8 @@ export const getAllTags = async (): Promise<ProductTag[]> => {
       console.error("Error fetching tags:", error);
       return [];
     }
+    
+    console.log("Retrieved tags:", data?.length || 0);
     
     if (!data || data.length === 0) {
       return [];
@@ -123,6 +134,8 @@ interface ProductTagRelation {
 
 export const getProductTags = async (productId: string): Promise<ProductTag[]> => {
   try {
+    console.log("Fetching tags for product:", productId);
+    
     const { data, error } = await supabase
       .from('product_tag_relations')
       .select('tag_id, product_tags(*)')
@@ -132,6 +145,8 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
       console.error("Error fetching product tags:", error);
       return [];
     }
+    
+    console.log("Retrieved product tag relations:", data?.length || 0);
     
     if (!data || data.length === 0) {
       return [];

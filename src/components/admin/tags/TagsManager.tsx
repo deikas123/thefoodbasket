@@ -28,12 +28,12 @@ const TagsManager = () => {
     mutationFn: createTag,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-tags"] });
-      toast("Tag added successfully");
+      toast.success("Tag added successfully");
       setNewTagName("");
     },
     onError: (error) => {
       console.error("Error adding tag:", error);
-      toast("Failed to add tag");
+      toast.error("Failed to add tag");
     }
   });
 
@@ -41,24 +41,27 @@ const TagsManager = () => {
     mutationFn: deleteTag,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-tags"] });
-      toast("Tag deleted successfully");
+      toast.success("Tag deleted successfully");
     },
     onError: (error) => {
       console.error("Error deleting tag:", error);
-      toast("Failed to delete tag");
+      toast.error("Failed to delete tag");
     }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTagName.trim()) return;
-    
+    console.log("Submitting new tag:", newTagName);
     addTagMutation.mutate(newTagName);
   };
 
   const handleDeleteTag = (id: string) => {
+    console.log("Deleting tag with ID:", id);
     deleteTagMutation.mutate(id);
   };
+
+  console.log("Rendering TagsManager, tags:", tags);
 
   return (
     <Card>

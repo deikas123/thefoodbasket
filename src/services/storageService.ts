@@ -15,6 +15,35 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `product-images/${fileName}`;
     
+    console.log("Uploading to storage bucket with path:", filePath);
+    
+    // First, check if the bucket exists
+    const { data: buckets, error: bucketsError } = await supabase
+      .storage
+      .listBuckets();
+    
+    if (bucketsError) {
+      console.error("Error checking buckets:", bucketsError);
+      toast.error("Storage system error");
+      return null;
+    }
+    
+    // Check if 'products' bucket exists, create if not
+    const productsBucketExists = buckets.some(bucket => bucket.name === 'products');
+    if (!productsBucketExists) {
+      const { error: createBucketError } = await supabase.storage.createBucket('products', {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+      });
+      
+      if (createBucketError) {
+        console.error("Error creating bucket:", createBucketError);
+        toast.error("Failed to create storage bucket");
+        return null;
+      }
+      console.log("Created new 'products' bucket");
+    }
+    
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from('products')
@@ -29,10 +58,14 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
       return null;
     }
     
+    console.log("Upload successful:", data?.path);
+    
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('products')
       .getPublicUrl(filePath);
+    
+    console.log("Generated public URL:", publicUrl);
     
     return publicUrl;
   } catch (error) {

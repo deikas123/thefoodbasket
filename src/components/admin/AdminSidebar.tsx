@@ -29,6 +29,7 @@ const AdminSidebar = () => {
     { name: "Dashboard", icon: LayoutGrid, path: "/admin" },
     { name: "Products", icon: ShoppingBag, path: "/admin/products" },
     { name: "Categories", icon: Tag, path: "/admin/categories" },
+    { name: "Tags", icon: Tag, path: "/admin/tags" },
     { name: "Orders", icon: Package, path: "/admin/orders" },
     { name: "Users", icon: Users, path: "/admin/users" },
     { name: "Deliveries", icon: Truck, path: "/admin/deliveries" },

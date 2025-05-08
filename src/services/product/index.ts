@@ -1,5 +1,3 @@
 
-// Barrel file to re-export all product-related services
-export * from './productService';
-export * from './categoryService';
-export * from './recommendationService';
+// Re-export everything from the refactored product services for backward compatibility
+export * from './product';
