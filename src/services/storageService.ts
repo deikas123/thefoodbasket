@@ -17,34 +17,7 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
     
     console.log("Uploading to storage bucket with path:", filePath);
     
-    // First, check if the bucket exists
-    const { data: buckets, error: bucketsError } = await supabase
-      .storage
-      .listBuckets();
-    
-    if (bucketsError) {
-      console.error("Error checking buckets:", bucketsError);
-      toast.error("Storage system error");
-      return null;
-    }
-    
-    // Check if 'products' bucket exists, create if not
-    const productsBucketExists = buckets.some(bucket => bucket.name === 'products');
-    if (!productsBucketExists) {
-      const { error: createBucketError } = await supabase.storage.createBucket('products', {
-        public: true,
-        fileSizeLimit: 10485760, // 10MB
-      });
-      
-      if (createBucketError) {
-        console.error("Error creating bucket:", createBucketError);
-        toast.error("Failed to create storage bucket");
-        return null;
-      }
-      console.log("Created new 'products' bucket");
-    }
-    
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage (bucket 'products' already exists)
     const { data, error } = await supabase.storage
       .from('products')
       .upload(filePath, file, {
@@ -86,8 +59,8 @@ export const deleteProductImage = async (imageUrl: string): Promise<boolean> => 
     // Extract file path from URL
     const url = new URL(imageUrl);
     const pathParts = url.pathname.split('/');
-    const bucket = pathParts[1]; // Should be 'products'
-    const filePath = pathParts.slice(2).join('/');
+    const bucket = pathParts[pathParts.indexOf('object') + 2]; // Should be 'products'
+    const filePath = pathParts.slice(pathParts.indexOf('object') + 3).join('/');
     
     if (bucket !== 'products') {
       console.warn("Not a product image URL:", imageUrl);
