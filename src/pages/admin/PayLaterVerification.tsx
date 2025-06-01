@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLayout from "@/layouts/AdminLayout";
 import { getKYCVerificationsForAdmin, updateKYCVerification } from "@/services/adminService";
 import { KYCVerification } from "@/types/kyc";
 

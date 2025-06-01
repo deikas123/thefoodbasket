@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -48,7 +47,7 @@ import { Plus, Trash2, Edit } from "lucide-react";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import AdminLayout from "@/components/admin/AdminLayout";
+import AdminLayout from "@/layouts/AdminLayout";
 
 const DiscountCodes = () => {
   const { toast } = useToast();
