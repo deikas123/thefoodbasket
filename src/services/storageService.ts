@@ -4,20 +4,46 @@ import { toast } from "sonner";
 
 export const uploadProductImage = async (file: File): Promise<string | null> => {
   try {
+    console.log("Starting image upload process...");
+    
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error("Please upload an image file");
       return null;
     }
     
-    // Generate a unique file name with original extension
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return null;
+    }
+    
+    // Generate a unique file name
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `product-images/${fileName}`;
     
-    console.log("Uploading to storage bucket with path:", filePath);
+    console.log("Uploading file:", fileName, "Size:", file.size);
     
-    // Upload to Supabase Storage (bucket 'products' already exists)
+    // First, let's make sure the bucket exists and is accessible
+    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    
+    if (bucketsError) {
+      console.error("Error listing buckets:", bucketsError);
+      toast.error("Storage configuration error");
+      return null;
+    }
+    
+    console.log("Available buckets:", buckets?.map(b => b.name));
+    
+    const productsBucket = buckets?.find(b => b.name === 'products');
+    if (!productsBucket) {
+      console.error("Products bucket not found");
+      toast.error("Storage bucket not configured. Please contact administrator.");
+      return null;
+    }
+    
+    // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from('products')
       .upload(filePath, file, {
@@ -27,7 +53,7 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
     
     if (error) {
       console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
+      toast.error(`Failed to upload image: ${error.message}`);
       return null;
     }
     
@@ -40,7 +66,15 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
     
     console.log("Generated public URL:", publicUrl);
     
+    if (!publicUrl) {
+      console.error("Failed to generate public URL");
+      toast.error("Failed to generate image URL");
+      return null;
+    }
+    
+    toast.success("Image uploaded successfully!");
     return publicUrl;
+    
   } catch (error) {
     console.error("Error in image upload:", error);
     toast.error("An error occurred while uploading the image");
@@ -49,23 +83,37 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
 };
 
 export const uploadProductImages = async (files: File[]): Promise<string[]> => {
+  console.log(`Uploading ${files.length} additional images...`);
   const uploadPromises = files.map(file => uploadProductImage(file));
   const results = await Promise.all(uploadPromises);
-  return results.filter((url): url is string => url !== null);
+  const successfulUploads = results.filter((url): url is string => url !== null);
+  
+  if (successfulUploads.length !== files.length) {
+    toast.warning(`${files.length - successfulUploads.length} images failed to upload`);
+  }
+  
+  return successfulUploads;
 };
 
 export const deleteProductImage = async (imageUrl: string): Promise<boolean> => {
   try {
-    // Extract file path from URL
-    const url = new URL(imageUrl);
-    const pathParts = url.pathname.split('/');
-    const bucket = pathParts[pathParts.indexOf('object') + 2]; // Should be 'products'
-    const filePath = pathParts.slice(pathParts.indexOf('object') + 3).join('/');
-    
-    if (bucket !== 'products') {
-      console.warn("Not a product image URL:", imageUrl);
+    if (!imageUrl.includes('/products/')) {
+      console.warn("Not a products bucket URL:", imageUrl);
       return false;
     }
+    
+    // Extract file path from URL
+    const url = new URL(imageUrl);
+    const pathSegments = url.pathname.split('/');
+    const objectIndex = pathSegments.indexOf('object');
+    
+    if (objectIndex === -1) {
+      console.error("Invalid storage URL format:", imageUrl);
+      return false;
+    }
+    
+    const filePath = pathSegments.slice(objectIndex + 3).join('/');
+    console.log("Deleting file:", filePath);
     
     const { error } = await supabase.storage
       .from('products')

@@ -71,6 +71,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
   const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const additionalFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -176,9 +177,22 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
     }
   }, [product, form, productTags, additionalImages]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    console.log("Selected file:", file.name, file.type, file.size);
+    
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
     
     setImageFile(file);
     
@@ -189,8 +203,8 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
     };
     reader.readAsDataURL(file);
     
-    // Auto-set the form value
-    form.setValue("image", "uploaded-image-pending");
+    // Set form value to indicate an image is selected
+    form.setValue("image", "file-selected");
   };
 
   const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,42 +257,45 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
   const onSubmit = async (values: ProductFormValues) => {
     setIsSubmitting(true);
     try {
+      console.log("Starting form submission...");
+      
       // Upload main image if there's a new file
       let imageUrl = values.image;
       if (imageFile) {
-        console.log("Uploading main image file:", imageFile.name);
+        console.log("Uploading main image...");
+        setIsUploadingImage(true);
         const uploadedUrl = await uploadProductImage(imageFile);
+        setIsUploadingImage(false);
+        
         if (uploadedUrl) {
-          console.log("Image uploaded successfully:", uploadedUrl);
+          console.log("Main image uploaded successfully:", uploadedUrl);
           imageUrl = uploadedUrl;
         } else {
-          // If upload failed and we don't have an existing image
-          if (!product?.image) {
-            toast.error("Main image upload failed");
-            setIsSubmitting(false);
-            return;
-          }
+          toast.error("Failed to upload main image");
+          setIsSubmitting(false);
+          return;
         }
-      } else if (!values.image && !product?.image) {
+      } else if (!product?.image && !imagePreview) {
         toast.error("Please upload a product image");
         setIsSubmitting(false);
         return;
+      } else if (product?.image && !imageFile) {
+        // Keep existing image
+        imageUrl = product.image;
       }
       
       // Upload additional images
       let additionalImageUrls: string[] = [];
       if (additionalImageFiles.length > 0) {
+        console.log("Uploading additional images...");
         const uploadedUrls = await uploadProductImages(additionalImageFiles);
         additionalImageUrls = uploadedUrls;
-        if (additionalImageUrls.length !== additionalImageFiles.length) {
-          toast.warning("Some additional images failed to upload");
-        }
       }
       
-      // Combine with existing additional images
+      // Combine with existing additional images that weren't changed
       if (values.additionalImages) {
         additionalImageUrls = [
-          ...values.additionalImages.filter(url => url !== "uploaded-image-pending"),
+          ...values.additionalImages.filter(url => url !== "uploaded-image-pending" && url !== "file-selected"),
           ...additionalImageUrls
         ];
       }
@@ -445,6 +462,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       toast.error("Failed to save product: " + (error.message || "Unknown error"));
     } finally {
       setIsSubmitting(false);
+      setIsUploadingImage(false);
     }
   };
 
@@ -563,6 +581,11 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
                           alt="Product preview" 
                           className="w-full h-full object-cover"
                         />
+                        {isUploadingImage && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-white" />
+                          </div>
+                        )}
                       </div>
                     )}
                     
@@ -571,9 +594,14 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
                       type="button" 
                       variant="outline" 
                       onClick={triggerFileInput} 
+                      disabled={isUploadingImage}
                       className="flex items-center gap-2"
                     >
-                      <Upload className="h-4 w-4" /> 
+                      {isUploadingImage ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
                       {imagePreview ? 'Change Image' : 'Upload Image'}
                     </Button>
                     
@@ -753,12 +781,15 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
                 type="button" 
                 variant="outline" 
                 onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {product ? "Update" : "Create"} Product
+              <Button type="submit" disabled={isSubmitting || isUploadingImage}>
+                {(isSubmitting || isUploadingImage) && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isUploadingImage ? "Uploading..." : isSubmitting ? "Saving..." : product ? "Update" : "Create"} Product
               </Button>
             </DialogFooter>
           </form>
