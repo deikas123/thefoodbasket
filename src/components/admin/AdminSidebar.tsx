@@ -16,7 +16,8 @@ import {
   Calendar,
   Bell,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,11 +34,11 @@ const AdminSidebar = () => {
     { name: "Orders", icon: Package, path: "/admin/orders" },
     { name: "Users", icon: Users, path: "/admin/users" },
     { name: "Deliveries", icon: Truck, path: "/admin/deliveries" },
+    { name: "Delivery Zones", icon: MapPin, path: "/admin/delivery-zones" },
     { name: "Banners", icon: Image, path: "/admin/banners" },
     { name: "Coupons", icon: Ticket, path: "/admin/discount-codes" },
     { name: "Daily Offers", icon: BadgePercent, path: "/admin/daily-offers" },
     { name: "Pay Later Verification", icon: FileCheck, path: "/admin/pay-later-verification" },
-    { name: "Delivery Zones", icon: Calendar, path: "/admin/delivery-zones" },
     { name: "Notifications", icon: Bell, path: "/admin/notifications" },
     { name: "Content Management", icon: Image, path: "/admin/content-management" },
     { name: "Settings", icon: Settings, path: "/admin/settings" },
@@ -52,12 +53,11 @@ const AdminSidebar = () => {
     >
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-800">
         <div className={cn("flex items-center", collapsed && "hidden")}>
-          <span className="text-xl font-bold">Admin</span>
+          <span className="text-xl font-bold">Admin Panel</span>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="flex lg:hidden"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}

@@ -1,3 +1,4 @@
+
 import { Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -14,6 +15,7 @@ const PayLaterVerification = lazy(() => import("@/pages/admin/PayLaterVerificati
 const DailyOffers = lazy(() => import("@/pages/admin/DailyOffers"));
 const AdminNotifications = lazy(() => import("@/pages/admin/Notifications"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
+const DeliveryZones = lazy(() => import("@/pages/admin/DeliveryZones"));
 
 const AdminRoutes = () => {
   return (
@@ -106,7 +108,7 @@ const AdminRoutes = () => {
       <Route path="/admin/delivery-zones" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
-            <AdminDashboard />
+            <DeliveryZones />
           </AdminLayout>
         </Suspense>
       } />

@@ -25,7 +25,15 @@ export const createNotification = async (notification: Omit<Notification, 'id' |
     const { data, error } = await supabase
       .from('notifications')
       .insert({
-        ...notification,
+        title: notification.title,
+        body: notification.body,
+        image: notification.image,
+        link: notification.link,
+        status: notification.status,
+        scheduled_for: notification.scheduledFor,
+        target_user_role: notification.targetUserRole,
+        target_user_ids: notification.targetUserIds,
+        trigger: notification.trigger,
         created_at: new Date().toISOString(),
       })
       .select()
@@ -33,36 +41,46 @@ export const createNotification = async (notification: Omit<Notification, 'id' |
       
     if (error) throw error;
     
-    // If notification is not scheduled or triggered, send it immediately
+    // If notification status is 'sent', send it immediately
     if (notification.status === 'sent') {
       await sendPushNotification(data);
     }
     
-    toast.success("Notification created successfully");
     return data;
   } catch (error: any) {
-    toast.error(`Error creating notification: ${error.message}`);
-    return null;
+    console.error("Error creating notification:", error.message);
+    throw error;
   }
 };
 
 // Update a notification
 export const updateNotification = async (id: string, updates: Partial<Notification>): Promise<Notification | null> => {
   try {
+    const updateData: any = {};
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.body !== undefined) updateData.body = updates.body;
+    if (updates.image !== undefined) updateData.image = updates.image;
+    if (updates.link !== undefined) updateData.link = updates.link;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.scheduledFor !== undefined) updateData.scheduled_for = updates.scheduledFor;
+    if (updates.sentAt !== undefined) updateData.sent_at = updates.sentAt;
+    if (updates.targetUserRole !== undefined) updateData.target_user_role = updates.targetUserRole;
+    if (updates.targetUserIds !== undefined) updateData.target_user_ids = updates.targetUserIds;
+    if (updates.trigger !== undefined) updateData.trigger = updates.trigger;
+
     const { data, error } = await supabase
       .from('notifications')
-      .update(updates)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
       
     if (error) throw error;
-    
-    toast.success("Notification updated successfully");
     return data;
   } catch (error: any) {
-    toast.error(`Error updating notification: ${error.message}`);
-    return null;
+    console.error("Error updating notification:", error.message);
+    throw error;
   }
 };
 
@@ -75,22 +93,20 @@ export const deleteNotification = async (id: string): Promise<boolean> => {
       .eq('id', id);
       
     if (error) throw error;
-    
-    toast.success("Notification deleted successfully");
     return true;
   } catch (error: any) {
-    toast.error(`Error deleting notification: ${error.message}`);
-    return false;
+    console.error("Error deleting notification:", error.message);
+    throw error;
   }
 };
 
 // Send a push notification
 export const sendPushNotification = async (notification: Notification): Promise<boolean> => {
   try {
-    // In a real application, this would call a serverless function to send the push notification
-    // Here we're simulating the sending process
+    console.log("Sending notification:", notification.title);
     
-    // Update notification status to sent
+    // In a real implementation, this would call a backend service to send push notifications
+    // For now, we'll just update the notification status
     const { error } = await supabase
       .from('notifications')
       .update({ 
@@ -101,10 +117,32 @@ export const sendPushNotification = async (notification: Notification): Promise<
       
     if (error) throw error;
     
+    // Here you would typically call your push notification service
+    // e.g., Firebase Cloud Messaging, OneSignal, etc.
+    
     toast.success("Notification sent successfully");
     return true;
   } catch (error: any) {
-    toast.error(`Error sending notification: ${error.message}`);
-    return false;
+    console.error("Error sending notification:", error.message);
+    throw error;
+  }
+};
+
+// Get notifications for a specific user (for the notification menu)
+export const getUserNotifications = async (userId: string): Promise<Notification[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .or(`target_user_ids.cs.{${userId}},target_user_ids.is.null`)
+      .eq('status', 'sent')
+      .order('sent_at', { ascending: false })
+      .limit(10);
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error: any) {
+    console.error("Error fetching user notifications:", error.message);
+    return [];
   }
 };
