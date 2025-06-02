@@ -25,24 +25,6 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
     
     console.log("Uploading file:", fileName, "Size:", file.size);
     
-    // First, let's make sure the bucket exists and is accessible
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
-    if (bucketsError) {
-      console.error("Error listing buckets:", bucketsError);
-      toast.error("Storage configuration error");
-      return null;
-    }
-    
-    console.log("Available buckets:", buckets?.map(b => b.name));
-    
-    const productsBucket = buckets?.find(b => b.name === 'products');
-    if (!productsBucket) {
-      console.error("Products bucket not found");
-      toast.error("Storage bucket not configured. Please contact administrator.");
-      return null;
-    }
-    
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from('products')
