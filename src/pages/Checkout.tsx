@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
@@ -136,7 +137,7 @@ const Checkout = () => {
         id: selectedDelivery.id,
         name: selectedDelivery.name,
         price: selectedDelivery.base_price,
-        estimatedDays: selectedDelivery.estimated_delivery_days
+        estimatedDelivery: `${selectedDelivery.estimated_delivery_days} days`
       };
 
       const order = await checkout(
