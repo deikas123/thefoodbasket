@@ -16,12 +16,13 @@ import {
   ShoppingCart
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import DeliveryOptions from "@/components/checkout/DeliveryOptions";
+import DeliveryOptionsNew from "@/components/checkout/DeliveryOptionsNew";
 import DeliveryAddressForm from "@/components/checkout/DeliveryAddressForm";
 import PaymentMethods from "@/components/checkout/PaymentMethods";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import CheckoutStepper from "@/components/checkout/CheckoutStepper";
-import { Address, DeliveryOption, PaymentMethod, Order } from "@/types";
+import { Address, PaymentMethod, Order } from "@/types";
+import { DeliveryOption } from "@/services/deliveryOptionsService";
 
 const steps = [
   { id: "cart", title: "Cart", icon: ShoppingCart },
@@ -130,10 +131,18 @@ const Checkout = () => {
     setIsProcessing(true);
     
     try {
+      // Convert new delivery option format to old format for checkout
+      const deliveryOptionForCheckout = {
+        id: selectedDelivery.id,
+        name: selectedDelivery.name,
+        price: selectedDelivery.base_price,
+        estimatedDays: selectedDelivery.estimated_delivery_days
+      };
+
       const order = await checkout(
         user.id,
         selectedAddress,
-        selectedDelivery,
+        deliveryOptionForCheckout,
         selectedPayment
       );
       
@@ -203,10 +212,9 @@ const Checkout = () => {
                       Delivery Options
                     </h2>
                     
-                    <DeliveryOptions 
+                    <DeliveryOptionsNew 
                       selectedDelivery={selectedDelivery}
                       setSelectedDelivery={setSelectedDelivery}
-                      postalCode={selectedAddress?.zipCode || "00100"}
                     />
                   </CardContent>
                 </Card>
@@ -216,7 +224,7 @@ const Checkout = () => {
                 <OrderSummary 
                   items={items}
                   subtotal={total}
-                  deliveryFee={selectedDelivery?.price || 0}
+                  deliveryFee={selectedDelivery?.base_price || 0}
                 />
                 
                 <div className="mt-4">
@@ -256,7 +264,7 @@ const Checkout = () => {
                 <OrderSummary 
                   items={items}
                   subtotal={total}
-                  deliveryFee={selectedDelivery?.price || 0}
+                  deliveryFee={selectedDelivery?.base_price || 0}
                 />
                 
                 <div className="mt-4 space-y-3">

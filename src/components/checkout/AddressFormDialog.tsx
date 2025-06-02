@@ -16,13 +16,13 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { formatAddressFromDb } from "@/services/addressService";
+import { addUserAddress, updateUserAddress } from "@/services/addressService";
 
 interface AddressFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   address: Address | null;
+  onAddressSaved?: (address: Address) => void;
 }
 
 // Kenyan Counties
@@ -46,7 +46,8 @@ const nairobiPostalCodes = [
 const AddressFormDialog = ({ 
   open, 
   onOpenChange, 
-  address 
+  address,
+  onAddressSaved 
 }: AddressFormDialogProps) => {
   const { user, updateProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,65 +89,46 @@ const AddressFormDialog = ({
     setIsSubmitting(true);
     
     try {
-      // If making this address default, update all other addresses
-      if (formData.isDefault) {
-        await supabase
-          .from('addresses')
-          .update({ is_default: false })
-          .eq('user_id', user.id);
-      }
+      const addressData = {
+        street: formData.street,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zipCode,
+        is_default: formData.isDefault
+      };
+
+      let savedAddress;
       
       if (address) {
         // Update existing address
-        await supabase
-          .from('addresses')
-          .update({
-            street: formData.street,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            is_default: formData.isDefault
-          })
-          .eq('id', address.id);
-        
+        savedAddress = await updateUserAddress(address.id, addressData, user.id);
         toast.success("Address updated successfully");
       } else {
         // Add new address
-        const { data, error } = await supabase
-          .from('addresses')
-          .insert({
-            user_id: user.id,
-            street: formData.street,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            is_default: formData.isDefault || user.addresses.length === 0 // Make default if first address
-          })
-          .select();
-        
-        if (error) {
-          throw error;
-        }
-        
+        savedAddress = await addUserAddress(user.id, addressData);
         toast.success("Address added successfully");
       }
       
-      // Fetch updated addresses to refresh UI
-      const { data: addresses, error: fetchError } = await supabase
-        .from('addresses')
-        .select('*')
-        .eq('user_id', user.id);
-        
-      if (fetchError) {
-        throw fetchError;
-      }
+      // Convert to app format
+      const formattedAddress: Address = {
+        id: savedAddress.id,
+        street: savedAddress.street,
+        city: savedAddress.city,
+        state: savedAddress.state,
+        zipCode: savedAddress.zip_code,
+        isDefault: savedAddress.is_default
+      };
       
-      if (addresses) {
-        // Convert from database format to app format
-        const formattedAddresses = addresses.map(addr => formatAddressFromDb(addr));
+      // Update user context with new addresses
+      const updatedAddresses = address 
+        ? user.addresses.map(addr => addr.id === address.id ? formattedAddress : addr)
+        : [...user.addresses, formattedAddress];
         
-        // Update the user context with new addresses
-        await updateProfile({ addresses: formattedAddresses });
+      await updateProfile({ addresses: updatedAddresses });
+      
+      // Call the callback if provided
+      if (onAddressSaved) {
+        onAddressSaved(formattedAddress);
       }
       
       onOpenChange(false);

@@ -5,7 +5,7 @@ import { Address } from "@/types";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Home, Edit, MapPin } from "lucide-react";
+import { PlusCircle, Home, Edit } from "lucide-react";
 import AddressFormDialog from "./AddressFormDialog";
 
 interface DeliveryAddressFormProps {
@@ -31,6 +31,11 @@ const DeliveryAddressForm = ({
   const handleAddNewAddress = () => {
     setEditingAddress(null);
     setIsDialogOpen(true);
+  };
+
+  const handleAddressSaved = (address: Address) => {
+    // Auto-select the newly saved address
+    setSelectedAddress(address);
   };
   
   return (
@@ -108,6 +113,7 @@ const DeliveryAddressForm = ({
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         address={editingAddress}
+        onAddressSaved={handleAddressSaved}
       />
     </div>
   );
