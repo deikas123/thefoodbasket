@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -77,7 +78,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
   const wishlistActive = isInWishlist(product.id);
   
   return (
-    <Link to={`/products/${product.id}`} className={`group ${className || ''}`}>
+    <Link to={`/product/${product.id}`} className={`group ${className || ''}`}>
       <div className="border rounded-lg overflow-hidden transition-all hover:shadow-md">
         <div className="relative h-48 bg-gray-100">
           {/* Product image */}

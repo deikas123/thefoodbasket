@@ -171,7 +171,7 @@ const Checkout = () => {
       <Header />
       <main className="flex-grow pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <Button 
               variant="ghost" 
               onClick={() => navigate(-1)} 
@@ -182,19 +182,19 @@ const Checkout = () => {
               Back
             </Button>
             
-            <h1 className="text-3xl font-bold">Checkout</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Checkout</h1>
             
-            <div className="my-8">
+            <div className="my-6 sm:my-8">
               <CheckoutStepper steps={steps} currentStep={currentStep} />
             </div>
           </div>
           
           {currentStep === "delivery" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+              <div className="lg:col-span-2 space-y-6 lg:space-y-8">
                 <Card>
-                  <CardContent className="pt-6">
-                    <h2 className="text-xl font-semibold flex items-center mb-4">
+                  <CardContent className="pt-4 sm:pt-6">
+                    <h2 className="text-lg sm:text-xl font-semibold flex items-center mb-4">
                       <Truck className="mr-2 h-5 w-5 text-primary" />
                       Delivery Address
                     </h2>
@@ -207,8 +207,8 @@ const Checkout = () => {
                 </Card>
                 
                 <Card>
-                  <CardContent className="pt-6">
-                    <h2 className="text-xl font-semibold flex items-center mb-4">
+                  <CardContent className="pt-4 sm:pt-6">
+                    <h2 className="text-lg sm:text-xl font-semibold flex items-center mb-4">
                       <Clock className="mr-2 h-5 w-5 text-primary" />
                       Delivery Options
                     </h2>
@@ -221,7 +221,7 @@ const Checkout = () => {
                 </Card>
               </div>
               
-              <div>
+              <div className="order-first lg:order-last">
                 <OrderSummary 
                   items={items}
                   subtotal={total}
@@ -243,11 +243,11 @@ const Checkout = () => {
           )}
           
           {currentStep === "payment" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
               <div className="lg:col-span-2">
                 <Card>
-                  <CardContent className="pt-6">
-                    <h2 className="text-xl font-semibold flex items-center mb-4">
+                  <CardContent className="pt-4 sm:pt-6">
+                    <h2 className="text-lg sm:text-xl font-semibold flex items-center mb-4">
                       <CreditCard className="mr-2 h-5 w-5 text-primary" />
                       Payment Method
                     </h2>
@@ -261,7 +261,7 @@ const Checkout = () => {
                 </Card>
               </div>
               
-              <div>
+              <div className="order-first lg:order-last">
                 <OrderSummary 
                   items={items}
                   subtotal={total}
@@ -294,19 +294,19 @@ const Checkout = () => {
           {currentStep === "confirmation" && completedOrder && (
             <div className="max-w-2xl mx-auto text-center">
               <div className="mb-8">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="h-10 w-10 text-primary" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
                 </div>
                 
-                <h2 className="text-2xl font-bold mb-2">Order Confirmed!</h2>
-                <p className="text-muted-foreground mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold mb-2">Order Confirmed!</h2>
+                <p className="text-sm sm:text-base text-muted-foreground mb-6 px-4">
                   Your order #{completedOrder.id} has been placed and is being processed. You will receive a confirmation email shortly.
                 </p>
                 
-                <div className="p-6 border rounded-md mb-8 text-left">
+                <div className="p-4 sm:p-6 border rounded-md mb-6 sm:mb-8 text-left">
                   <div className="mb-4">
-                    <h3 className="font-medium mb-2">Delivery Address:</h3>
-                    <p>
+                    <h3 className="font-medium mb-2 text-sm sm:text-base">Delivery Address:</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {completedOrder.deliveryAddress.street}, {completedOrder.deliveryAddress.city}<br />
                       {completedOrder.deliveryAddress.state}, {completedOrder.deliveryAddress.zipCode}
                     </p>
@@ -315,9 +315,9 @@ const Checkout = () => {
                   <Separator className="my-4" />
                   
                   <div className="mb-4">
-                    <h3 className="font-medium mb-2">Delivery Method:</h3>
-                    <p>{completedOrder.deliveryMethod.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="font-medium mb-2 text-sm sm:text-base">Delivery Method:</h3>
+                    <p className="text-xs sm:text-sm">{completedOrder.deliveryMethod.name}</p>
+                    <p className="text-xs text-muted-foreground">
                       Estimated delivery: {completedOrder.estimatedDelivery}
                     </p>
                   </div>
@@ -325,18 +325,25 @@ const Checkout = () => {
                   <Separator className="my-4" />
                   
                   <div>
-                    <h3 className="font-medium mb-2">Payment Method:</h3>
-                    <p>{completedOrder.paymentMethod.name}</p>
+                    <h3 className="font-medium mb-2 text-sm sm:text-base">Payment Method:</h3>
+                    <p className="text-xs sm:text-sm">{completedOrder.paymentMethod.name}</p>
                   </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button onClick={() => navigate(`/orders/${completedOrder.id}`)}>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+                  <Button 
+                    onClick={() => navigate(`/orders/${completedOrder.id}`)}
+                    className="w-full sm:w-auto"
+                  >
                     <Truck className="mr-2 h-4 w-4" />
                     Track Order
                   </Button>
                   
-                  <Button variant="outline" onClick={() => navigate("/shop")}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate("/shop")}
+                    className="w-full sm:w-auto"
+                  >
                     Continue Shopping
                   </Button>
                 </div>
