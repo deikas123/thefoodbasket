@@ -10,7 +10,7 @@ export const formatCurrency = (amount: number): string => {
     currency: 'KES',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(amount);
+  }).format(amount).replace('KES', 'KSh');
 };
 
 /**
@@ -32,12 +32,18 @@ export const formatCurrencyValue = (amount: number): string => {
  * @returns The formatted currency string
  */
 export const formatWithCurrency = (amount: number, currency: string = 'KES'): string => {
-  return new Intl.NumberFormat('en-KE', {
+  const formatted = new Intl.NumberFormat('en-KE', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(amount);
+  
+  if (currency === 'KES') {
+    return formatted.replace('KES', 'KSh');
+  }
+  
+  return formatted;
 };
 
 /**
@@ -46,6 +52,10 @@ export const formatWithCurrency = (amount: number, currency: string = 'KES'): st
  * @returns The currency symbol
  */
 export const getCurrencySymbol = (currencyCode: string = 'KES'): string => {
+  if (currencyCode === 'KES') {
+    return 'KSh';
+  }
+  
   return new Intl.NumberFormat('en-KE', {
     style: 'currency',
     currency: currencyCode,

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
@@ -189,47 +190,49 @@ const FoodBaskets = () => {
     <div className="flex flex-col min-h-screen">
       <Header />
       
-      <main className="flex-grow pt-24 pb-16">
+      <main className="flex-grow pt-20 sm:pt-24 pb-8 sm:pb-16">
         <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Smart Food Baskets</h1>
-            <p className="text-muted-foreground">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Smart Food Baskets</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
               AI-powered meal planning, curated collections, and your personal kitchen assistant
             </p>
           </div>
           
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-              <TabsList className="mb-4 sm:mb-0">
-                <TabsTrigger value="all">All Baskets</TabsTrigger>
-                <TabsTrigger value="personalized">Personalized</TabsTrigger>
-                <TabsTrigger value="ai-generated" className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
+            <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center mb-6">
+              <TabsList className="w-full sm:w-auto overflow-x-auto">
+                <TabsTrigger value="all" className="text-xs sm:text-sm">All Baskets</TabsTrigger>
+                <TabsTrigger value="personalized" className="text-xs sm:text-sm">Personalized</TabsTrigger>
+                <TabsTrigger value="ai-generated" className="flex items-center gap-1 text-xs sm:text-sm">
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
                   AI Generated
                 </TabsTrigger>
-                <TabsTrigger value="recipes">Recipe Generator</TabsTrigger>
-                <TabsTrigger value="assistant">Kitchen Assistant</TabsTrigger>
+                <TabsTrigger value="recipes" className="text-xs sm:text-sm">Recipe Generator</TabsTrigger>
+                <TabsTrigger value="assistant" className="text-xs sm:text-sm">Kitchen Assistant</TabsTrigger>
               </TabsList>
               
               {(activeTab === "all" || activeTab === "personalized" || activeTab === "ai-generated") && (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   {activeTab === "ai-generated" && (
                     <Button 
                       onClick={handleGenerateAIBaskets} 
                       disabled={isGeneratingBaskets}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 text-xs sm:text-sm"
+                      size="sm"
                     >
                       {isGeneratingBaskets ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                       ) : (
-                        <Wand2 className="h-4 w-4" />
+                        <Wand2 className="h-3 w-3 sm:h-4 sm:w-4" />
                       )}
                       {isGeneratingBaskets ? "Generating..." : "Generate AI Baskets"}
                     </Button>
                   )}
-                  <Button variant="outline" size="sm" onClick={toggleSort}>
-                    <ArrowUpDown className="h-4 w-4 mr-2" />
-                    {sort === "price_asc" ? "Price: Low to High" : "Price: High to Low"}
+                  <Button variant="outline" size="sm" onClick={toggleSort} className="text-xs sm:text-sm">
+                    <ArrowUpDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Price: {sort === "price_asc" ? "Low to High" : "High to Low"}</span>
+                    <span className="sm:hidden">{sort === "price_asc" ? "↑" : "↓"}</span>
                   </Button>
                 </div>
               )}
@@ -237,7 +240,7 @@ const FoodBaskets = () => {
             
             <TabsContent value="all" className="pt-2">
               {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[...Array(6)].map((_, i) => (
                     <Card key={i}>
                       <CardHeader>
@@ -256,16 +259,16 @@ const FoodBaskets = () => {
                   ))}
                 </div>
               ) : sortedBaskets.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {sortedBaskets.map((basket) => (
                     <Card key={basket.id} className="overflow-hidden flex flex-col h-full">
-                      <CardHeader>
-                        <CardTitle>{basket.name}</CardTitle>
-                        <CardDescription>{basket.description}</CardDescription>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg sm:text-xl">{basket.name}</CardTitle>
+                        <CardDescription className="text-sm">{basket.description}</CardDescription>
                       </CardHeader>
-                      <CardContent className="flex-grow">
+                      <CardContent className="flex-grow px-4 sm:px-6">
                         {basket.image && (
-                          <div className="w-full h-48 mb-4 overflow-hidden rounded-md">
+                          <div className="w-full h-40 sm:h-48 mb-4 overflow-hidden rounded-md">
                             <img 
                               src={basket.image} 
                               alt={basket.name}
@@ -274,8 +277,8 @@ const FoodBaskets = () => {
                           </div>
                         )}
                         <div>
-                          <h3 className="text-lg font-medium mb-2">Included Items:</h3>
-                          <ul className="list-disc list-inside mb-4 text-sm text-muted-foreground">
+                          <h3 className="text-base sm:text-lg font-medium mb-2">Included Items:</h3>
+                          <ul className="list-disc list-inside mb-4 text-xs sm:text-sm text-muted-foreground space-y-1">
                             {basket.items.map((item) => (
                               <li key={item.id}>
                                 {getProductName(item.productId)} x{item.quantity}
@@ -283,10 +286,10 @@ const FoodBaskets = () => {
                             ))}
                           </ul>
                           
-                          <div className="flex justify-between items-center">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                             <div>
-                              <Badge className="mb-1">Recipe Included</Badge>
-                              <p className="text-2xl font-bold">
+                              <Badge className="mb-2 text-xs">Recipe Included</Badge>
+                              <p className="text-xl sm:text-2xl font-bold">
                                 {formatCurrency(basket.totalPrice)}
                               </p>
                             </div>
@@ -294,15 +297,16 @@ const FoodBaskets = () => {
                               variant="outline" 
                               size="icon"
                               title="View Recipe"
+                              className="self-start sm:self-auto"
                             >
                               <ChefHat className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter>
+                      <CardFooter className="pt-3">
                         <Button 
-                          className="w-full" 
+                          className="w-full text-sm" 
                           onClick={() => handleAddBasketToCart(basket)}
                         >
                           <ShoppingCart className="mr-2 h-4 w-4" />
@@ -314,8 +318,8 @@ const FoodBaskets = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <h3 className="text-xl font-medium mb-2">No baskets found</h3>
-                  <p className="text-muted-foreground mb-6">
+                  <h3 className="text-lg sm:text-xl font-medium mb-2">No baskets found</h3>
+                  <p className="text-muted-foreground mb-6 text-sm sm:text-base">
                     We couldn't find any food baskets. Please check back later.
                   </p>
                 </div>
@@ -324,7 +328,7 @@ const FoodBaskets = () => {
             
             <TabsContent value="personalized" className="pt-2">
               {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[...Array(4)].map((_, i) => (
                     <Card key={i}>
                       <CardHeader>
@@ -332,7 +336,7 @@ const FoodBaskets = () => {
                         <Skeleton className="h-4 w-1/2" />
                       </CardHeader>
                       <CardContent>
-                        <Skeleton className="h-48 w-full rounded-md mb-4" />
+                        <Skeleton className="h-40 sm:h-48 w-full rounded-md mb-4" />
                         <Skeleton className="h-4 w-full mb-2" />
                         <Skeleton className="h-4 w-4/5 mb-2" />
                         <Skeleton className="h-4 w-3/5" />
@@ -344,21 +348,21 @@ const FoodBaskets = () => {
                   ))}
                 </div>
               ) : sortedBaskets.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {sortedBaskets.map((basket) => (
                     <Card key={basket.id} className="overflow-hidden flex flex-col h-full border-primary/20">
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle>{basket.name}</CardTitle>
-                            <CardDescription>{basket.description}</CardDescription>
+                      <CardHeader className="pb-3">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                          <div className="flex-1">
+                            <CardTitle className="text-lg sm:text-xl">{basket.name}</CardTitle>
+                            <CardDescription className="text-sm">{basket.description}</CardDescription>
                           </div>
-                          <Badge variant="secondary">Personalized</Badge>
+                          <Badge variant="secondary" className="self-start text-xs">Personalized</Badge>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex-grow">
+                      <CardContent className="flex-grow px-4 sm:px-6">
                         {basket.image && (
-                          <div className="w-full h-48 mb-4 overflow-hidden rounded-md">
+                          <div className="w-full h-40 sm:h-48 mb-4 overflow-hidden rounded-md">
                             <img 
                               src={basket.image} 
                               alt={basket.name}
@@ -367,8 +371,8 @@ const FoodBaskets = () => {
                           </div>
                         )}
                         <div>
-                          <h3 className="text-lg font-medium mb-2">Included Items:</h3>
-                          <ul className="list-disc list-inside mb-4 text-sm text-muted-foreground">
+                          <h3 className="text-base sm:text-lg font-medium mb-2">Included Items:</h3>
+                          <ul className="list-disc list-inside mb-4 text-xs sm:text-sm text-muted-foreground space-y-1">
                             {basket.items.map((item) => (
                               <li key={item.id}>
                                 {getProductName(item.productId)} x{item.quantity}
@@ -376,10 +380,10 @@ const FoodBaskets = () => {
                             ))}
                           </ul>
                           
-                          <div className="flex justify-between items-center">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                             <div>
-                              <Badge className="mb-1" variant="outline">5% Discount Applied</Badge>
-                              <p className="text-2xl font-bold">
+                              <Badge className="mb-2 text-xs" variant="outline">5% Discount Applied</Badge>
+                              <p className="text-xl sm:text-2xl font-bold">
                                 {formatCurrency(basket.totalPrice)}
                               </p>
                             </div>
@@ -387,15 +391,16 @@ const FoodBaskets = () => {
                               variant="outline" 
                               size="icon"
                               title="View Recipe"
+                              className="self-start sm:self-auto"
                             >
                               <ChefHat className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter>
+                      <CardFooter className="pt-3">
                         <Button 
-                          className="w-full" 
+                          className="w-full text-sm" 
                           onClick={() => handleAddBasketToCart(basket)}
                         >
                           <ShoppingCart className="mr-2 h-4 w-4" />
@@ -406,10 +411,10 @@ const FoodBaskets = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-12 px-4">
                   <ChefHat className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-medium mb-2">No personalized baskets yet</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  <h3 className="text-lg sm:text-xl font-medium mb-2">No personalized baskets yet</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm sm:text-base">
                     To receive personalized basket suggestions, please make some purchases or update your dietary preferences in your profile.
                   </p>
                   <Button onClick={() => setActiveTab("all")}>Browse All Baskets</Button>
@@ -419,7 +424,7 @@ const FoodBaskets = () => {
             
             <TabsContent value="ai-generated" className="pt-2">
               {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[...Array(6)].map((_, i) => (
                     <Card key={i}>
                       <CardHeader>
@@ -438,25 +443,25 @@ const FoodBaskets = () => {
                   ))}
                 </div>
               ) : aiGeneratedBaskets.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {aiGeneratedBaskets.map((basket, index) => (
                     <Card key={index} className="overflow-hidden flex flex-col h-full border-primary/20">
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="flex items-center gap-2">
+                      <CardHeader className="pb-3">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                          <div className="flex-1">
+                            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                               <Sparkles className="h-4 w-4 text-primary" />
                               {basket.name}
                             </CardTitle>
-                            <CardDescription>{basket.description}</CardDescription>
+                            <CardDescription className="text-sm">{basket.description}</CardDescription>
                           </div>
-                          <Badge variant="secondary">AI Generated</Badge>
+                          <Badge variant="secondary" className="self-start text-xs">AI Generated</Badge>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex-grow">
+                      <CardContent className="flex-grow px-4 sm:px-6">
                         <div>
-                          <h3 className="text-lg font-medium mb-2">Included Items:</h3>
-                          <ul className="list-disc list-inside mb-4 text-sm text-muted-foreground">
+                          <h3 className="text-base sm:text-lg font-medium mb-2">Included Items:</h3>
+                          <ul className="list-disc list-inside mb-4 text-xs sm:text-sm text-muted-foreground space-y-1">
                             {basket.products.map((item: any, itemIndex: number) => (
                               <li key={itemIndex}>
                                 {item.product.name} x{item.quantity}
@@ -464,10 +469,10 @@ const FoodBaskets = () => {
                             ))}
                           </ul>
                           
-                          <div className="flex justify-between items-center">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                             <div>
-                              <Badge className="mb-1">Smart Recipe Included</Badge>
-                              <p className="text-2xl font-bold">
+                              <Badge className="mb-2 text-xs">Smart Recipe Included</Badge>
+                              <p className="text-xl sm:text-2xl font-bold">
                                 {formatCurrency(basket.totalPrice)}
                               </p>
                             </div>
@@ -477,6 +482,7 @@ const FoodBaskets = () => {
                                 size="sm"
                                 onClick={() => handleSaveAIBasket(basket)}
                                 title="Save to Collection"
+                                className="self-start sm:self-auto"
                               >
                                 <ChefHat className="h-4 w-4" />
                               </Button>
@@ -484,9 +490,9 @@ const FoodBaskets = () => {
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter className="space-y-2">
+                      <CardFooter className="pt-3 space-y-2">
                         <Button 
-                          className="w-full" 
+                          className="w-full text-sm" 
                           onClick={() => handleAddBasketToCart(basket)}
                         >
                           <ShoppingCart className="mr-2 h-4 w-4" />
@@ -497,10 +503,10 @@ const FoodBaskets = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-12 px-4">
                   <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-medium mb-2">No AI baskets generated yet</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  <h3 className="text-lg sm:text-xl font-medium mb-2">No AI baskets generated yet</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm sm:text-base">
                     Click the "Generate AI Baskets" button to create smart food baskets based on available products and intelligent meal planning.
                   </p>
                   <Button onClick={handleGenerateAIBaskets} disabled={isGeneratingBaskets}>

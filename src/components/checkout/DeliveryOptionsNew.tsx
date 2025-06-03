@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Truck, Zap } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getActiveDeliveryOptions, DeliveryOption } from "@/services/deliveryOptionsService";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface DeliveryOptionsNewProps {
   selectedDelivery: DeliveryOption | null;
@@ -79,11 +80,11 @@ const DeliveryOptionsNew = ({
                 
                 <div className="text-left sm:text-right font-medium flex-shrink-0">
                   <div className="text-sm sm:text-base">
-                    ${option.base_price.toFixed(2)}
+                    {formatCurrency(option.base_price)}
                   </div>
                   {option.price_per_km && (
                     <div className="text-xs text-muted-foreground">
-                      + ${option.price_per_km}/km
+                      + {formatCurrency(option.price_per_km)}/km
                     </div>
                   )}
                 </div>
