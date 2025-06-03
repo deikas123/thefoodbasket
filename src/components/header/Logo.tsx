@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/types";
+import { cn } from "@/lib/utils";
 
 const Logo = () => {
   const { user } = useAuth();

@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useIsMobile } from "@/types";
+import { cn } from "@/lib/utils";
 
 const CartButton = () => {
   const { items, openCart } = useCart();
