@@ -13,10 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User, Package, Wallet, Clock, CalendarClock, LogOut, ShieldAlert, Truck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useIsMobile } from "@/types";
+import { cn } from "@/lib/utils";
 
 const UserMenu = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const handleLogout = () => {
     logout();
@@ -26,8 +29,8 @@ const UserMenu = () => {
   if (!user) {
     return (
       <Link to="/login">
-        <Button variant="ghost" size="icon">
-          <User className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className={cn(isMobile ? "h-9 w-9" : "h-10 w-10")}>
+          <User className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} />
           <span className="sr-only">Login</span>
         </Button>
       </Link>
@@ -37,9 +40,9 @@ const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback>
+        <Button variant="ghost" size="icon" className={cn(isMobile ? "h-9 w-9" : "h-10 w-10")}>
+          <Avatar className={cn(isMobile ? "h-7 w-7" : "h-8 w-8")}>
+            <AvatarFallback className="text-xs">
               {user.email?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
             {user.photoURL && <AvatarImage src={user.photoURL} />}
@@ -56,6 +59,7 @@ const UserMenu = () => {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        
         {user.role === "admin" && (
           <DropdownMenuItem asChild>
             <Link to="/admin" className="cursor-pointer">
@@ -64,6 +68,7 @@ const UserMenu = () => {
             </Link>
           </DropdownMenuItem>
         )}
+        
         {user.role === "delivery" && (
           <DropdownMenuItem asChild>
             <Link to="/delivery" className="cursor-pointer">
@@ -72,36 +77,46 @@ const UserMenu = () => {
             </Link>
           </DropdownMenuItem>
         )}
+        
         <DropdownMenuItem asChild>
           <Link to="/profile" className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
+        
         <DropdownMenuItem asChild>
           <Link to="/orders" className="cursor-pointer">
             <Package className="mr-2 h-4 w-4" />
             <span>Orders</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/wallet" className="cursor-pointer">
-            <Wallet className="mr-2 h-4 w-4" />
-            <span>Wallet</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/pay-later" className="cursor-pointer">
-            <Clock className="mr-2 h-4 w-4" />
-            <span>Pay Later</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/auto-replenish" className="cursor-pointer">
-            <CalendarClock className="mr-2 h-4 w-4" />
-            <span>Auto Replenish</span>
-          </Link>
-        </DropdownMenuItem>
+        
+        {!isMobile && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link to="/wallet" className="cursor-pointer">
+                <Wallet className="mr-2 h-4 w-4" />
+                <span>Wallet</span>
+              </Link>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem asChild>
+              <Link to="/pay-later" className="cursor-pointer">
+                <Clock className="mr-2 h-4 w-4" />
+                <span>Pay Later</span>
+              </Link>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem asChild>
+              <Link to="/auto-replenish" className="cursor-pointer">
+                <CalendarClock className="mr-2 h-4 w-4" />
+                <span>Auto Replenish</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
+        
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />

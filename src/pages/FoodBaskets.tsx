@@ -163,7 +163,7 @@ const FoodBaskets = () => {
     <div className="flex flex-col min-h-screen">
       <Header />
       
-      <main className="flex-grow pt-20 sm:pt-24 pb-8 sm:pb-16">
+      <main className="flex-grow pt-16 sm:pt-20 pb-8 sm:pb-16">
         <div className="container mx-auto px-4">
           <div className="mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">Smart Food Baskets</h1>

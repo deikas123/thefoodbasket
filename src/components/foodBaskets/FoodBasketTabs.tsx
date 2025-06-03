@@ -43,25 +43,39 @@ const FoodBasketTabs = ({
 }: FoodBasketTabsProps) => {
   return (
     <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-      <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center mb-6">
-        <TabsList className="w-full sm:w-auto overflow-x-auto">
-          <TabsTrigger value="all" className="text-xs sm:text-sm">All Baskets</TabsTrigger>
-          <TabsTrigger value="personalized" className="text-xs sm:text-sm">Personalized</TabsTrigger>
-          <TabsTrigger value="ai-generated" className="flex items-center gap-1 text-xs sm:text-sm">
-            <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-            AI Generated
-          </TabsTrigger>
-          <TabsTrigger value="recipes" className="text-xs sm:text-sm">Recipe Generator</TabsTrigger>
-          <TabsTrigger value="assistant" className="text-xs sm:text-sm">Kitchen Assistant</TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col space-y-4 mb-6">
+        {/* Mobile optimized tabs */}
+        <div className="overflow-x-auto">
+          <TabsList className="w-full justify-start overflow-x-auto min-w-max">
+            <TabsTrigger value="all" className="text-xs sm:text-sm whitespace-nowrap">
+              All Baskets
+            </TabsTrigger>
+            <TabsTrigger value="personalized" className="text-xs sm:text-sm whitespace-nowrap">
+              Personalized
+            </TabsTrigger>
+            <TabsTrigger value="ai-generated" className="flex items-center gap-1 text-xs sm:text-sm whitespace-nowrap">
+              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+              AI Generated
+            </TabsTrigger>
+            <TabsTrigger value="recipes" className="text-xs sm:text-sm whitespace-nowrap">
+              Recipe Generator
+            </TabsTrigger>
+            <TabsTrigger value="assistant" className="text-xs sm:text-sm whitespace-nowrap">
+              Kitchen Assistant
+            </TabsTrigger>
+          </TabsList>
+        </div>
         
-        <FoodBasketActions
-          activeTab={activeTab}
-          sort={sort}
-          isGeneratingBaskets={isGeneratingBaskets}
-          onToggleSort={onToggleSort}
-          onGenerateAIBaskets={onGenerateAIBaskets}
-        />
+        {/* Actions - responsive positioning */}
+        <div className="flex justify-end">
+          <FoodBasketActions
+            activeTab={activeTab}
+            sort={sort}
+            isGeneratingBaskets={isGeneratingBaskets}
+            onToggleSort={onToggleSort}
+            onGenerateAIBaskets={onGenerateAIBaskets}
+          />
+        </div>
       </div>
       
       <TabsContent value="all" className="pt-2">
