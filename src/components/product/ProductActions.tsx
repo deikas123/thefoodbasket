@@ -1,219 +1,114 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  Heart, 
-  HeartOff, 
-  Loader2, 
-  Minus, 
-  Plus, 
-  ShoppingCart 
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Heart, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { toast } from "@/hooks/use-toast";
-import { convertToProduct } from "@/utils/typeConverters";
-import AddToAutoReplenishButton from "@/components/product/AddToAutoReplenishButton";
-import { ProductType } from "@/types/supabase";
 import { Product } from "@/types";
+import { cn } from "@/lib/utils";
+import EnhancedAutoReplenishButton from "./EnhancedAutoReplenishButton";
 
 interface ProductActionsProps {
-  product: ProductType;
+  product: Product;
+  className?: string;
 }
 
-const ProductActions = ({ product }: ProductActionsProps) => {
-  const navigate = useNavigate();
+const ProductActions = ({ product, className }: ProductActionsProps) => {
   const [quantity, setQuantity] = useState(1);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-  
-  const { addItem } = useCart();
-  const { addItem: addToWishlist, isInWishlist, removeItem: removeFromWishlist } = useWishlist();
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(product.id);
+
+  const handleAddToCart = () => {
+    addToCart({ product, quantity });
+  };
+
+  const handleWishlistToggle = () => {
+    if (isWishlisted) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
+  };
 
   const incrementQuantity = () => {
-    if (product && quantity < product.stock) {
-      setQuantity(quantity + 1);
-    } else {
-      toast({
-        title: "Maximum quantity reached",
-        description: "You've reached the maximum available quantity for this product.",
-        variant: "destructive"
-      });
-    }
+    setQuantity(prev => Math.min(prev + 1, product.stock));
   };
-  
+
   const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
-  };
-  
-  const handleAddToCart = async () => {
-    if (product) {
-      setIsAddingToCart(true);
-      try {
-        // Create a full Product object that meets all requirements
-        const fullProduct: Product = {
-          id: product.id,
-          name: product.name,
-          description: product.description || "",
-          price: product.price || 0,
-          image: product.image || "",
-          category: product.category || "",
-          stock: product.stock || 0,
-          featured: product.featured || false,
-          rating: product.rating || 0,
-          numReviews: product.numReviews || product.num_reviews || 0,
-          discountPercentage: product.discountPercentage || 0
-        };
-        
-        addItem(fullProduct, quantity);
-        toast({
-          title: "Added to cart",
-          description: `${quantity} × ${product.name} added to your cart`,
-          variant: "default",
-        });
-      } finally {
-        setIsAddingToCart(false);
-      }
-    }
-  };
-  
-  const handleBuyNow = () => {
-    if (product) {
-      // Create a full Product object that meets all requirements
-      const fullProduct: Product = {
-        id: product.id,
-        name: product.name,
-        description: product.description || "",
-        price: product.price || 0,
-        image: product.image || "",
-        category: product.category || "",
-        stock: product.stock || 0,
-        featured: product.featured || false,
-        rating: product.rating || 0,
-        numReviews: product.numReviews || product.num_reviews || 0,
-        discountPercentage: product.discountPercentage || 0
-      };
-      
-      addItem(fullProduct, quantity);
-      navigate('/checkout');
-    }
-  };
-  
-  const toggleWishlist = () => {
-    if (!product) return;
-    
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
-      toast({
-        title: "Removed from wishlist",
-        description: `${product.name} has been removed from your wishlist`,
-        variant: "default",
-      });
-    } else {
-      // Create a full Product object that meets all requirements
-      const fullProduct: Product = {
-        id: product.id,
-        name: product.name,
-        description: product.description || "",
-        price: product.price || 0,
-        image: product.image || "",
-        category: product.category || "",
-        stock: product.stock || 0,
-        featured: product.featured || false,
-        rating: product.rating || 0,
-        numReviews: product.numReviews || product.num_reviews || 0,
-        discountPercentage: product.discountPercentage || 0
-      };
-      
-      addToWishlist(fullProduct);
-      toast({
-        title: "Added to wishlist",
-        description: `${product.name} has been added to your wishlist`,
-        variant: "default",
-      });
-    }
+    setQuantity(prev => Math.max(prev - 1, 1));
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <label htmlFor="quantity" className="block text-sm font-medium">
-          Quantity
-        </label>
-        <div className="flex items-center space-x-2">
+    <div className={cn("space-y-4", className)}>
+      {/* Quantity Selector */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium">Quantity:</span>
+        <div className="flex items-center border rounded-md">
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
+            className="h-8 w-8 rounded-none"
             onClick={decrementQuantity}
-            disabled={quantity <= 1 || product.stock === 0}
+            disabled={quantity <= 1}
           >
             <Minus className="h-4 w-4" />
           </Button>
-          <span className="w-12 text-center">{quantity}</span>
+          <span className="px-3 py-1 text-center min-w-[3rem] border-x">
+            {quantity}
+          </span>
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
+            className="h-8 w-8 rounded-none"
             onClick={incrementQuantity}
-            disabled={quantity >= product.stock || product.stock === 0}
+            disabled={quantity >= product.stock}
           >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
       </div>
-      
-      <div className="flex flex-wrap gap-3 mt-8">
+
+      {/* Action Buttons */}
+      <div className="grid grid-cols-1 gap-3">
         <Button
-          className="gap-2"
           onClick={handleAddToCart}
-          disabled={isAddingToCart || product.stock === 0}
-        >
-          {isAddingToCart ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Adding...
-            </>
-          ) : (
-            <>
-              <ShoppingCart className="h-4 w-4" />
-              Add to Cart
-            </>
-          )}
-        </Button>
-
-        <Button
-          variant="secondary"
-          className="gap-2"
-          onClick={handleBuyNow}
           disabled={product.stock === 0}
+          className="w-full"
+          size="lg"
         >
-          Buy Now
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
         </Button>
 
-        <Button
-          variant={isInWishlist(product.id) ? "default" : "outline"}
-          className="gap-2"
-          onClick={toggleWishlist}
-        >
-          {isInWishlist(product.id) ? (
-            <>
-              <HeartOff className="h-4 w-4" />
-              Remove from Wishlist
-            </>
-          ) : (
-            <>
-              <Heart className="h-4 w-4" />
-              Add to Wishlist
-            </>
-          )}
-        </Button>
-        
-        <AddToAutoReplenishButton 
-          productId={product.id} 
-          productName={product.name} 
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            onClick={handleWishlistToggle}
+            className="flex-1"
+          >
+            <Heart 
+              className={cn(
+                "h-4 w-4 mr-2",
+                isWishlisted && "fill-current text-red-500"
+              )} 
+            />
+            {isWishlisted ? "Saved" : "Save"}
+          </Button>
+
+          <EnhancedAutoReplenishButton
+            productId={product.id}
+            productName={product.name}
+          />
+        </div>
       </div>
+
+      {/* Stock Status */}
+      {product.stock > 0 && product.stock <= 10 && (
+        <p className="text-sm text-orange-600">
+          Only {product.stock} left in stock
+        </p>
+      )}
     </div>
   );
 };

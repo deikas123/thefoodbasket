@@ -46,8 +46,11 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
+          custom_days: string[] | null
+          custom_time: string | null
           frequency_days: number
           id: string
+          last_order_date: string | null
           next_order_date: string
           product_id: string
           quantity: number
@@ -57,8 +60,11 @@ export type Database = {
         Insert: {
           active?: boolean
           created_at?: string
+          custom_days?: string[] | null
+          custom_time?: string | null
           frequency_days?: number
           id?: string
+          last_order_date?: string | null
           next_order_date: string
           product_id: string
           quantity?: number
@@ -68,8 +74,11 @@ export type Database = {
         Update: {
           active?: boolean
           created_at?: string
+          custom_days?: string[] | null
+          custom_time?: string | null
           frequency_days?: number
           id?: string
+          last_order_date?: string | null
           next_order_date?: string
           product_id?: string
           quantity?: number
@@ -77,6 +86,54 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      auto_replenish_orders: {
+        Row: {
+          auto_replenish_item_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          order_id: string | null
+          scheduled_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto_replenish_item_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          scheduled_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_replenish_item_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          scheduled_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_replenish_orders_auto_replenish_item_id_fkey"
+            columns: ["auto_replenish_item_id"]
+            isOneToOne: false
+            referencedRelation: "auto_replenish_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenish_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       banners: {
         Row: {
@@ -865,7 +922,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_auto_replenish_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
