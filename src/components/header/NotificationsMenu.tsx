@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { getUserNotifications } from "@/services/notificationService";
+import { getUserNotifications, markCustomerNotificationAsRead } from "@/services/notificationService";
 import { formatDistanceToNow } from "date-fns";
 
 const NotificationsMenu = () => {
@@ -31,7 +31,19 @@ const NotificationsMenu = () => {
     return null;
   }
 
-  const unreadCount = notifications.length;
+  const unreadNotifications = notifications.filter(n => !n.read);
+  const unreadCount = unreadNotifications.length;
+
+  const handleNotificationClick = async (notification: any) => {
+    if (!notification.read) {
+      try {
+        await markCustomerNotificationAsRead(notification.id);
+        // Note: In a real app, you'd want to update the cache here
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -59,14 +71,27 @@ const NotificationsMenu = () => {
             </div>
           ) : (
             notifications.map((notification) => (
-              <div key={notification.id} className="p-3 hover:bg-muted rounded-md cursor-pointer">
-                <p className="font-medium text-sm">{notification.title}</p>
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {notification.body}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {notification.sentAt && formatDistanceToNow(new Date(notification.sentAt), { addSuffix: true })}
-                </p>
+              <div 
+                key={notification.id} 
+                className={`p-3 hover:bg-muted rounded-md cursor-pointer ${
+                  !notification.read ? 'bg-blue-50' : ''
+                }`}
+                onClick={() => handleNotificationClick(notification)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{notification.title}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                    </p>
+                  </div>
+                  {!notification.read && (
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2"></div>
+                  )}
+                </div>
               </div>
             ))
           )}

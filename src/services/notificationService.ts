@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Notification } from "@/types/notification";
 import { toast } from "sonner";
 
-// Get all notifications
+// Get all notifications (admin)
 export const getNotifications = async (): Promise<Notification[]> => {
   try {
     const { data, error } = await supabase
@@ -19,7 +19,7 @@ export const getNotifications = async (): Promise<Notification[]> => {
   }
 };
 
-// Create a new notification
+// Create a new notification (admin)
 export const createNotification = async (notification: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification | null> => {
   try {
     const { data, error } = await supabase
@@ -53,7 +53,7 @@ export const createNotification = async (notification: Omit<Notification, 'id' |
   }
 };
 
-// Update a notification
+// Update a notification (admin)
 export const updateNotification = async (id: string, updates: Partial<Notification>): Promise<Notification | null> => {
   try {
     const updateData: any = {};
@@ -84,7 +84,7 @@ export const updateNotification = async (id: string, updates: Partial<Notificati
   }
 };
 
-// Delete a notification
+// Delete a notification (admin)
 export const deleteNotification = async (id: string): Promise<boolean> => {
   try {
     const { error } = await supabase
@@ -100,7 +100,7 @@ export const deleteNotification = async (id: string): Promise<boolean> => {
   }
 };
 
-// Send a push notification
+// Send a push notification (admin)
 export const sendPushNotification = async (notification: Notification): Promise<boolean> => {
   try {
     console.log("Sending notification:", notification.title);
@@ -129,14 +129,13 @@ export const sendPushNotification = async (notification: Notification): Promise<
 };
 
 // Get notifications for a specific user (for the notification menu)
-export const getUserNotifications = async (userId: string): Promise<Notification[]> => {
+export const getUserNotifications = async (userId: string): Promise<any[]> => {
   try {
     const { data, error } = await supabase
-      .from('notifications')
+      .from('customer_notifications')
       .select('*')
-      .or(`target_user_ids.cs.{${userId}},target_user_ids.is.null`)
-      .eq('status', 'sent')
-      .order('sent_at', { ascending: false })
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
       .limit(10);
       
     if (error) throw error;
@@ -144,5 +143,20 @@ export const getUserNotifications = async (userId: string): Promise<Notification
   } catch (error: any) {
     console.error("Error fetching user notifications:", error.message);
     return [];
+  }
+};
+
+// Mark customer notification as read
+export const markCustomerNotificationAsRead = async (notificationId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('customer_notifications')
+      .update({ read: true })
+      .eq('id', notificationId);
+      
+    if (error) throw error;
+  } catch (error: any) {
+    console.error("Error marking notification as read:", error.message);
+    throw error;
   }
 };
