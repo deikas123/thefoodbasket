@@ -6,7 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { Product } from "@/types";
 import { cn } from "@/lib/utils";
-import EnhancedAutoReplenishButton from "./EnhancedAutoReplenishButton";
+import { AutoReplenishButton } from "./autoReplenish";
 
 interface ProductActionsProps {
   product: Product;
@@ -96,7 +96,7 @@ const ProductActions = ({ product, className }: ProductActionsProps) => {
             {isWishlisted ? "Saved" : "Save"}
           </Button>
 
-          <EnhancedAutoReplenishButton
+          <AutoReplenishButton
             productId={product.id}
             productName={product.name}
           />
