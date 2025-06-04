@@ -9,4 +9,6 @@ export interface AutoReplenishItem {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+  custom_days?: string[];
+  custom_time?: string;
 }

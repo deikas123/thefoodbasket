@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getProductById } from "@/services/product";
@@ -167,7 +168,7 @@ export const processAutoReplenishOrders = async (): Promise<void> => {
 
         const address = addresses[0];
 
-        // Create the order
+        // Create the order with proper OrderItem structure
         const orderData = {
           user_id: session.user.id,
           delivery_address: {
@@ -187,13 +188,11 @@ export const processAutoReplenishOrders = async (): Promise<void> => {
             name: 'Auto Replenish (Default Payment)'
           },
           items: [{
-            product: {
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              image: product.image
-            },
-            quantity: item.quantity
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: item.quantity,
+            image: product.image
           }],
           subtotal: product.price * item.quantity,
           delivery_fee: 5.99,

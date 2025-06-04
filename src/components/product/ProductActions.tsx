@@ -15,12 +15,12 @@ interface ProductActionsProps {
 
 const ProductActions = ({ product, className }: ProductActionsProps) => {
   const [quantity, setQuantity] = useState(1);
-  const { addToCart } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addItem } = useCart();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const isWishlisted = isInWishlist(product.id);
 
   const handleAddToCart = () => {
-    addToCart({ product, quantity });
+    addItem(product, quantity);
   };
 
   const handleWishlistToggle = () => {
