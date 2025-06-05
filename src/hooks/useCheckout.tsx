@@ -41,7 +41,8 @@ export const useCheckout = () => {
         });
         return;
       }
-      placeOrder();
+      // Note: placeOrder will be called from the component with the delivery address
+      setCurrentStep("confirmation");
     }
   };
   
