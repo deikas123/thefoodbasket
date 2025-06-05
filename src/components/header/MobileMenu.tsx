@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Home, ShoppingBag, Package, Menu, Clock, RotateCcw, User, LogOut, SignIn, Star } from "lucide-react";
+import { Home, ShoppingBag, Package, Menu, Clock, RotateCcw, User, LogOut, LogIn, Star } from "lucide-react";
 
 const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -110,7 +110,7 @@ const MobileMenu = () => {
                       className="flex items-center px-3 py-2 rounded-md hover:bg-accent transition-colors"
                       onClick={() => setIsOpen(false)}
                     >
-                      <SignIn className="h-5 w-5 mr-3" />
+                      <LogIn className="h-5 w-5 mr-3" />
                       Login
                     </Link>
                     <Link
