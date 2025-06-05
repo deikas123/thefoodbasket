@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getProducts, getCategories } from "@/services/productService";
+import { formatCurrency } from "@/utils/currencyFormatter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -38,7 +39,7 @@ const Shop = () => {
   const initialCategory = searchParams.get("category") || "";
   const initialSearch = searchParams.get("search") || "";
   const initialMinPrice = Number(searchParams.get("minPrice")) || 0;
-  const initialMaxPrice = Number(searchParams.get("maxPrice")) || 1000; // Increased max price
+  const initialMaxPrice = Number(searchParams.get("maxPrice")) || 50000; // Increased max price for KSH
   const initialInStock = searchParams.get("inStock") === "true";
   const initialSort = searchParams.get("sort") || "name_asc";
   
@@ -56,16 +57,36 @@ const Shop = () => {
     queryFn: getCategories
   });
   
-  // Fetch products with filters - fixed to ensure all products are fetched
+  // Fetch products with filters - use category ID instead of slug for filtering
   const productsQuery = useQuery({
     queryKey: ["products", selectedCategory, searchTerm, priceRange, inStockOnly],
-    queryFn: () => getProducts(
-      selectedCategory || undefined,
-      searchTerm || undefined,
-      priceRange[0],
-      priceRange[1],
-      inStockOnly
-    )
+    queryFn: async () => {
+      // If a category is selected, we need to get the actual category UUID from the categories data
+      let categoryId = undefined;
+      if (selectedCategory && categoriesQuery.data) {
+        const category = categoriesQuery.data.find(cat => cat.id === selectedCategory);
+        if (category) {
+          // Get the actual database UUID for the category
+          const { data: categoryData } = await import("@/integrations/supabase/client").then(module => 
+            module.supabase
+              .from('categories')
+              .select('id')
+              .eq('slug', selectedCategory)
+              .single()
+          );
+          categoryId = categoryData?.id;
+        }
+      }
+      
+      return getProducts(
+        categoryId,
+        searchTerm || undefined,
+        priceRange[0],
+        priceRange[1],
+        inStockOnly
+      );
+    },
+    enabled: !selectedCategory || !!categoriesQuery.data
   });
   
   // Update URL params when filters change
@@ -75,7 +96,7 @@ const Shop = () => {
     if (selectedCategory) params.set("category", selectedCategory);
     if (searchTerm) params.set("search", searchTerm);
     if (priceRange[0] > 0) params.set("minPrice", priceRange[0].toString());
-    if (priceRange[1] < 1000) params.set("maxPrice", priceRange[1].toString());
+    if (priceRange[1] < 50000) params.set("maxPrice", priceRange[1].toString());
     if (inStockOnly) params.set("inStock", "true");
     params.set("sort", sortOption);
     
@@ -94,7 +115,7 @@ const Shop = () => {
   const clearFilters = () => {
     setSelectedCategory("");
     setSearchTerm("");
-    setPriceRange([0, 100]);
+    setPriceRange([0, 50000]);
     setInStockOnly(false);
     setSortOption("name_asc");
   };
@@ -139,7 +160,13 @@ const Shop = () => {
               <Checkbox 
                 id={`category-${category.id}`}
                 checked={selectedCategory === category.id}
-                onCheckedChange={() => setSelectedCategory(category.id)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedCategory(category.id);
+                  } else {
+                    setSelectedCategory("");
+                  }
+                }}
               />
               <Label htmlFor={`category-${category.id}`}>
                 {category.name} ({category.productCount || 0})
@@ -156,14 +183,14 @@ const Shop = () => {
         <Slider
           defaultValue={priceRange}
           value={priceRange}
-          max={1000} // Increased max price slider range
-          step={10}
+          max={50000} // Updated max price for KSH
+          step={100} // Larger step for KSH
           onValueChange={(value) => setPriceRange(value as [number, number])}
           className="mb-6"
         />
         <div className="flex items-center justify-between">
-          <span>${priceRange[0]}</span>
-          <span>${priceRange[1]}</span>
+          <span>{formatCurrency(priceRange[0])}</span>
+          <span>{formatCurrency(priceRange[1])}</span>
         </div>
       </div>
       
@@ -274,7 +301,7 @@ const Shop = () => {
                 </p>
                 
                 {/* Active Filters */}
-                {(selectedCategory || searchTerm || priceRange[0] > 0 || priceRange[1] < 100 || inStockOnly) && (
+                {(selectedCategory || searchTerm || priceRange[0] > 0 || priceRange[1] < 50000 || inStockOnly) && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
