@@ -1,13 +1,8 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useCart } from "@/context/CartContext";
-import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, 
   CreditCard, 
@@ -16,14 +11,13 @@ import {
   CheckCircle,
   ShoppingCart
 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import DeliveryOptionsNew from "@/components/checkout/DeliveryOptionsNew";
-import DeliveryAddressForm from "@/components/checkout/DeliveryAddressForm";
-import PaymentMethods from "@/components/checkout/PaymentMethods";
-import OrderSummary from "@/components/checkout/OrderSummary";
 import CheckoutStepper from "@/components/checkout/CheckoutStepper";
-import { Address, PaymentMethod, Order } from "@/types";
-import { DeliveryOption } from "@/services/deliveryOptionsService";
+import DeliveryStep from "@/components/checkout/steps/DeliveryStep";
+import PaymentStep from "@/components/checkout/steps/PaymentStep";
+import ConfirmationStep from "@/components/checkout/steps/ConfirmationStep";
+import EmptyCartState from "@/components/checkout/EmptyCartState";
+import { useCheckout } from "@/hooks/useCheckout";
+import { convertToDeliveryAddress } from "@/utils/checkoutUtils";
 
 const steps = [
   { id: "cart", title: "Cart", icon: ShoppingCart },
@@ -32,65 +26,37 @@ const steps = [
   { id: "confirmation", title: "Confirmation", icon: CheckCircle },
 ];
 
-// Convert Address to DeliveryAddress format
-const convertToDeliveryAddress = (address: Address | null) => {
-  if (!address) {
-    return {
-      fullName: "",
-      phone: "",
-      street: "",
-      city: "",
-      postalCode: "",
-      instructions: "",
-    };
-  }
-  
-  return {
-    fullName: "",
-    phone: "",
-    street: address.street,
-    city: address.city,
-    postalCode: address.zipCode,
-    instructions: "",
-  };
-};
-
 const Checkout = () => {
-  const navigate = useNavigate();
-  const { items, total, checkout } = useCart();
-  const { user, isAuthenticated } = useAuth();
-  
-  const [currentStep, setCurrentStep] = useState("delivery");
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(
-    user?.addresses.find(addr => addr.isDefault) || null
-  );
+  const {
+    currentStep,
+    selectedAddress,
+    selectedDelivery,
+    selectedPayment,
+    isProcessing,
+    completedOrder,
+    items,
+    total,
+    user,
+    isAuthenticated,
+    setSelectedAddress,
+    setSelectedDelivery,
+    setSelectedPayment,
+    nextStep,
+    prevStep,
+    placeOrder,
+    navigate
+  } = useCheckout();
+
   const [deliveryAddress, setDeliveryAddress] = useState(
     convertToDeliveryAddress(selectedAddress)
   );
-  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null);
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
   
   if (items.length === 0 && currentStep !== "confirmation") {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow pt-24 pb-16 px-4 flex items-center justify-center">
-          <Card className="w-full max-w-lg text-center p-8">
-            <CardContent className="pt-6 space-y-4">
-              <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h1 className="text-2xl font-bold">Your Cart is Empty</h1>
-              <p className="text-muted-foreground">
-                Add some products to your cart before proceeding to checkout.
-              </p>
-            </CardContent>
-            <CardFooter className="flex justify-center pt-6">
-              <Button onClick={() => navigate("/shop")}>
-                Continue Shopping
-              </Button>
-            </CardFooter>
-          </Card>
+          <EmptyCartState onContinueShopping={() => navigate("/shop")} />
         </main>
         <Footer />
       </div>
@@ -107,7 +73,7 @@ const Checkout = () => {
     
     // Update selectedAddress if the location changes
     if (newAddress.location) {
-      const updatedAddress: Address = {
+      const updatedAddress = {
         id: selectedAddress?.id || "temp",
         street: newAddress.street || "",
         city: newAddress.city || "",
@@ -118,105 +84,9 @@ const Checkout = () => {
       setSelectedAddress(updatedAddress);
     }
   };
-  
-  const nextStep = () => {
-    if (currentStep === "delivery") {
-      if (!deliveryAddress.street || !deliveryAddress.city) {
-        toast({
-          title: "Please complete the delivery address",
-          description: "You need to provide a complete delivery address to continue.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (!selectedDelivery) {
-        toast({
-          title: "Please select a delivery option",
-          description: "You need to select a delivery option to continue.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setCurrentStep("payment");
-    } else if (currentStep === "payment") {
-      if (!selectedPayment) {
-        toast({
-          title: "Please select a payment method",
-          description: "You need to select a payment method to continue.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      placeOrder();
-    }
-  };
-  
-  const prevStep = () => {
-    if (currentStep === "payment") {
-      setCurrentStep("delivery");
-    } else if (currentStep === "confirmation") {
-      setCurrentStep("payment");
-    }
-  };
-  
-  const placeOrder = async () => {
-    if (!user || !selectedDelivery || !selectedPayment) {
-      toast({
-        title: "Incomplete information",
-        description: "Please fill in all required information.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsProcessing(true);
-    
-    try {
-      // Convert delivery address to Address format for checkout
-      const addressForCheckout: Address = {
-        id: selectedAddress?.id || "temp",
-        street: deliveryAddress.street,
-        city: deliveryAddress.city,
-        state: "Kenya",
-        zipCode: deliveryAddress.postalCode,
-        isDefault: false
-      };
 
-      // Convert new delivery option format to old format for checkout
-      const deliveryOptionForCheckout = {
-        id: selectedDelivery.id,
-        name: selectedDelivery.name,
-        price: selectedDelivery.base_price,
-        estimatedDelivery: `${selectedDelivery.estimated_delivery_days} days`
-      };
-
-      const order = await checkout(
-        user.id,
-        addressForCheckout,
-        deliveryOptionForCheckout,
-        selectedPayment
-      );
-      
-      setCompletedOrder(order);
-      setCurrentStep("confirmation");
-      
-      toast({
-        title: "Order placed successfully!",
-        description: "Thank you for your order. We'll process it right away.",
-      });
-    } catch (error) {
-      console.error("Error placing order:", error);
-      toast({
-        title: "Failed to place order",
-        description: "There was an error processing your order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+  const handlePlaceOrder = () => {
+    placeOrder(deliveryAddress);
   };
   
   return (
@@ -243,165 +113,37 @@ const Checkout = () => {
           </div>
           
           {currentStep === "delivery" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-              <div className="lg:col-span-2 space-y-6 lg:space-y-8">
-                <Card>
-                  <CardContent className="pt-4 sm:pt-6">
-                    <h2 className="text-lg sm:text-xl font-semibold flex items-center mb-4">
-                      <Truck className="mr-2 h-5 w-5 text-primary" />
-                      Delivery Address
-                    </h2>
-                    
-                    <DeliveryAddressForm 
-                      address={deliveryAddress}
-                      onAddressChange={handleAddressChange}
-                    />
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="pt-4 sm:pt-6">
-                    <h2 className="text-lg sm:text-xl font-semibold flex items-center mb-4">
-                      <Clock className="mr-2 h-5 w-5 text-primary" />
-                      Delivery Options
-                    </h2>
-                    
-                    <DeliveryOptionsNew 
-                      selectedDelivery={selectedDelivery}
-                      setSelectedDelivery={setSelectedDelivery}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="order-first lg:order-last">
-                <OrderSummary 
-                  items={items}
-                  subtotal={total}
-                  deliveryFee={selectedDelivery?.base_price || 0}
-                />
-                
-                <div className="mt-4">
-                  <Button 
-                    className="w-full" 
-                    size="lg" 
-                    onClick={nextStep}
-                    disabled={isProcessing}
-                  >
-                    Continue to Payment
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <DeliveryStep
+              deliveryAddress={deliveryAddress}
+              onAddressChange={handleAddressChange}
+              selectedDelivery={selectedDelivery}
+              setSelectedDelivery={setSelectedDelivery}
+              items={items}
+              total={total}
+              onNext={nextStep}
+              isProcessing={isProcessing}
+            />
           )}
           
           {currentStep === "payment" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-              <div className="lg:col-span-2">
-                <Card>
-                  <CardContent className="pt-4 sm:pt-6">
-                    <h2 className="text-lg sm:text-xl font-semibold flex items-center mb-4">
-                      <CreditCard className="mr-2 h-5 w-5 text-primary" />
-                      Payment Method
-                    </h2>
-                    
-                    <PaymentMethods 
-                      selectedPayment={selectedPayment}
-                      setSelectedPayment={setSelectedPayment}
-                      orderTotal={total}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="order-first lg:order-last">
-                <OrderSummary 
-                  items={items}
-                  subtotal={total}
-                  deliveryFee={selectedDelivery?.base_price || 0}
-                />
-                
-                <div className="mt-4 space-y-3">
-                  <Button 
-                    className="w-full" 
-                    size="lg" 
-                    onClick={nextStep}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? "Processing..." : "Place Order"}
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={prevStep}
-                    disabled={isProcessing}
-                  >
-                    Back to Delivery
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <PaymentStep
+              selectedPayment={selectedPayment}
+              setSelectedPayment={setSelectedPayment}
+              items={items}
+              total={total}
+              selectedDelivery={selectedDelivery}
+              onNext={handlePlaceOrder}
+              onPrev={prevStep}
+              isProcessing={isProcessing}
+            />
           )}
           
           {currentStep === "confirmation" && completedOrder && (
-            <div className="max-w-2xl mx-auto text-center">
-              <div className="mb-8">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
-                </div>
-                
-                <h2 className="text-xl sm:text-2xl font-bold mb-2">Order Confirmed!</h2>
-                <p className="text-sm sm:text-base text-muted-foreground mb-6 px-4">
-                  Your order #{completedOrder.id} has been placed and is being processed. You will receive a confirmation email shortly.
-                </p>
-                
-                <div className="p-4 sm:p-6 border rounded-md mb-6 sm:mb-8 text-left">
-                  <div className="mb-4">
-                    <h3 className="font-medium mb-2 text-sm sm:text-base">Delivery Address:</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      {completedOrder.deliveryAddress.street}, {completedOrder.deliveryAddress.city}<br />
-                      {completedOrder.deliveryAddress.state}, {completedOrder.deliveryAddress.zipCode}
-                    </p>
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div className="mb-4">
-                    <h3 className="font-medium mb-2 text-sm sm:text-base">Delivery Method:</h3>
-                    <p className="text-xs sm:text-sm">{completedOrder.deliveryMethod.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Estimated delivery: {completedOrder.estimatedDelivery}
-                    </p>
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div>
-                    <h3 className="font-medium mb-2 text-sm sm:text-base">Payment Method:</h3>
-                    <p className="text-xs sm:text-sm">{completedOrder.paymentMethod.name}</p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-                  <Button 
-                    onClick={() => navigate(`/orders/${completedOrder.id}`)}
-                    className="w-full sm:w-auto"
-                  >
-                    <Truck className="mr-2 h-4 w-4" />
-                    Track Order
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate("/shop")}
-                    className="w-full sm:w-auto"
-                  >
-                    Continue Shopping
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <ConfirmationStep
+              completedOrder={completedOrder}
+              onTrackOrder={(orderId) => navigate(`/orders/${orderId}`)}
+              onContinueShopping={() => navigate("/shop")}
+            />
           )}
         </div>
       </main>
