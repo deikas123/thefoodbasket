@@ -1,6 +1,7 @@
 
-import { OrderType, OrderItem, OrderStatus } from "@/types/supabase";
+import { OrderType, OrderItem, OrderStatus, ProductType } from "@/types/supabase";
 import { Order } from "@/types/order";
+import { Product } from "@/types";
 
 export const convertToOrder = (orderType: OrderType): Order => {
   return {
@@ -39,4 +40,25 @@ export const convertToOrder = (orderType: OrderType): Order => {
 
 export const convertToOrders = (orderTypes: OrderType[]): Order[] => {
   return orderTypes.map(convertToOrder);
+};
+
+export const convertToProduct = (productType: ProductType): Product => {
+  return {
+    id: productType.id,
+    name: productType.name,
+    description: productType.description,
+    price: Number(productType.price),
+    image: productType.image,
+    category: productType.category_id,
+    categoryId: productType.category_id,
+    stock: productType.stock,
+    featured: productType.featured,
+    rating: Number(productType.rating),
+    numReviews: productType.num_reviews,
+    discountPercentage: productType.discount_percentage ? Number(productType.discount_percentage) : undefined
+  };
+};
+
+export const convertToProducts = (productTypes: ProductType[]): Product[] => {
+  return productTypes.map(convertToProduct);
 };
