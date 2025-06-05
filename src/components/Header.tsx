@@ -13,7 +13,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import Logo from "@/components/header/Logo";
 import MobileMenu from "@/components/header/MobileMenu";
 import DesktopNavigation from "@/components/header/DesktopNavigation";
-import SearchBar from "@/components/header/SearchBar";
+import EnhancedSearchBar from "@/components/header/EnhancedSearchBar";
 import UserMenu from "@/components/header/UserMenu";
 import NotificationsMenu from "@/components/header/NotificationsMenu";
 import CartButton from "@/components/header/CartButton";
@@ -79,6 +79,7 @@ const Header = () => {
               <UserMenu />
               <NotificationsMenu />
               <CartButton />
+              <ThemeToggle />
             </div>
           </div>
         ) : (
@@ -90,7 +91,7 @@ const Header = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <SearchBar />
+              <EnhancedSearchBar />
 
               <div className="flex items-center gap-2">
                 <Link to="/wishlist">

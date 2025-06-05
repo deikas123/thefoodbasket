@@ -1,128 +1,118 @@
 
-import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { Address } from "@/types";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Home, Edit } from "lucide-react";
-import AddressFormDialog from "./AddressFormDialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import LocationSelector from "./LocationSelector";
 
-interface DeliveryAddressFormProps {
-  selectedAddress: Address | null;
-  setSelectedAddress: (address: Address) => void;
+interface DeliveryAddress {
+  fullName: string;
+  phone: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  instructions?: string;
+  location?: { lat: number; lng: number; address: string };
 }
 
-const DeliveryAddressForm = ({ 
-  selectedAddress, 
-  setSelectedAddress 
-}: DeliveryAddressFormProps) => {
-  const { user } = useAuth();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  
-  const addresses = user?.addresses || [];
-  
-  const handleEditAddress = (address: Address) => {
-    setEditingAddress(address);
-    setIsDialogOpen(true);
-  };
-  
-  const handleAddNewAddress = () => {
-    setEditingAddress(null);
-    setIsDialogOpen(true);
+interface DeliveryAddressFormProps {
+  onAddressChange: (address: DeliveryAddress) => void;
+  address: DeliveryAddress;
+}
+
+const DeliveryAddressForm = ({ onAddressChange, address }: DeliveryAddressFormProps) => {
+  const [formData, setFormData] = useState<DeliveryAddress>(address);
+
+  const handleInputChange = (field: keyof DeliveryAddress, value: string) => {
+    const updatedData = { ...formData, [field]: value };
+    setFormData(updatedData);
+    onAddressChange(updatedData);
   };
 
-  const handleAddressSaved = (address: Address) => {
-    // Auto-select the newly saved address
-    setSelectedAddress(address);
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
+    const updatedData = { ...formData, location };
+    setFormData(updatedData);
+    onAddressChange(updatedData);
   };
-  
+
   return (
-    <div>
-      {addresses.length > 0 ? (
-        <RadioGroup 
-          value={selectedAddress?.id} 
-          onValueChange={(value) => {
-            const address = addresses.find(addr => addr.id === value);
-            if (address) setSelectedAddress(address);
-          }}
-          className="space-y-3"
-        >
-          {addresses.map((address) => (
-            <div
-              key={address.id}
-              className="flex items-start space-x-3 border rounded-lg p-3 sm:p-4 transition-colors hover:bg-accent/50"
-            >
-              <RadioGroupItem value={address.id} id={address.id} className="mt-1 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <Label 
-                  htmlFor={address.id}
-                  className="flex flex-col cursor-pointer"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center flex-wrap gap-2 mb-1">
-                        {address.isDefault && (
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                            Default
-                          </span>
-                        )}
-                        <span className="font-medium text-sm sm:text-base">
-                          {user?.firstName} {user?.lastName}
-                        </span>
-                      </div>
-                      
-                      <div className="text-muted-foreground text-xs sm:text-sm">
-                        <div>{address.street}</div>
-                        <div>{address.city}, {address.state} {address.zipCode}</div>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="self-start sm:self-center mt-2 sm:mt-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleEditAddress(address);
-                      }}
-                    >
-                      <Edit className="mr-1 h-3 w-3" />
-                      <span className="text-xs sm:text-sm">Edit</span>
-                    </Button>
-                  </div>
-                </Label>
-              </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Delivery Address</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Location Selector */}
+          <LocationSelector
+            onLocationSelect={handleLocationSelect}
+            selectedLocation={formData.location}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="fullName">Full Name *</Label>
+              <Input
+                id="fullName"
+                value={formData.fullName}
+                onChange={(e) => handleInputChange("fullName", e.target.value)}
+                required
+              />
             </div>
-          ))}
-        </RadioGroup>
-      ) : (
-        <div className="text-center p-6 border rounded-lg">
-          <Home className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-          <h3 className="font-medium text-sm sm:text-base">No addresses saved</h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-            Add a new address to continue with checkout
-          </p>
-        </div>
-      )}
-      
-      <Button
-        variant="outline"
-        onClick={handleAddNewAddress}
-        className="mt-4 w-full sm:w-auto"
-      >
-        <PlusCircle className="mr-2 h-4 w-4" />
-        Add New Address
-      </Button>
-      
-      <AddressFormDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        address={editingAddress}
-        onAddressSaved={handleAddressSaved}
-      />
+            <div>
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => handleInputChange("phone", e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="street">Street Address *</Label>
+            <Input
+              id="street"
+              value={formData.street}
+              onChange={(e) => handleInputChange("street", e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="city">City *</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => handleInputChange("city", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="postalCode">Postal Code</Label>
+              <Input
+                id="postalCode"
+                value={formData.postalCode}
+                onChange={(e) => handleInputChange("postalCode", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="instructions">Delivery Instructions (Optional)</Label>
+            <Textarea
+              id="instructions"
+              placeholder="e.g., Leave at front door, Ring bell twice"
+              value={formData.instructions || ""}
+              onChange={(e) => handleInputChange("instructions", e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
