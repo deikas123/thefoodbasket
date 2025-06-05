@@ -32,6 +32,29 @@ const steps = [
   { id: "confirmation", title: "Confirmation", icon: CheckCircle },
 ];
 
+// Convert Address to DeliveryAddress format
+const convertToDeliveryAddress = (address: Address | null) => {
+  if (!address) {
+    return {
+      fullName: "",
+      phone: "",
+      street: "",
+      city: "",
+      postalCode: "",
+      instructions: "",
+    };
+  }
+  
+  return {
+    fullName: "",
+    phone: "",
+    street: address.street,
+    city: address.city,
+    postalCode: address.zipCode,
+    instructions: "",
+  };
+};
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, total, checkout } = useCart();
@@ -40,6 +63,9 @@ const Checkout = () => {
   const [currentStep, setCurrentStep] = useState("delivery");
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(
     user?.addresses.find(addr => addr.isDefault) || null
+  );
+  const [deliveryAddress, setDeliveryAddress] = useState(
+    convertToDeliveryAddress(selectedAddress)
   );
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
@@ -75,13 +101,30 @@ const Checkout = () => {
     navigate("/login", { state: { from: "/checkout" } });
     return null;
   }
+
+  const handleAddressChange = (newAddress: any) => {
+    setDeliveryAddress(newAddress);
+    
+    // Update selectedAddress if the location changes
+    if (newAddress.location) {
+      const updatedAddress: Address = {
+        id: selectedAddress?.id || "temp",
+        street: newAddress.street || "",
+        city: newAddress.city || "",
+        state: "Kenya", // Default state
+        zipCode: newAddress.postalCode || "",
+        isDefault: selectedAddress?.isDefault || false
+      };
+      setSelectedAddress(updatedAddress);
+    }
+  };
   
   const nextStep = () => {
     if (currentStep === "delivery") {
-      if (!selectedAddress) {
+      if (!deliveryAddress.street || !deliveryAddress.city) {
         toast({
-          title: "Please select a delivery address",
-          description: "You need to select a delivery address to continue.",
+          title: "Please complete the delivery address",
+          description: "You need to provide a complete delivery address to continue.",
           variant: "destructive",
         });
         return;
@@ -120,7 +163,7 @@ const Checkout = () => {
   };
   
   const placeOrder = async () => {
-    if (!user || !selectedAddress || !selectedDelivery || !selectedPayment) {
+    if (!user || !selectedDelivery || !selectedPayment) {
       toast({
         title: "Incomplete information",
         description: "Please fill in all required information.",
@@ -132,6 +175,16 @@ const Checkout = () => {
     setIsProcessing(true);
     
     try {
+      // Convert delivery address to Address format for checkout
+      const addressForCheckout: Address = {
+        id: selectedAddress?.id || "temp",
+        street: deliveryAddress.street,
+        city: deliveryAddress.city,
+        state: "Kenya",
+        zipCode: deliveryAddress.postalCode,
+        isDefault: false
+      };
+
       // Convert new delivery option format to old format for checkout
       const deliveryOptionForCheckout = {
         id: selectedDelivery.id,
@@ -142,7 +195,7 @@ const Checkout = () => {
 
       const order = await checkout(
         user.id,
-        selectedAddress,
+        addressForCheckout,
         deliveryOptionForCheckout,
         selectedPayment
       );
@@ -200,8 +253,8 @@ const Checkout = () => {
                     </h2>
                     
                     <DeliveryAddressForm 
-                      selectedAddress={selectedAddress}
-                      setSelectedAddress={setSelectedAddress}
+                      address={deliveryAddress}
+                      onAddressChange={handleAddressChange}
                     />
                   </CardContent>
                 </Card>
