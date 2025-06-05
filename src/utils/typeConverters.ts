@@ -1,4 +1,3 @@
-
 import { OrderType, OrderItem, OrderStatus, ProductType } from "@/types/supabase";
 import { Order } from "@/types/order";
 import { Product } from "@/types";
@@ -49,13 +48,12 @@ export const convertToProduct = (productType: ProductType): Product => {
     description: productType.description,
     price: Number(productType.price),
     image: productType.image,
-    category: productType.category_id,
-    categoryId: productType.category_id,
+    category: productType.category,
     stock: productType.stock,
     featured: productType.featured,
     rating: Number(productType.rating),
-    numReviews: productType.num_reviews,
-    discountPercentage: productType.discount_percentage ? Number(productType.discount_percentage) : undefined
+    numReviews: productType.numReviews,
+    discountPercentage: productType.discountPercentage ? Number(productType.discountPercentage) : undefined
   };
 };
 
