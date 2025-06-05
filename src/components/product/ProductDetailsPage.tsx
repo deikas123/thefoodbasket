@@ -14,7 +14,7 @@ import FrequentlyPurchasedTogether from "@/components/product/FrequentlyPurchase
 import { Separator } from "@/components/ui/separator";
 
 const ProductDetailsPage = () => {
-  const { productId } = useParams<{ productId: string }>();
+  const { id: productId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
   const productQuery = useQuery({
