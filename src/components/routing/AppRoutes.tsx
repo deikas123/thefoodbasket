@@ -1,36 +1,49 @@
-
+import React, { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
-import LoadingFallback from "@/components/ui/LoadingFallback";
 
-// Public pages import
-import Index from "@/pages/Index";
-
-// Lazy load NotFound page
+const Home = lazy(() => import("@/pages/Home"));
+const Shop = lazy(() => import("@/pages/Shop"));
+const ProductDetails = lazy(() => import("@/pages/ProductDetails"));
+const FoodBaskets = lazy(() => import("@/pages/FoodBaskets"));
+const AutoReplenish = lazy(() => import("@/pages/AutoReplenish"));
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const Checkout = lazy(() => import("@/pages/Checkout"));
+const Orders = lazy(() => import("@/pages/Orders"));
+const OrderDetails = lazy(() => import("@/pages/OrderDetails"));
+const Notifications = lazy(() => import("@/pages/Notifications"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const AdminRoutes = lazy(() => import("./AdminRoutes"));
+const DeliveryRoutes = lazy(() => import("./DeliveryRoutes"));
 
-// Lazy load route components
-import PublicRoutes from "./PublicRoutes";
-import AdminRoutes from "./AdminRoutes";
-import DeliveryRoutes from "./DeliveryRoutes";
+import Timer from "@/pages/Timer";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<Index />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/shop" element={<Shop />} />
+      <Route path="/product/:id" element={<ProductDetails />} />
+      <Route path="/food-baskets" element={<FoodBaskets />} />
+      <Route path="/auto-replenish" element={<AutoReplenish />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/orders" element={<Orders />} />
+      <Route path="/orders/:id" element={<OrderDetails />} />
+      <Route path="/notifications" element={<Notifications />} />
+      <Route path="/timer" element={<Timer />} />
       
-      {/* Include all nested routes */}
-      {PublicRoutes()}
-      {AdminRoutes()}
-      {DeliveryRoutes()}
+      {/* Admin Routes */}
+      <Route path="/admin/*" element={<AdminRoutes />} />
       
-      {/* 404 Route */}
-      <Route path="*" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <NotFound />
-        </Suspense>
-      } />
+      {/* Delivery Routes */}
+      <Route path="/delivery/*" element={<DeliveryRoutes />} />
+      
+      {/* Catch all route */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

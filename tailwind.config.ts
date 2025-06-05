@@ -65,6 +65,43 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Vibrant grocery store colors
+				fresh: {
+					50: '#fff3e0',
+					100: '#ffe0b2',
+					200: '#ffcc80',
+					300: '#ffb74d',
+					400: '#ffa726',
+					500: '#ff9800',
+					600: '#fb8c00',
+					700: '#f57c00',
+					800: '#ef6c00',
+					900: '#e65100'
+				},
+				organic: {
+					50: '#f1f8e9',
+					100: '#dcedc8',
+					200: '#c5e1a5',
+					300: '#aed581',
+					400: '#9ccc65',
+					500: '#8bc34a',
+					600: '#7cb342',
+					700: '#689f38',
+					800: '#558b2f',
+					900: '#33691e'
+				},
+				grocery: {
+					50: '#e8f5e8',
+					100: '#c8e6c9',
+					200: '#a5d6a7',
+					300: '#81c784',
+					400: '#66bb6a',
+					500: '#4caf50',
+					600: '#43a047',
+					700: '#388e3c',
+					800: '#2e7d32',
+					900: '#1b5e20'
 				}
 			},
 			borderRadius: {
@@ -103,6 +140,14 @@ export default {
 				},
 				shimmer: {
 					'100%': { transform: 'translateX(100%)' }
+				},
+				pulse: {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '.5' }
+				},
+				bounce: {
+					'0%, 100%': { transform: 'translateY(-25%)', animationTimingFunction: 'cubic-bezier(0.8,0,1,1)' },
+					'50%': { transform: 'none', animationTimingFunction: 'cubic-bezier(0,0,0.2,1)' }
 				}
 			},
 			animation: {
@@ -113,7 +158,9 @@ export default {
 				'scale-in': 'scaleIn 0.3s ease-out forwards',
 				'float': 'float 3s ease-in-out infinite',
 				'slide-up': 'slideUp 0.5s ease-out forwards',
-				'shimmer': 'shimmer 1.5s infinite'
+				'shimmer': 'shimmer 1.5s infinite',
+				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'bounce': 'bounce 1s infinite'
 			}
 		}
 	},
