@@ -15,6 +15,7 @@ const PayLaterVerification = lazy(() => import("@/pages/admin/PayLaterVerificati
 const DailyOffers = lazy(() => import("@/pages/admin/DailyOffers"));
 const AdminNotifications = lazy(() => import("@/pages/admin/Notifications"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
+const DeliveryOptions = lazy(() => import("@/pages/admin/DeliveryOptions"));
 const DeliveryZones = lazy(() => import("@/pages/admin/DeliveryZones"));
 
 const AdminRoutes = () => {
@@ -70,10 +71,10 @@ const AdminRoutes = () => {
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/deliveries" element={
+      <Route path="/admin/delivery-options" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
-            <AdminDashboard />
+            <DeliveryOptions />
           </AdminLayout>
         </Suspense>
       } />

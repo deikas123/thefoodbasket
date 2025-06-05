@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { ProductType } from "@/types/supabase";
-import { Heart, ShoppingBag, Check, Timer, TruckIcon } from "lucide-react";
+import { Heart, ShoppingBag, Check, Timer, TruckIcon, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import AddToAutoReplenishButton from "./AddToAutoReplenishButton";
 import ProductTags from "./ProductTags";
@@ -74,13 +74,6 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     } else {
       addToWishlist(wishlistProduct);
       toast("Added to wishlist");
-    }
-  };
-  
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value > 0) {
-      setQuantity(value);
     }
   };
   
@@ -178,28 +171,28 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       {/* Quantity selector */}
       <div className="flex items-center space-x-4">
         <span className="font-medium">Quantity:</span>
-        <div className="flex items-center">
-          <button 
-            className="h-8 w-8 rounded-l border border-gray-300 flex items-center justify-center"
+        <div className="flex items-center border rounded-md">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-none"
             onClick={decrementQuantity}
             disabled={quantity <= 1}
           >
-            -
-          </button>
-          <input
-            type="number"
-            min="1"
-            value={quantity}
-            onChange={handleQuantityChange}
-            className="h-8 w-12 border-t border-b border-gray-300 text-center"
-          />
-          <button 
-            className="h-8 w-8 rounded-r border border-gray-300 flex items-center justify-center"
+            <Minus className="h-4 w-4" />
+          </Button>
+          <span className="px-3 py-1 text-center min-w-[3rem] border-x">
+            {quantity}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-none"
             onClick={incrementQuantity}
             disabled={quantity >= product.stock}
           >
-            +
-          </button>
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       
@@ -229,6 +222,22 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         </Button>
         
         <AddToAutoReplenishButton productId={product.id} productName={product.name} />
+      </div>
+
+      {/* Delivery benefits */}
+      <div className="space-y-2 pt-4 border-t">
+        <div className="flex items-center gap-2 text-sm">
+          <TruckIcon className="h-4 w-4 text-green-600" />
+          <span>Free Delivery on orders over $50</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <Timer className="h-4 w-4 text-blue-600" />
+          <span>Same-Day Dispatch for orders before 2pm</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <Check className="h-4 w-4 text-green-600" />
+          <span>Easy Returns & Exchange</span>
+        </div>
       </div>
     </div>
   );
