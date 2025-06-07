@@ -1,7 +1,6 @@
 
 import ProductImageGallery from "@/components/product/ProductImageGallery";
 import ProductInfo from "@/components/product/ProductInfo";
-import ProductActions from "@/components/product/ProductActions";
 import ProductShippingInfo from "@/components/product/ProductShippingInfo";
 import ProductReviews from "@/components/product/ProductReviews";
 import { ProductType } from "@/types/supabase";
@@ -28,7 +27,6 @@ const ProductDetailsContent = ({ product, category }: ProductDetailsContentProps
       {/* Product info section */}
       <div className="space-y-6">
         <ProductInfo product={product} />
-        <ProductActions product={product} />
         <ProductShippingInfo />
       </div>
 
