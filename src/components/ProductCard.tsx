@@ -70,7 +70,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     e.stopPropagation();
     
     const message = `Hi! I'd like to order:\n\nProduct: ${product.name}\nQuantity: 1\nPrice: ${formatCurrency(getDiscountedPrice())}\n\nProduct ID: ${product.id}`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/254798435685?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
   
