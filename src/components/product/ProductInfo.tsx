@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { ProductType } from "@/types/supabase";
-import { Heart, ShoppingBag, Check, Timer, TruckIcon, Minus, Plus } from "lucide-react";
+import { Heart, ShoppingBag, Check, Timer, TruckIcon, Minus, Plus, Zap, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import AddToAutoReplenishButton from "./AddToAutoReplenishButton";
 import ProductTags from "./ProductTags";
@@ -50,6 +50,17 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     
     addItem(cartProduct, quantity);
     toast("Item added to cart");
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart();
+    navigate("/checkout");
+  };
+
+  const handleWhatsAppOrder = () => {
+    const message = `Hi! I'd like to order:\n\nProduct: ${product.name}\nQuantity: ${quantity}\nPrice: ${formatCurrency(getDiscountedPrice())}\nTotal: ${formatCurrency(getDiscountedPrice() * quantity)}\n\nProduct ID: ${product.id}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleToggleWishlist = () => {
@@ -197,31 +208,55 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       </div>
       
       {/* Action buttons */}
-      <div className="flex flex-wrap gap-3">
-        <Button 
-          size="lg"
-          className="flex-1"
-          onClick={handleAddToCart}
-          disabled={product.stock <= 0}
-        >
-          <ShoppingBag className="mr-2 h-4 w-4" />
-          Add to Cart
-        </Button>
-        
-        <Button 
-          variant={isProductInWishlist ? "secondary" : "outline"}
-          size="icon"
-          onClick={handleToggleWishlist}
-        >
-          <Heart 
-            className={`h-4 w-4 ${isProductInWishlist ? 'fill-current' : ''}`} 
-          />
-          <span className="sr-only">
-            {isProductInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-          </span>
-        </Button>
-        
-        <AddToAutoReplenishButton productId={product.id} productName={product.name} />
+      <div className="space-y-3">
+        {/* Primary actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button 
+            size="lg"
+            onClick={handleAddToCart}
+            disabled={product.stock <= 0}
+            variant="outline"
+          >
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Add to Cart
+          </Button>
+          
+          <Button 
+            size="lg"
+            onClick={handleBuyNow}
+            disabled={product.stock <= 0}
+          >
+            <Zap className="mr-2 h-4 w-4" />
+            Buy Now
+          </Button>
+        </div>
+
+        {/* Secondary actions */}
+        <div className="flex gap-3">
+          <Button 
+            variant={isProductInWishlist ? "secondary" : "outline"}
+            size="icon"
+            onClick={handleToggleWishlist}
+          >
+            <Heart 
+              className={`h-4 w-4 ${isProductInWishlist ? 'fill-current' : ''}`} 
+            />
+            <span className="sr-only">
+              {isProductInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+            </span>
+          </Button>
+          
+          <AddToAutoReplenishButton productId={product.id} productName={product.name} />
+          
+          <Button 
+            variant="outline"
+            onClick={handleWhatsAppOrder}
+            className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+          >
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Order via WhatsApp
+          </Button>
+        </div>
       </div>
 
       {/* Delivery benefits */}

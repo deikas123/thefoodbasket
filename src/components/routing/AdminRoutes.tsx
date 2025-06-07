@@ -1,5 +1,5 @@
 
-import { Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import LoadingFallback from "@/components/ui/LoadingFallback";
@@ -20,121 +20,121 @@ const DeliveryZones = lazy(() => import("@/pages/admin/DeliveryZones"));
 
 const AdminRoutes = () => {
   return (
-    <>
+    <Routes>
       {/* Admin Login (outside of admin layout) */}
-      <Route path="/admin/login" element={
+      <Route path="login" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLogin />
         </Suspense>
       } />
       
       {/* Admin Routes with AdminLayout */}
-      <Route path="/admin" element={
+      <Route path="" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <AdminDashboard />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/products" element={
+      <Route path="products" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <Products />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/categories" element={
+      <Route path="categories" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <Categories />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/tags" element={
+      <Route path="tags" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <Tags />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/orders" element={
+      <Route path="orders" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <AdminDashboard />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/users" element={
+      <Route path="users" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <AdminDashboard />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/delivery-options" element={
+      <Route path="delivery-options" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <DeliveryOptions />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/banners" element={
+      <Route path="banners" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <AdminDashboard />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/discount-codes" element={
+      <Route path="discount-codes" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <DiscountCodes />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/daily-offers" element={
+      <Route path="daily-offers" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <DailyOffers />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/pay-later-verification" element={
+      <Route path="pay-later-verification" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <PayLaterVerification />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/delivery-zones" element={
+      <Route path="delivery-zones" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <DeliveryZones />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/settings" element={
+      <Route path="settings" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <AdminDashboard />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/notifications" element={
+      <Route path="notifications" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <AdminNotifications />
           </AdminLayout>
         </Suspense>
       } />
-      <Route path="/admin/content-management" element={
+      <Route path="content-management" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
             <ContentManagement />
           </AdminLayout>
         </Suspense>
       } />
-    </>
+    </Routes>
   );
 };
 

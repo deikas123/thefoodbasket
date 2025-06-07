@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductType } from "@/types/supabase";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { ShoppingCart, Heart, Star } from "lucide-react";
+import { ShoppingCart, Heart, Star, Zap, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Product } from "@/types";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   product: ProductType;
@@ -18,10 +19,17 @@ interface ProductCardProps {
 const ProductCard = ({ product, className }: ProductCardProps) => {
   const { addItem } = useCart();
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
+  const navigate = useNavigate();
 
   // First image if multiple images
   const mainImage = product.image ? product.image.split(',')[0].trim() : '/placeholder.svg';
   
+  const getDiscountedPrice = () => {
+    if (!product.discountPercentage) return product.price;
+    const discount = (product.price * product.discountPercentage) / 100;
+    return product.price - discount;
+  };
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -35,7 +43,7 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     const cartProduct: Product = {
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: getDiscountedPrice(),
       image: mainImage,
       description: product.description || "",
       category: product.category || "",
@@ -47,8 +55,23 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     };
     
     addItem(cartProduct, 1);
-    
     toast(`${product.name} has been added to your cart`);
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleAddToCart(e);
+    navigate("/checkout");
+  };
+
+  const handleWhatsAppOrder = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const message = `Hi! I'd like to order:\n\nProduct: ${product.name}\nQuantity: 1\nPrice: ${formatCurrency(getDiscountedPrice())}\n\nProduct ID: ${product.id}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
   
   const handleAddToWishlist = (e: React.MouseEvent) => {
@@ -71,7 +94,6 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     };
     
     addToWishlist(wishlistProduct);
-    
     toast(`${product.name} has been added to your wishlist`);
   };
   
@@ -142,32 +164,53 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
           </div>
           
           {/* Price */}
-          <div className="flex items-center justify-between">
-            <div>
-              {product.discountPercentage && product.discountPercentage > 0 ? (
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold">
-                    {formatCurrency(product.price * (1 - product.discountPercentage / 100))}
-                  </span>
-                  <span className="text-sm text-gray-500 line-through">
-                    {formatCurrency(product.price)}
-                  </span>
-                </div>
-              ) : (
-                <span className="font-bold">{formatCurrency(product.price)}</span>
-              )}
+          <div className="mb-3">
+            {product.discountPercentage && product.discountPercentage > 0 ? (
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold">
+                  {formatCurrency(getDiscountedPrice())}
+                </span>
+                <span className="text-sm text-gray-500 line-through">
+                  {formatCurrency(product.price)}
+                </span>
+              </div>
+            ) : (
+              <span className="font-bold">{formatCurrency(product.price)}</span>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleAddToCart}
+                disabled={product.stock <= 0}
+                className="text-xs"
+              >
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                Add to Cart
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleBuyNow}
+                disabled={product.stock <= 0}
+                className="text-xs"
+              >
+                <Zap className="h-3 w-3 mr-1" />
+                Buy Now
+              </Button>
             </div>
-            
-            {/* Add to cart button */}
             <Button
               size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0"
-              onClick={handleAddToCart}
+              variant="outline"
+              onClick={handleWhatsAppOrder}
               disabled={product.stock <= 0}
+              className="w-full text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
             >
-              <ShoppingCart className="h-4 w-4" />
-              <span className="sr-only">Add to cart</span>
+              <MessageCircle className="h-3 w-3 mr-1" />
+              Order via WhatsApp
             </Button>
           </div>
         </div>
