@@ -1,114 +1,78 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Minus, Plus, ShoppingCart } from "lucide-react";
-import { useCart } from "@/context/CartContext";
-import { useWishlist } from "@/context/WishlistContext";
-import { Product } from "@/types";
-import { cn } from "@/lib/utils";
-import { AutoReplenishButton } from "./autoReplenish";
+import { Heart, ShoppingBag, Zap, MessageCircle } from "lucide-react";
+import AddToAutoReplenishButton from "./AddToAutoReplenishButton";
+import { ProductType } from "@/types/supabase";
 
 interface ProductActionsProps {
-  product: Product;
-  className?: string;
+  product: ProductType;
+  quantity: number;
+  isProductInWishlist: boolean;
+  onAddToCart: () => void;
+  onBuyNow: () => void;
+  onWhatsAppOrder: () => void;
+  onToggleWishlist: () => void;
 }
 
-const ProductActions = ({ product, className }: ProductActionsProps) => {
-  const [quantity, setQuantity] = useState(1);
-  const { addItem } = useCart();
-  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
-  const isWishlisted = isInWishlist(product.id);
-
-  const handleAddToCart = () => {
-    addItem(product, quantity);
-  };
-
-  const handleWishlistToggle = () => {
-    if (isWishlisted) {
-      removeFromWishlist(product.id);
-    } else {
-      addToWishlist(product);
-    }
-  };
-
-  const incrementQuantity = () => {
-    setQuantity(prev => Math.min(prev + 1, product.stock));
-  };
-
-  const decrementQuantity = () => {
-    setQuantity(prev => Math.max(prev - 1, 1));
-  };
-
+const ProductActions = ({
+  product,
+  quantity,
+  isProductInWishlist,
+  onAddToCart,
+  onBuyNow,
+  onWhatsAppOrder,
+  onToggleWishlist
+}: ProductActionsProps) => {
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Quantity Selector */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Quantity:</span>
-        <div className="flex items-center border rounded-md">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-none"
-            onClick={decrementQuantity}
-            disabled={quantity <= 1}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <span className="px-3 py-1 text-center min-w-[3rem] border-x">
-            {quantity}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-none"
-            onClick={incrementQuantity}
-            disabled={quantity >= product.stock}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="grid grid-cols-1 gap-3">
-        <Button
-          onClick={handleAddToCart}
-          disabled={product.stock === 0}
-          className="w-full"
+    <div className="space-y-3">
+      {/* Primary actions */}
+      <div className="grid grid-cols-2 gap-3">
+        <Button 
           size="lg"
+          onClick={onAddToCart}
+          disabled={product.stock <= 0}
+          variant="outline"
         >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+          <ShoppingBag className="mr-2 h-4 w-4" />
+          Add to Cart
         </Button>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            variant="outline"
-            onClick={handleWishlistToggle}
-            className="flex-1"
-          >
-            <Heart 
-              className={cn(
-                "h-4 w-4 mr-2",
-                isWishlisted && "fill-current text-red-500"
-              )} 
-            />
-            {isWishlisted ? "Saved" : "Save"}
-          </Button>
-
-          <AutoReplenishButton
-            productId={product.id}
-            productName={product.name}
-          />
-        </div>
+        
+        <Button 
+          size="lg"
+          onClick={onBuyNow}
+          disabled={product.stock <= 0}
+        >
+          <Zap className="mr-2 h-4 w-4" />
+          Buy Now
+        </Button>
       </div>
 
-      {/* Stock Status */}
-      {product.stock > 0 && product.stock <= 10 && (
-        <p className="text-sm text-orange-600">
-          Only {product.stock} left in stock
-        </p>
-      )}
+      {/* Secondary actions */}
+      <div className="flex gap-3">
+        <Button 
+          variant={isProductInWishlist ? "secondary" : "outline"}
+          size="icon"
+          onClick={onToggleWishlist}
+        >
+          <Heart 
+            className={`h-4 w-4 ${isProductInWishlist ? 'fill-current' : ''}`} 
+          />
+          <span className="sr-only">
+            {isProductInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+          </span>
+        </Button>
+        
+        <AddToAutoReplenishButton productId={product.id} productName={product.name} />
+        
+        <Button 
+          variant="outline"
+          onClick={onWhatsAppOrder}
+          className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+        >
+          <MessageCircle className="mr-2 h-4 w-4" />
+          Order via WhatsApp
+        </Button>
+      </div>
     </div>
   );
 };
