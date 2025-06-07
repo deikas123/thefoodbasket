@@ -7,13 +7,13 @@ import { formatCurrency } from "@/utils/currencyFormatter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import EnhancedSearchBar from "@/components/header/EnhancedSearchBar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
-import { FilterX, Search } from "lucide-react";
+import { FilterX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Select,
@@ -103,13 +103,13 @@ const Shop = () => {
     setSearchParams(params);
   }, [selectedCategory, searchTerm, priceRange, inStockOnly, sortOption, setSearchParams]);
   
-  // Handle search submission
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const search = formData.get("search") as string;
-    setSearchTerm(search);
-  };
+  // Update search term when URL changes (from enhanced search bar navigation)
+  useEffect(() => {
+    const urlSearchTerm = searchParams.get("search") || "";
+    if (urlSearchTerm !== searchTerm) {
+      setSearchTerm(urlSearchTerm);
+    }
+  }, [searchParams, searchTerm]);
   
   // Handle clearing all filters
   const clearFilters = () => {
@@ -237,23 +237,10 @@ const Shop = () => {
             {/* Products Grid */}
             <div className="lg:col-span-3 space-y-6">
               <div className="flex flex-col sm:flex-row justify-between gap-4">
-                {/* Search Bar */}
-                <form 
-                  onSubmit={handleSearch}
-                  className="flex w-full max-w-sm items-center space-x-2"
-                >
-                  <Input
-                    type="search"
-                    name="search"
-                    placeholder="Search products..."
-                    defaultValue={searchTerm}
-                    className="flex-1"
-                  />
-                  <Button type="submit">
-                    <Search className="h-4 w-4 mr-2" />
-                    Search
-                  </Button>
-                </form>
+                {/* Enhanced Search Bar */}
+                <div className="flex w-full max-w-sm">
+                  <EnhancedSearchBar />
+                </div>
                 
                 <div className="flex gap-2">
                   {/* Mobile Filters Button */}

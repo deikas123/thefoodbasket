@@ -3,11 +3,17 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
 import { useIsMobile } from "@/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Heart } from "lucide-react";
 import { useWishlist } from "@/context/WishlistContext";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 // Import new components
 import Logo from "@/components/header/Logo";
@@ -21,6 +27,7 @@ import CartButton from "@/components/header/CartButton";
 const Header = () => {
   const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { itemCount } = useWishlist();
 
   useEffect(() => {
@@ -57,12 +64,24 @@ const Header = () => {
             </div>
             
             <div className="flex items-center gap-1">
-              <Link to="/shop">
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Search className="h-4 w-4" />
-                  <span className="sr-only">Search</span>
-                </Button>
-              </Link>
+              <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span className="sr-only">Search</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="top" className="h-auto">
+                  <SheetHeader>
+                    <SheetTitle>Search Products</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-4">
+                    <EnhancedSearchBar />
+                  </div>
+                </SheetContent>
+              </Sheet>
 
               <Link to="/wishlist">
                 <Button variant="ghost" size="icon" className="relative h-9 w-9">
