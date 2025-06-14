@@ -21,7 +21,6 @@ const Notifications = lazy(() => import("@/pages/admin/Notifications"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 const PayLaterVerification = lazy(() => import("@/pages/admin/PayLaterVerification"));
 const LoyaltyManagement = lazy(() => import("@/pages/admin/LoyaltyManagement"));
-const Settings = lazy(() => import("@/pages/admin/Settings"));
 
 const AdminRoutes = () => {
   return (
@@ -45,7 +44,6 @@ const AdminRoutes = () => {
           <Route path="/content" element={<ContentManagement />} />
           <Route path="/pay-later-verification" element={<PayLaterVerification />} />
           <Route path="/loyalty" element={<LoyaltyManagement />} />
-          <Route path="/settings" element={<Settings />} />
         </Routes>
       </Suspense>
     </AdminLayout>

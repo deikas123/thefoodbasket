@@ -1,15 +1,14 @@
 
 export interface AutoReplenishItem {
   id: string;
-  user_id: string;
-  product_id: string;
+  userId: string;
+  productId: string;
   quantity: number;
-  frequency_days: number;
-  next_order_date: string;
-  last_order_date?: string;
+  frequencyDays: number;
+  nextOrderDate: string;
   active: boolean;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   custom_days?: string[];
   custom_time?: string;
 }
