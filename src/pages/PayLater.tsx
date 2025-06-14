@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Clock, AlertCircle, ArrowLeft, Home, ShoppingCart, CreditCard } from "lucide-react";
@@ -15,6 +15,38 @@ const PayLater = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [kycStatus, setKycStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+
+  // Check existing KYC status on component mount
+  useEffect(() => {
+    const checkKYCStatus = async () => {
+      if (!user) return;
+      
+      setCheckingStatus(true);
+      try {
+        console.log('Checking KYC status for user:', user.id);
+        
+        const { data, error } = await supabase
+          .from('kyc_verifications')
+          .select('status')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+          console.error('Error checking KYC status:', error);
+        } else if (data) {
+          console.log('Existing KYC status found:', data.status);
+          setKycStatus(data.status as 'pending' | 'approved' | 'rejected');
+        }
+      } catch (error) {
+        console.error('Unexpected error checking KYC status:', error);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
+    checkKYCStatus();
+  }, [user]);
 
   const handleSubmit = async (formData: { idDocumentUrl: string; addressProofUrl: string }) => {
     console.log('Starting KYC submission:', formData);
@@ -127,7 +159,14 @@ const PayLater = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {kycStatus === 'pending' && (
+              {checkingStatus && (
+                <div className="text-center p-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                  <p className="text-sm text-muted-foreground">Checking verification status...</p>
+                </div>
+              )}
+              
+              {!checkingStatus && kycStatus === 'pending' && (
                 <div className="text-center p-4">
                   <Clock className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">Verification Pending</h3>
@@ -137,7 +176,7 @@ const PayLater = () => {
                 </div>
               )}
               
-              {kycStatus === 'approved' && (
+              {!checkingStatus && kycStatus === 'approved' && (
                 <div className="text-center p-4">
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">Verification Approved</h3>
@@ -147,7 +186,7 @@ const PayLater = () => {
                 </div>
               )}
               
-              {kycStatus === 'rejected' && (
+              {!checkingStatus && kycStatus === 'rejected' && (
                 <div className="text-center p-4">
                   <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">Verification Rejected</h3>
@@ -164,7 +203,7 @@ const PayLater = () => {
                 </div>
               )}
               
-              {!kycStatus && (
+              {!checkingStatus && !kycStatus && (
                 <KYCVerificationForm 
                   onSubmit={handleSubmit}
                   isLoading={isLoading}
