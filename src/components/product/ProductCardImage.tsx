@@ -33,11 +33,11 @@ const ProductCardImage = ({
         }}
       />
       
-      {/* Dynamic discount badge */}
+      {/* Discount badge */}
       {product.discountPercentage && product.discountPercentage > 0 && (
         <DynamicBadge 
           className="absolute top-2 left-2"
-          imageUrl={mainImage}
+          variant="discount"
         >
           {product.discountPercentage}% OFF
         </DynamicBadge>

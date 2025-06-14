@@ -1,4 +1,3 @@
-
 import { DynamicBadge } from "@/components/ui/dynamic-badge";
 import { Badge } from "@/components/ui/badge";
 
@@ -54,15 +53,15 @@ const ProductImageGallery = ({
       
       <div className="absolute top-4 left-4 flex flex-col gap-2">
         {discountPercentage && (
-          <DynamicBadge imageUrl={imageUrl}>
+          <DynamicBadge variant="discount">
             {discountPercentage}% OFF
           </DynamicBadge>
         )}
         
         {featured && (
-          <Badge variant="outline" className="bg-white/80 backdrop-blur-sm">
+          <DynamicBadge variant="featured">
             Featured
-          </Badge>
+          </DynamicBadge>
         )}
       </div>
     </div>
