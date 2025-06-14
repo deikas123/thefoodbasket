@@ -103,6 +103,13 @@ const AdminRoutes = () => {
           </AdminLayout>
         </Suspense>
       } />
+      <Route path="coupons" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminLayout>
+            <DiscountCodes />
+          </AdminLayout>
+        </Suspense>
+      } />
       <Route path="daily-offers" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>

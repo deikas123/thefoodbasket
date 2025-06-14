@@ -47,7 +47,6 @@ import { Plus, Trash2, Edit } from "lucide-react";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import AdminLayout from "@/layouts/AdminLayout";
 
 const DiscountCodes = () => {
   const { toast } = useToast();
@@ -178,282 +177,285 @@ const DiscountCodes = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Discount Codes</h1>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => {
-                resetForm();
-                setIsDialogOpen(true);
-              }}>
-                <Plus className="mr-2 h-4 w-4" /> Create Code
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingCode ? "Edit Discount Code" : "Create Discount Code"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingCode
-                    ? "Make changes to the existing discount code"
-                    : "Create a new discount code for your customers"}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateCode}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="code" className="text-right">
-                      Code
-                    </Label>
-                    <Input
-                      id="code"
-                      value={formData.code}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                      className="col-span-3"
-                      placeholder="e.g. SUMMER20"
-                      required
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Discount Codes</h1>
+          <p className="text-muted-foreground">
+            Manage promotional codes for your store
+          </p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => {
+              resetForm();
+              setIsDialogOpen(true);
+            }}>
+              <Plus className="mr-2 h-4 w-4" /> Create Code
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[525px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCode ? "Edit Discount Code" : "Create Discount Code"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingCode
+                  ? "Make changes to the existing discount code"
+                  : "Create a new discount code for your customers"}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateCode}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="code" className="text-right">
+                    Code
+                  </Label>
+                  <Input
+                    id="code"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    className="col-span-3"
+                    placeholder="e.g. SUMMER20"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="type" className="text-right">
+                    Type
+                  </Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type: value })}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentage">Percentage</SelectItem>
+                      <SelectItem value="fixed">Fixed Amount</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="value" className="text-right">
+                    Value
+                  </Label>
+                  <Input
+                    id="value"
+                    type="number"
+                    min="0"
+                    value={formData.value}
+                    onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
+                    className="col-span-3"
+                    placeholder="10"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="minPurchase" className="text-right">
+                    Min Purchase
+                  </Label>
+                  <Input
+                    id="minPurchase"
+                    type="number"
+                    min="0"
+                    value={formData.min_purchase || ""}
+                    onChange={(e) => setFormData({ ...formData, min_purchase: e.target.value ? Number(e.target.value) : null })}
+                    className="col-span-3"
+                    placeholder="1000"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="maxDiscount" className="text-right">
+                    Max Discount
+                  </Label>
+                  <Input
+                    id="maxDiscount"
+                    type="number"
+                    min="0"
+                    value={formData.max_discount || ""}
+                    onChange={(e) => setFormData({ ...formData, max_discount: e.target.value ? Number(e.target.value) : null })}
+                    className="col-span-3"
+                    placeholder="500"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="usageLimit" className="text-right">
+                    Usage Limit
+                  </Label>
+                  <Input
+                    id="usageLimit"
+                    type="number"
+                    min="0"
+                    value={formData.usage_limit || ""}
+                    onChange={(e) => setFormData({ ...formData, usage_limit: e.target.value ? Number(e.target.value) : null })}
+                    className="col-span-3"
+                    placeholder="0 for unlimited"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="startDate" className="text-right">
+                    Start Date
+                  </Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="endDate" className="text-right">
+                    End Date
+                  </Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="active" className="text-right">
+                    Status
+                  </Label>
+                  <div className="col-span-3 flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="active"
+                      checked={formData.active}
+                      onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
                     />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="type" className="text-right">
-                      Type
-                    </Label>
-                    <Select
-                      value={formData.type}
-                      onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type: value })}
-                    >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="percentage">Percentage</SelectItem>
-                        <SelectItem value="fixed">Fixed Amount</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="value" className="text-right">
-                      Value
-                    </Label>
-                    <Input
-                      id="value"
-                      type="number"
-                      min="0"
-                      value={formData.value}
-                      onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
-                      className="col-span-3"
-                      placeholder="10"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="minPurchase" className="text-right">
-                      Min Purchase
-                    </Label>
-                    <Input
-                      id="minPurchase"
-                      type="number"
-                      min="0"
-                      value={formData.min_purchase || ""}
-                      onChange={(e) => setFormData({ ...formData, min_purchase: e.target.value ? Number(e.target.value) : null })}
-                      className="col-span-3"
-                      placeholder="1000"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="maxDiscount" className="text-right">
-                      Max Discount
-                    </Label>
-                    <Input
-                      id="maxDiscount"
-                      type="number"
-                      min="0"
-                      value={formData.max_discount || ""}
-                      onChange={(e) => setFormData({ ...formData, max_discount: e.target.value ? Number(e.target.value) : null })}
-                      className="col-span-3"
-                      placeholder="500"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="usageLimit" className="text-right">
-                      Usage Limit
-                    </Label>
-                    <Input
-                      id="usageLimit"
-                      type="number"
-                      min="0"
-                      value={formData.usage_limit || ""}
-                      onChange={(e) => setFormData({ ...formData, usage_limit: e.target.value ? Number(e.target.value) : null })}
-                      className="col-span-3"
-                      placeholder="0 for unlimited"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="startDate" className="text-right">
-                      Start Date
-                    </Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className="col-span-3"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="endDate" className="text-right">
-                      End Date
-                    </Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      className="col-span-3"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="active" className="text-right">
-                      Status
-                    </Label>
-                    <div className="col-span-3 flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="active"
-                        checked={formData.active}
-                        onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                        className="rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <Label htmlFor="active" className="m-0">Active</Label>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="description" className="text-right">
-                      Description
-                    </Label>
-                    <Input
-                      id="description"
-                      value={formData.description || ""}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="col-span-3"
-                      placeholder="Optional description"
-                    />
+                    <Label htmlFor="active" className="m-0">Active</Label>
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : (editingCode ? "Save Changes" : "Create Code")}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>All Discount Codes</CardTitle>
-            <CardDescription>
-              Manage promotional codes for your store
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <p>Loading discount codes...</p>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">
+                    Description
+                  </Label>
+                  <Input
+                    id="description"
+                    value={formData.description || ""}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="col-span-3"
+                    placeholder="Optional description"
+                  />
+                </div>
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : (editingCode ? "Save Changes" : "Create Code")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>All Discount Codes</CardTitle>
+          <CardDescription>
+            Manage promotional codes for your store
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <p>Loading discount codes...</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Min Purchase</TableHead>
+                  <TableHead>Usage</TableHead>
+                  <TableHead>Validity</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {discountCodes.length === 0 ? (
                   <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Min Purchase</TableHead>
-                    <TableHead>Usage</TableHead>
-                    <TableHead>Validity</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                      No discount codes found. Click "Create Code" to add one.
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {discountCodes.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
-                        No discount codes found. Click "Create Code" to add one.
+                ) : (
+                  discountCodes.map((code) => (
+                    <TableRow key={code.id}>
+                      <TableCell className="font-medium">{code.code}</TableCell>
+                      <TableCell>
+                        {code.type === "percentage" ? "Percentage" : "Fixed Amount"}
+                      </TableCell>
+                      <TableCell>
+                        {code.type === "percentage"
+                          ? `${code.value}%`
+                          : formatCurrency(code.value)}
+                      </TableCell>
+                      <TableCell>
+                        {code.min_purchase
+                          ? formatCurrency(code.min_purchase)
+                          : "None"}
+                      </TableCell>
+                      <TableCell>
+                        {code.usage_limit > 0
+                          ? `${code.usage_count}/${code.usage_limit}`
+                          : `${code.usage_count}/∞`}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(code.end_date) < new Date()
+                          ? "Expired"
+                          : `Until ${new Date(code.end_date).toLocaleDateString()}`}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={code.active ? "default" : "secondary"}
+                          className={code.active ? "bg-green-100 text-green-800 border-green-200" : ""}
+                        >
+                          {code.active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditCode(code)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteCode(code.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    discountCodes.map((code) => (
-                      <TableRow key={code.id}>
-                        <TableCell className="font-medium">{code.code}</TableCell>
-                        <TableCell>
-                          {code.type === "percentage" ? "Percentage" : "Fixed Amount"}
-                        </TableCell>
-                        <TableCell>
-                          {code.type === "percentage"
-                            ? `${code.value}%`
-                            : formatCurrency(code.value)}
-                        </TableCell>
-                        <TableCell>
-                          {code.min_purchase
-                            ? formatCurrency(code.min_purchase)
-                            : "None"}
-                        </TableCell>
-                        <TableCell>
-                          {code.usage_limit > 0
-                            ? `${code.usage_count}/${code.usage_limit}`
-                            : `${code.usage_count}/∞`}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(code.end_date) < new Date()
-                            ? "Expired"
-                            : `Until ${new Date(code.end_date).toLocaleDateString()}`}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={code.active ? "default" : "secondary"}
-                            className={code.active ? "bg-green-100 text-green-800 border-green-200" : ""}
-                          >
-                            {code.active ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditCode(code)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteCode(code.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </AdminLayout>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
