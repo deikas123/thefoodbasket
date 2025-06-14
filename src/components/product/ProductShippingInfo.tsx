@@ -7,7 +7,7 @@ const ProductShippingInfo = () => {
       <div className="flex flex-col items-center text-center p-4 border rounded-lg">
         <Truck className="h-6 w-6 mb-2 text-primary" />
         <h3 className="font-medium">Free Delivery</h3>
-        <p className="text-xs text-muted-foreground">On orders over $50</p>
+        <p className="text-xs text-muted-foreground">On orders over KSH 1,500</p>
       </div>
       
       <div className="flex flex-col items-center text-center p-4 border rounded-lg">

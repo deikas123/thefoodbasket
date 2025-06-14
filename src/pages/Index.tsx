@@ -1,3 +1,4 @@
+
 import Hero from "@/components/Hero";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import Categories from "@/components/Categories";
@@ -37,7 +38,7 @@ const Index = () => {
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Free Delivery</h3>
                 <p className="text-muted-foreground text-sm">
-                  Free delivery on all orders over $50 within city limits.
+                  Free delivery on all orders over KSH 1,500 within city limits.
                 </p>
               </div>
               
