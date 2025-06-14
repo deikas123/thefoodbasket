@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { CheckCircle, Clock, AlertCircle, ArrowLeft, Home, ShoppingCart, CreditC
 import { Link, useNavigate } from "react-router-dom";
 import KYCVerificationForm from "@/components/payLater/KYCVerificationForm";
 import PayLaterOption from "@/components/payLater/PayLaterOption";
+import DataPrivacyNotice from "@/components/payLater/DataPrivacyNotice";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ const PayLater = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [kycStatus, setKycStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   // Check existing KYC status on component mount
   useEffect(() => {
@@ -90,6 +91,10 @@ const PayLater = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePrivacyAccept = () => {
+    setPrivacyAccepted(true);
   };
 
   if (!user) {
@@ -196,14 +201,21 @@ const PayLater = () => {
                   <Button 
                     variant="outline" 
                     className="mt-4"
-                    onClick={() => setKycStatus(null)}
+                    onClick={() => {
+                      setKycStatus(null);
+                      setPrivacyAccepted(false);
+                    }}
                   >
                     Try Again
                   </Button>
                 </div>
               )}
               
-              {!checkingStatus && !kycStatus && (
+              {!checkingStatus && !kycStatus && !privacyAccepted && (
+                <DataPrivacyNotice onAccept={handlePrivacyAccept} />
+              )}
+              
+              {!checkingStatus && !kycStatus && privacyAccepted && (
                 <KYCVerificationForm 
                   onSubmit={handleSubmit}
                   isLoading={isLoading}
