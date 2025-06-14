@@ -9,17 +9,20 @@ import { getActiveDeliveryOptions, DeliveryOption } from "@/services/deliveryOpt
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DeliveryOptionsNewProps {
   selectedDelivery: DeliveryOption | null;
   setSelectedDelivery: (option: DeliveryOption) => void;
   onScheduleChange?: (schedule: { date: Date | undefined; timeSlot: string }) => void;
+  subtotal?: number;
 }
 
 const DeliveryOptionsNew = ({ 
   selectedDelivery, 
   setSelectedDelivery,
-  onScheduleChange
+  onScheduleChange,
+  subtotal = 0
 }: DeliveryOptionsNewProps) => {
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
@@ -30,12 +33,57 @@ const DeliveryOptionsNew = ({
     queryFn: getActiveDeliveryOptions
   });
 
+  const { data: deliverySettings } = useQuery({
+    queryKey: ["delivery-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('website_sections')
+        .select('settings')
+        .eq('type', 'delivery_settings')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data?.settings || {
+        scheduled_delivery: {
+          pricing_type: 'free',
+          min_days_advance: 1
+        }
+      };
+    }
+  });
+
   // Time slots for scheduled delivery
   const timeSlots = [
     { id: "morning", label: "9:00 AM - 12:00 PM" },
     { id: "afternoon", label: "12:00 PM - 3:00 PM" },
     { id: "evening", label: "3:00 PM - 6:00 PM" },
   ];
+
+  // Calculate scheduled delivery price
+  const calculateScheduledPrice = () => {
+    if (!deliverySettings?.scheduled_delivery) return 0;
+    
+    const { pricing_type, fixed_price, percentage_of_subtotal } = deliverySettings.scheduled_delivery;
+    
+    switch (pricing_type) {
+      case 'free':
+        return 0;
+      case 'fixed':
+        return fixed_price || 0;
+      case 'percentage':
+        return subtotal * ((percentage_of_subtotal || 0) / 100);
+      default:
+        return 0;
+    }
+  };
+
+  // Get minimum date for scheduled delivery
+  const getMinScheduledDate = () => {
+    const minDays = deliverySettings?.scheduled_delivery?.min_days_advance || 1;
+    const minDate = new Date();
+    minDate.setDate(minDate.getDate() + minDays);
+    return minDate;
+  };
 
   // Auto-select first option if none selected
   useEffect(() => {
@@ -63,12 +111,13 @@ const DeliveryOptionsNew = ({
     setSelectedValue(value);
     
     if (value === "scheduled") {
-      // Create a virtual scheduled delivery option
+      // Create a virtual scheduled delivery option with calculated price
+      const scheduledPrice = calculateScheduledPrice();
       const scheduledOption: DeliveryOption = {
         id: "scheduled",
         name: "Scheduled Delivery",
         description: "Choose your preferred date and time",
-        base_price: 0,
+        base_price: scheduledPrice,
         estimated_delivery_days: 0,
         is_express: false,
         active: true
@@ -89,6 +138,8 @@ const DeliveryOptionsNew = ({
   if (!deliveryOptions || deliveryOptions.length === 0) {
     return <div className="p-4 text-center text-muted-foreground">No delivery options available</div>;
   }
+
+  const scheduledPrice = calculateScheduledPrice();
   
   return (
     <div>
@@ -165,8 +216,13 @@ const DeliveryOptionsNew = ({
               
               <div className="text-left sm:text-right font-medium flex-shrink-0">
                 <div className="text-sm sm:text-base">
-                  Free
+                  {scheduledPrice === 0 ? "Free" : formatCurrency(scheduledPrice)}
                 </div>
+                {deliverySettings?.scheduled_delivery?.pricing_type === 'percentage' && (
+                  <div className="text-xs text-muted-foreground">
+                    {deliverySettings.scheduled_delivery.percentage_of_subtotal}% of subtotal
+                  </div>
+                )}
               </div>
             </Label>
 
@@ -179,7 +235,13 @@ const DeliveryOptionsNew = ({
                     <DatePicker 
                       date={scheduledDate} 
                       setDate={setScheduledDate}
+                      disabled={(date) => date < getMinScheduledDate()}
                     />
+                    {deliverySettings?.scheduled_delivery?.min_days_advance && deliverySettings.scheduled_delivery.min_days_advance > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Minimum {deliverySettings.scheduled_delivery.min_days_advance} day(s) in advance
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">

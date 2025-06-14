@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PlusCircle, Edit, Trash2, Truck, Settings } from "lucide-react";
@@ -10,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   getActiveDeliveryOptions,
@@ -25,6 +25,12 @@ interface DeliverySettings {
   warehouse_location: {
     lat: number;
     lng: number;
+  };
+  scheduled_delivery: {
+    pricing_type: 'free' | 'fixed' | 'percentage';
+    fixed_price?: number;
+    percentage_of_subtotal?: number;
+    min_days_advance?: number;
   };
 }
 
@@ -43,7 +49,11 @@ const DeliveryOptions = () => {
 
   const [settings, setSettings] = useState<DeliverySettings>({
     minimum_checkout_amount: 50,
-    warehouse_location: { lat: -1.2921, lng: 36.8219 } // Nairobi default
+    warehouse_location: { lat: -1.2921, lng: 36.8219 }, // Nairobi default
+    scheduled_delivery: {
+      pricing_type: 'free',
+      min_days_advance: 1
+    }
   });
 
   const queryClient = useQueryClient();
@@ -216,7 +226,7 @@ const DeliveryOptions = () => {
                 Configure global delivery settings and policies
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="grid gap-2">
                 <Label htmlFor="min-checkout">Minimum Checkout Amount ($)</Label>
                 <Input
@@ -230,6 +240,7 @@ const DeliveryOptions = () => {
                   }))}
                 />
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="warehouse-lat">Warehouse Latitude</Label>
@@ -264,6 +275,93 @@ const DeliveryOptions = () => {
                   />
                 </div>
               </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <h3 className="text-lg font-semibold">Scheduled Delivery Pricing</h3>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="pricing-type">Pricing Type</Label>
+                  <Select 
+                    value={settings.scheduled_delivery.pricing_type} 
+                    onValueChange={(value: 'free' | 'fixed' | 'percentage') => 
+                      setSettings(prev => ({ 
+                        ...prev, 
+                        scheduled_delivery: {
+                          ...prev.scheduled_delivery,
+                          pricing_type: value
+                        }
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select pricing type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="fixed">Fixed Price</SelectItem>
+                      <SelectItem value="percentage">Percentage of Subtotal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {settings.scheduled_delivery.pricing_type === 'fixed' && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="fixed-price">Fixed Price ($)</Label>
+                    <Input
+                      id="fixed-price"
+                      type="number"
+                      step="0.01"
+                      value={settings.scheduled_delivery.fixed_price || 0}
+                      onChange={(e) => setSettings(prev => ({ 
+                        ...prev, 
+                        scheduled_delivery: {
+                          ...prev.scheduled_delivery,
+                          fixed_price: parseFloat(e.target.value) || 0
+                        }
+                      }))}
+                    />
+                  </div>
+                )}
+
+                {settings.scheduled_delivery.pricing_type === 'percentage' && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="percentage">Percentage of Subtotal (%)</Label>
+                    <Input
+                      id="percentage"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      value={settings.scheduled_delivery.percentage_of_subtotal || 0}
+                      onChange={(e) => setSettings(prev => ({ 
+                        ...prev, 
+                        scheduled_delivery: {
+                          ...prev.scheduled_delivery,
+                          percentage_of_subtotal: parseFloat(e.target.value) || 0
+                        }
+                      }))}
+                    />
+                  </div>
+                )}
+
+                <div className="grid gap-2">
+                  <Label htmlFor="min-days">Minimum Days in Advance</Label>
+                  <Input
+                    id="min-days"
+                    type="number"
+                    min="0"
+                    value={settings.scheduled_delivery.min_days_advance || 1}
+                    onChange={(e) => setSettings(prev => ({ 
+                      ...prev, 
+                      scheduled_delivery: {
+                        ...prev.scheduled_delivery,
+                        min_days_advance: parseInt(e.target.value) || 1
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+
               <Button onClick={handleSettingsUpdate} disabled={updateSettingsMutation.isPending}>
                 Save Settings
               </Button>

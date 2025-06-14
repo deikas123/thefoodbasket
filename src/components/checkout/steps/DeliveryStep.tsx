@@ -107,6 +107,7 @@ const DeliveryStep = ({
               selectedDelivery={selectedDelivery}
               setSelectedDelivery={setSelectedDelivery}
               onScheduleChange={handleScheduleChange}
+              subtotal={total}
             />
           </CardContent>
         </Card>
