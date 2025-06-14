@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const Home = lazy(() => import("@/pages/Index"));
 const Shop = lazy(() => import("@/pages/Shop"));
+const About = lazy(() => import("@/pages/About"));
 const ProductDetails = lazy(() => import("@/pages/ProductDetails"));
 const FoodBaskets = lazy(() => import("@/pages/FoodBaskets"));
 const AutoReplenish = lazy(() => import("@/pages/AutoReplenish"));
@@ -50,6 +51,7 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
+        <Route path="/about" element={<About />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/food-baskets" element={<FoodBaskets />} />
         <Route path="/auto-replenish" element={<AutoReplenish />} />

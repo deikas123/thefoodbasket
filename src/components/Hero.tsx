@@ -1,8 +1,19 @@
 
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
+  const handleShopNow = () => {
+    navigate('/shop');
+  };
+
+  const handleLearnMore = () => {
+    navigate('/about');
+  };
+
   return (
     <div className="relative w-full overflow-hidden pt-16 md:pt-20">
       {/* Background elements */}
@@ -27,10 +38,10 @@ const Hero = () => {
               Get farm-fresh produce, organic essentials, and gourmet delights delivered directly to your home.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button size="lg" className="button-animation">
+              <Button size="lg" className="button-animation" onClick={handleShopNow}>
                 Shop Now
               </Button>
-              <Button variant="outline" size="lg" className="button-animation">
+              <Button variant="outline" size="lg" className="button-animation" onClick={handleLearnMore}>
                 Learn More
               </Button>
             </div>
