@@ -6,7 +6,7 @@ import CustomerServiceDashboard from "./CustomerServiceDashboard";
 import OrderFulfillmentDashboard from "./OrderFulfillmentDashboard";
 import DeliveryDashboard from "./DeliveryDashboard";
 import AccountantDashboard from "./AccountantDashboard";
-import Dashboard from "@/pages/admin/Dashboard"; // Admin dashboard
+import { Navigate } from "react-router-dom";
 
 const DashboardRouter = () => {
   const { data: userRole, isLoading } = useQuery({
@@ -27,9 +27,12 @@ const DashboardRouter = () => {
     );
   }
 
+  // If user is admin, redirect to admin dashboard
+  if (userRole === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
   switch (userRole) {
-    case 'admin':
-      return <Dashboard />;
     case 'customer_service':
       return <CustomerServiceDashboard />;
     case 'order_fulfillment':

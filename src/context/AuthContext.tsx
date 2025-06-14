@@ -118,8 +118,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(userData);
 
       // Redirect based on role after login
-      if (userRole && userRole !== 'customer') {
-        // Redirect staff to their dashboard
+      if (userRole === 'admin') {
+        // Redirect admin to admin dashboard
+        navigate('/admin');
+      } else if (userRole && userRole !== 'customer') {
+        // Redirect other staff to their dashboard
         navigate('/staff');
       }
     } catch (error) {
