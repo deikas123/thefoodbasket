@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, Search, Settings } from "lucide-react";
+import { Eye, Search, Settings, UserPlus } from "lucide-react";
 import { Order, OrderStatus } from "@/types/order";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +14,7 @@ import { getAllOrders } from "@/services/orderService";
 import { convertToOrders } from "@/utils/typeConverters";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import OrderManagementDialog from "./OrderManagementDialog";
+import OrderAssignmentDialog from "./OrderAssignmentDialog";
 
 const getStatusBadgeVariant = (status: OrderStatus) => {
   switch (status) {
@@ -48,6 +48,7 @@ const AdminOrdersTable = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isManagementDialogOpen, setIsManagementDialogOpen] = useState(false);
+  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
@@ -76,6 +77,11 @@ const AdminOrdersTable = () => {
   const handleManageOrder = (order: Order) => {
     setSelectedOrder(order);
     setIsManagementDialogOpen(true);
+  };
+
+  const handleAssignOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsAssignmentDialogOpen(true);
   };
 
   const handleOrderUpdate = (updatedOrder: Order) => {
@@ -179,6 +185,13 @@ const AdminOrdersTable = () => {
                           <Button 
                             variant="ghost" 
                             size="icon"
+                            onClick={() => handleAssignOrder(order)}
+                          >
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
                             onClick={() => handleManageOrder(order)}
                           >
                             <Settings className="h-4 w-4" />
@@ -203,15 +216,27 @@ const AdminOrdersTable = () => {
       </Card>
 
       {selectedOrder && (
-        <OrderManagementDialog
-          isOpen={isManagementDialogOpen}
-          onClose={() => {
-            setIsManagementDialogOpen(false);
-            setSelectedOrder(null);
-          }}
-          order={selectedOrder}
-          onOrderUpdate={handleOrderUpdate}
-        />
+        <>
+          <OrderManagementDialog
+            isOpen={isManagementDialogOpen}
+            onClose={() => {
+              setIsManagementDialogOpen(false);
+              setSelectedOrder(null);
+            }}
+            order={selectedOrder}
+            onOrderUpdate={handleOrderUpdate}
+          />
+          
+          <OrderAssignmentDialog
+            isOpen={isAssignmentDialogOpen}
+            onClose={() => {
+              setIsAssignmentDialogOpen(false);
+              setSelectedOrder(null);
+            }}
+            order={selectedOrder}
+            onOrderUpdate={handleOrderUpdate}
+          />
+        </>
       )}
     </>
   );
