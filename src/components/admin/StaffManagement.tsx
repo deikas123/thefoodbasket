@@ -30,73 +30,60 @@ const StaffManagement = () => {
     queryFn: async () => {
       console.log("Fetching staff members...");
       
-      // Get all user roles that are not customers
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role')
-        .neq('role', 'customer');
+      try {
+        // Get all user roles that are not customers
+        const { data: userRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select(`
+            user_id, 
+            role,
+            profiles!inner(
+              id,
+              first_name,
+              last_name
+            )
+          `)
+          .neq('role', 'customer');
+          
+        if (rolesError) {
+          console.error("Error fetching user roles:", rolesError);
+          throw rolesError;
+        }
         
-      if (rolesError) {
-        console.error("Error fetching user roles:", rolesError);
-        throw rolesError;
-      }
-      
-      console.log("User roles found:", userRoles);
-      
-      if (!userRoles || userRoles.length === 0) {
+        console.log("User roles found:", userRoles);
+        
+        if (!userRoles || userRoles.length === 0) {
+          return [];
+        }
+        
+        // Transform the data to match our interface
+        const staffData: StaffMember[] = userRoles.map((item: any) => {
+          const profile = item.profiles;
+          return {
+            id: item.user_id,
+            email: `${profile.first_name?.toLowerCase() || 'user'}@foodbasket.com`, // Placeholder email
+            firstName: profile.first_name || '',
+            lastName: profile.last_name || '',
+            role: item.role as UserRole,
+            createdAt: new Date().toISOString() // Placeholder date
+          };
+        });
+        
+        console.log("Final staff data:", staffData);
+        return staffData;
+      } catch (error) {
+        console.error("Error in staff query:", error);
         return [];
       }
-      
-      const staffData: StaffMember[] = [];
-      
-      // Get profile and auth data for each staff member
-      for (const { user_id, role } of userRoles) {
-        try {
-          // Get profile data
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user_id)
-            .single();
-          
-          // Get auth user data for email and creation date
-          const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(user_id);
-          
-          if (user && profile) {
-            staffData.push({
-              id: user_id,
-              email: user.email || 'No email',
-              firstName: profile.first_name || '',
-              lastName: profile.last_name || '',
-              role: role as UserRole,
-              createdAt: user.created_at
-            });
-          } else if (user) {
-            // Handle case where profile doesn't exist but user does
-            staffData.push({
-              id: user_id,
-              email: user.email || 'No email',
-              firstName: user.user_metadata?.first_name || '',
-              lastName: user.user_metadata?.last_name || '',
-              role: role as UserRole,
-              createdAt: user.created_at
-            });
-          }
-        } catch (error) {
-          console.error(`Error fetching data for user ${user_id}:`, error);
-          // Continue with next user instead of failing completely
-        }
-      }
-      
-      console.log("Final staff data:", staffData);
-      return staffData;
     }
   });
 
   // Delete staff member mutation
   const deleteStaffMutation = useMutation({
     mutationFn: async (staffId: string) => {
-      // First remove the role
+      console.log("Deleting staff member:", staffId);
+      
+      // Remove the role assignment
       const { error: roleError } = await supabase
         .from('user_roles')
         .delete()
@@ -104,23 +91,23 @@ const StaffManagement = () => {
         
       if (roleError) {
         console.error("Error removing role:", roleError);
+        throw roleError;
       }
       
-      // Then delete the user
-      const { error } = await supabase.auth.admin.deleteUser(staffId);
-      if (error) throw error;
+      console.log("Staff member role removed successfully");
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Staff member deleted successfully",
+        description: "Staff member removed successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["staff-members"] });
     },
     onError: (error: any) => {
+      console.error("Delete staff error:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete staff member",
+        description: error.message || "Failed to remove staff member",
         variant: "destructive",
       });
     }
@@ -173,7 +160,7 @@ const StaffManagement = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -190,7 +177,9 @@ const StaffManagement = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(staff.createdAt).toLocaleDateString()}
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          Active
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
