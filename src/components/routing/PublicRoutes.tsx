@@ -29,7 +29,7 @@ const PublicRoutes = () => {
           <Shop />
         </Suspense>
       } />
-      <Route path="/categories/:categoryId" element={
+      <Route path="/categories/:slug" element={
         <Suspense fallback={<LoadingFallback />}>
           <Category />
         </Suspense>
@@ -44,7 +44,7 @@ const PublicRoutes = () => {
           <Register />
         </Suspense>
       } />
-      <Route path="/product/:productId" element={
+      <Route path="/product/:id" element={
         <Suspense fallback={<LoadingFallback />}>
           <ProductDetails />
         </Suspense>
