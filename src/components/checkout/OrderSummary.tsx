@@ -1,19 +1,16 @@
+
 import { CartItem } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, RefreshCw } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { formatCurrency } from "@/utils/currencyFormatter";
+import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { addToAutoReplenish } from "@/services/autoReplenishService";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { DeliveryOption } from "@/services/deliveryOptionsService";
 import { calculateDeliveryFee } from "@/services/deliveryCalculationService";
+import OrderItems from "./orderSummary/OrderItems";
+import OrderTotals from "./orderSummary/OrderTotals";
+import AutoReplenishDialog from "./orderSummary/AutoReplenishDialog";
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -43,9 +40,6 @@ const OrderSummary = ({
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(deliveryFee);
   const { isAuthenticated } = useAuth();
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
-  const [frequency, setFrequency] = useState(30);
-  const [quantity, setQuantity] = useState(1);
-  const [isProcessingAutoReplenish, setIsProcessingAutoReplenish] = useState(false);
 
   // Calculate delivery fee when delivery option or address changes
   useEffect(() => {
@@ -78,32 +72,6 @@ const OrderSummary = ({
 
   // Calculate total using the calculated delivery fee
   const total = subtotal + calculatedDeliveryFee - discount;
-
-  const handleAddToAutoReplenish = async () => {
-    if (!selectedItem) return;
-    
-    setIsProcessingAutoReplenish(true);
-    try {
-      const success = await addToAutoReplenish(selectedItem.product.id, quantity, frequency);
-      
-      if (success) {
-        toast({
-          title: "Added to Auto-Replenish",
-          description: `${selectedItem.product.name} will be automatically ordered every ${frequency} days`,
-        });
-        setSelectedItem(null);
-      }
-    } catch (error) {
-      console.error("Error adding to auto-replenish:", error);
-      toast({
-        title: "Failed to set up auto-replenish",
-        description: "Please try again or contact support",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessingAutoReplenish(false);
-    }
-  };
   
   const openAutoReplenishDialog = (item: CartItem) => {
     if (!isAuthenticated) {
@@ -116,7 +84,10 @@ const OrderSummary = ({
     }
     
     setSelectedItem(item);
-    setQuantity(item.quantity);
+  };
+
+  const closeAutoReplenishDialog = () => {
+    setSelectedItem(null);
   };
   
   return (
@@ -128,62 +99,17 @@ const OrderSummary = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-2">
-            {items.length} item{items.length !== 1 && 's'} in cart
-          </p>
-          
-          <div className="max-h-40 overflow-auto space-y-2">
-            {items.map(item => (
-              <div key={item.product.id} className="flex justify-between text-sm">
-                <div className="flex items-center">
-                  <span className="font-medium">{item.quantity} x</span>
-                  <span className="ml-2 truncate max-w-[140px]">{item.product.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>{formatCurrency(item.product.price * item.quantity)}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-6 w-6" 
-                    title="Set auto-replenish"
-                    onClick={() => openAutoReplenishDialog(item)}
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <OrderItems 
+          items={items} 
+          onAutoReplenishClick={openAutoReplenishDialog}
+        />
         
-        <Separator className="my-4" />
-        
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Delivery</span>
-            <span>{formatCurrency(calculatedDeliveryFee)}</span>
-          </div>
-          
-          {discount > 0 && (
-            <div className="flex justify-between text-green-600">
-              <span>Discount</span>
-              <span>-{formatCurrency(discount)}</span>
-            </div>
-          )}
-        </div>
-        
-        <Separator className="my-4" />
-        
-        <div className="flex justify-between font-bold text-lg">
-          <span>Total</span>
-          <span>{formatCurrency(total)}</span>
-        </div>
+        <OrderTotals 
+          subtotal={subtotal}
+          deliveryFee={calculatedDeliveryFee}
+          discount={discount}
+          total={total}
+        />
 
         {onNext && (
           <div className="mt-4">
@@ -204,85 +130,10 @@ const OrderSummary = ({
           </div>
         )}
 
-        {/* Auto Replenish Dialog */}
-        <Dialog open={!!selectedItem} onOpenChange={(isOpen) => !isOpen && setSelectedItem(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Set Up Auto-Replenish</DialogTitle>
-              <DialogDescription>
-                {selectedItem?.product.name} will be automatically ordered on your chosen schedule
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-6 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <div className="flex items-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="rounded-r-none"
-                    onClick={() => quantity > 1 && setQuantity(quantity - 1)}
-                    disabled={quantity <= 1}
-                  >
-                    -
-                  </Button>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    className="rounded-none text-center"
-                    value={quantity}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (!isNaN(val) && val > 0) setQuantity(val);
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="rounded-l-none"
-                    onClick={() => setQuantity(quantity + 1)}
-                  >
-                    +
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <Label>Frequency</Label>
-                <RadioGroup value={String(frequency)} onValueChange={(value) => setFrequency(parseInt(value))}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="30" id="30days" />
-                    <Label htmlFor="30days">Every 30 days</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="60" id="60days" />
-                    <Label htmlFor="60days">Every 60 days</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="90" id="90days" />
-                    <Label htmlFor="90days">Every 90 days</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button 
-                onClick={handleAddToAutoReplenish} 
-                disabled={isProcessingAutoReplenish}
-              >
-                {isProcessingAutoReplenish ? "Processing..." : "Confirm"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <AutoReplenishDialog 
+          selectedItem={selectedItem}
+          onClose={closeAutoReplenishDialog}
+        />
       </CardContent>
     </Card>
   );
