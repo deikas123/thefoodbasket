@@ -1,8 +1,10 @@
+
 import { createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthState } from "@/hooks/useAuthState";
-import { signInUser, signOutUser, updateUserProfile, registerUser } from "@/services/authOperations";
+import { signInUser, signOutUser, updateUserProfile as updateAuthProfile, registerUser } from "@/services/authOperations";
+import { updateUserProfile } from "@/services/profileService";
 import { AuthContextType, User } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,7 +22,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { authState, setAuthState, updateUserProfile } = useAuthState();
+  const { authState, setAuthState, updateUserProfile: updateAuthUserProfile } = useAuthState();
   const navigate = useNavigate();
 
   const handleRoleBasedRedirect = (userRole: string | undefined) => {
@@ -36,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const user = await signInUser(email, password);
       if (user) {
-        const { userData } = await updateUserProfile(user, true);
+        const { userData } = await updateAuthProfile(user, true);
         if (userData) {
           handleRoleBasedRedirect(userData.role);
         }
@@ -66,12 +68,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!authState.user) throw new Error("User not authenticated");
     
     try {
-      // Use the string overload of updateUserProfile
-      await updateUserProfile(authState.user.id, userData);
+      // Use the profile service to update the user profile
+      await updateUserProfile(authState.user.id, {
+        first_name: userData.firstName || userData.first_name,
+        last_name: userData.lastName || userData.last_name,
+        phone: userData.phone,
+        dietary_preferences: userData.dietaryPreferences
+      });
       
       // Refresh the user data by fetching the updated profile
       if (authState.session?.user) {
-        const result = await updateUserProfile(authState.session.user);
+        const result = await updateAuthProfile(authState.session.user);
         return result.userData || authState.user;
       }
       
