@@ -41,12 +41,15 @@ const PayLater = () => {
           console.error('Error checking KYC status:', error);
           setKycStatus(null);
         } else if (data) {
-          // Only set status if documents were actually submitted
-          if (data.id_document_url || data.address_proof_url) {
-            console.log('Existing KYC status found:', data.status);
+          // Only set status if documents were actually submitted (both URLs must exist and not be empty)
+          const hasIdDocument = data.id_document_url && data.id_document_url.trim() !== '';
+          const hasAddressProof = data.address_proof_url && data.address_proof_url.trim() !== '';
+          
+          if (hasIdDocument && hasAddressProof) {
+            console.log('Existing KYC status found with documents:', data.status);
             setKycStatus(data.status as 'pending' | 'approved' | 'rejected');
           } else {
-            console.log('KYC record exists but no documents submitted');
+            console.log('KYC record exists but documents are missing or empty');
             setKycStatus(null);
           }
         } else {
@@ -70,6 +73,13 @@ const PayLater = () => {
     if (!user) {
       console.error('No user found');
       toast.error("Please login to continue");
+      return;
+    }
+
+    // Validate that both URLs are provided and not empty
+    if (!formData.idDocumentUrl || !formData.addressProofUrl || 
+        formData.idDocumentUrl.trim() === '' || formData.addressProofUrl.trim() === '') {
+      toast.error("Both documents must be uploaded before submission");
       return;
     }
 
