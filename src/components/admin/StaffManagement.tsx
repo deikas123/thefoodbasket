@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,7 +70,7 @@ const StaffManagement = () => {
       
       // Filter to only include staff roles (not customers)
       const staffRoles = roles?.filter(role => 
-        ['admin', 'delivery', 'customer_service', 'accountant'].includes(role.role)
+        ['admin', 'delivery', 'customer_service', 'accountant', 'order_fulfillment'].includes(role.role)
       ) || [];
       
       // Create staff members array
@@ -182,6 +181,8 @@ const StaffManagement = () => {
         return "bg-blue-50 text-blue-700 border-blue-200";
       case "accountant":
         return "bg-orange-50 text-orange-700 border-orange-200";
+      case "order_fulfillment":
+        return "bg-indigo-50 text-indigo-700 border-indigo-200";
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
@@ -197,6 +198,8 @@ const StaffManagement = () => {
         return "Delivery Personnel";
       case "accountant":
         return "Accountant";
+      case "order_fulfillment":
+        return "Order Fulfillment Staff";
       default:
         return role;
     }
@@ -309,6 +312,7 @@ const StaffManagement = () => {
                     <SelectItem value="customer_service">Customer Service</SelectItem>
                     <SelectItem value="delivery">Delivery Personnel</SelectItem>
                     <SelectItem value="accountant">Accountant</SelectItem>
+                    <SelectItem value="order_fulfillment">Order Fulfillment Staff</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

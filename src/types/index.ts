@@ -61,7 +61,7 @@ export interface User {
   dietaryPreferences?: string[];
 }
 
-export type UserRole = "admin" | "customer" | "delivery" | "customer_service" | "accountant";
+export type UserRole = "admin" | "customer" | "delivery" | "customer_service" | "accountant" | "order_fulfillment";
 
 export interface Address {
   id: string;

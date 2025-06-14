@@ -1,4 +1,3 @@
-
 import { Database } from '@/integrations/supabase/types';
 
 // Extending types from the auto-generated Supabase types
@@ -7,8 +6,8 @@ export type Tables<T extends keyof Database['public']['Tables']> = Database['pub
 // Define order statuses
 export type OrderStatus = 'pending' | 'processing' | 'dispatched' | 'out_for_delivery' | 'delivered' | 'cancelled';
 
-// Define user roles - updated to include all staff roles
-export type UserRole = 'customer' | 'admin' | 'delivery' | 'customer_service' | 'accountant';
+// Define user roles - updated to include all staff roles including order fulfillment
+export type UserRole = 'customer' | 'admin' | 'delivery' | 'customer_service' | 'accountant' | 'order_fulfillment';
 
 export interface ProfileType extends Tables<'profiles'> {
   role?: UserRole;
