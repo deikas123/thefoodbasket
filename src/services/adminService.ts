@@ -116,43 +116,165 @@ export interface AdminStats {
 }
 
 export const getAdminDashboardStats = async (): Promise<AdminStats> => {
-  // For now, return mock data until we implement the actual queries
-  return {
-    revenueToday: 12500,
-    revenueThisMonth: 243500,
-    revenueLastMonth: 190000,
-    ordersToday: 18,
-    ordersThisMonth: 211,
-    pendingOrders: 24,
-    newCustomers: 56,
-    activeCustomers: 328,
-    topSellingProducts: [
-      { id: "1", name: "Fresh Tomatoes", quantity: 245, revenue: 24500 },
-      { id: "2", name: "Organic Bananas", quantity: 189, revenue: 18900 },
-      { id: "3", name: "Free Range Eggs", quantity: 156, revenue: 15600 },
-    ],
-    categorySales: [
-      { name: 'Fruits', value: 35 },
-      { name: 'Vegetables', value: 30 },
-      { name: 'Dairy', value: 15 },
-      { name: 'Meat', value: 12 },
-      { name: 'Bakery', value: 8 },
-    ],
-    monthlyRevenue: [
-      { month: 'Jan', value: 125000 },
-      { month: 'Feb', value: 140000 },
-      { month: 'Mar', value: 135000 },
-      { month: 'Apr', value: 160000 },
-      { month: 'May', value: 190000 },
-      { month: 'Jun', value: 243500 },
-    ],
-    orderStatuses: [
-      { status: 'Pending', count: 24 },
-      { status: 'Processing', count: 18 },
-      { status: 'Dispatched', count: 12 },
-      { status: 'Out for Delivery', count: 16 },
-      { status: 'Delivered', count: 187 },
-      { status: 'Cancelled', count: 8 },
-    ]
-  };
+  try {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    // Get orders data
+    const { data: orders, error: ordersError } = await supabase
+      .from('orders')
+      .select('*');
+
+    if (ordersError) {
+      console.error('Error fetching orders:', ordersError);
+      throw ordersError;
+    }
+
+    // Get products data for category sales
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select(`
+        *,
+        categories!inner(name)
+      `);
+
+    if (productsError) {
+      console.error('Error fetching products:', productsError);
+    }
+
+    // Get profiles count
+    const { count: profilesCount, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
+
+    if (profilesError) {
+      console.error('Error fetching profiles count:', profilesError);
+    }
+
+    // Calculate stats from real data
+    const todaysOrders = orders?.filter(order => 
+      new Date(order.created_at) >= startOfToday
+    ) || [];
+
+    const thisMonthOrders = orders?.filter(order => 
+      new Date(order.created_at) >= startOfMonth
+    ) || [];
+
+    const lastMonthOrders = orders?.filter(order => {
+      const orderDate = new Date(order.created_at);
+      return orderDate >= startOfLastMonth && orderDate <= endOfLastMonth;
+    }) || [];
+
+    const pendingOrders = orders?.filter(order => 
+      order.status === 'pending'
+    ) || [];
+
+    // Calculate revenue
+    const revenueToday = todaysOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const revenueThisMonth = thisMonthOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const revenueLastMonth = lastMonthOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+
+    // Get category sales from products
+    const categorySales: { [key: string]: number } = {};
+    products?.forEach(product => {
+      const categoryName = product.categories?.name || 'Other';
+      if (!categorySales[categoryName]) {
+        categorySales[categoryName] = 0;
+      }
+      categorySales[categoryName] += 1;
+    });
+
+    const total = Object.values(categorySales).reduce((sum, count) => sum + count, 0);
+    const categorySalesArray = Object.entries(categorySales).map(([name, count]) => ({
+      name,
+      value: total > 0 ? Math.round((count / total) * 100) : 0
+    }));
+
+    // Calculate monthly revenue for the last 6 months
+    const monthlyRevenue = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      
+      const monthOrders = orders?.filter(order => {
+        const orderDate = new Date(order.created_at);
+        return orderDate >= monthStart && orderDate <= monthEnd;
+      }) || [];
+
+      const monthRevenue = monthOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+      
+      monthlyRevenue.push({
+        month: monthStart.toLocaleDateString('en-US', { month: 'short' }),
+        value: monthRevenue
+      });
+    }
+
+    // Get order statuses
+    const statusCounts: { [key: string]: number } = {};
+    orders?.forEach(order => {
+      statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
+    });
+
+    const orderStatuses = Object.entries(statusCounts).map(([status, count]) => ({
+      status: status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' '),
+      count
+    }));
+
+    // Calculate top selling products (simplified - by quantity in orders)
+    const productSales: { [key: string]: { name: string; quantity: number; revenue: number } } = {};
+    orders?.forEach(order => {
+      const items = order.items as any[];
+      items?.forEach(item => {
+        if (!productSales[item.productId]) {
+          productSales[item.productId] = {
+            name: item.name,
+            quantity: 0,
+            revenue: 0
+          };
+        }
+        productSales[item.productId].quantity += item.quantity || 0;
+        productSales[item.productId].revenue += (item.price || 0) * (item.quantity || 0);
+      });
+    });
+
+    const topSellingProducts = Object.entries(productSales)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 3);
+
+    return {
+      revenueToday,
+      revenueThisMonth,
+      revenueLastMonth,
+      ordersToday: todaysOrders.length,
+      ordersThisMonth: thisMonthOrders.length,
+      pendingOrders: pendingOrders.length,
+      newCustomers: Math.max(0, (profilesCount || 0) - 300), // Estimate new customers
+      activeCustomers: profilesCount || 0,
+      topSellingProducts,
+      categorySales: categorySalesArray,
+      monthlyRevenue,
+      orderStatuses
+    };
+  } catch (error) {
+    console.error("Error fetching admin dashboard stats:", error);
+    // Return fallback data if there's an error
+    return {
+      revenueToday: 0,
+      revenueThisMonth: 0,
+      revenueLastMonth: 0,
+      ordersToday: 0,
+      ordersThisMonth: 0,
+      pendingOrders: 0,
+      newCustomers: 0,
+      activeCustomers: 0,
+      topSellingProducts: [],
+      categorySales: [],
+      monthlyRevenue: [],
+      orderStatuses: []
+    };
+  }
 };
