@@ -1,6 +1,6 @@
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DynamicBadge } from "@/components/ui/dynamic-badge";
 import { Heart } from "lucide-react";
 import { ProductType } from "@/types/supabase";
 
@@ -33,11 +33,14 @@ const ProductCardImage = ({
         }}
       />
       
-      {/* Discount badge */}
+      {/* Dynamic discount badge */}
       {product.discountPercentage && product.discountPercentage > 0 && (
-        <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600">
+        <DynamicBadge 
+          className="absolute top-2 left-2"
+          imageUrl={mainImage}
+        >
           {product.discountPercentage}% OFF
-        </Badge>
+        </DynamicBadge>
       )}
       
       {/* Wishlist button */}

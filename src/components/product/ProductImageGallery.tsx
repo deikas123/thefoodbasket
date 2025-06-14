@@ -1,3 +1,5 @@
+
+import { DynamicBadge } from "@/components/ui/dynamic-badge";
 import { Badge } from "@/components/ui/badge";
 
 interface ProductImageGalleryProps {
@@ -52,9 +54,9 @@ const ProductImageGallery = ({
       
       <div className="absolute top-4 left-4 flex flex-col gap-2">
         {discountPercentage && (
-          <Badge className="bg-red-500 text-white">
+          <DynamicBadge imageUrl={imageUrl}>
             {discountPercentage}% OFF
-          </Badge>
+          </DynamicBadge>
         )}
         
         {featured && (
