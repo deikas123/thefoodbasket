@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { convertToOrder } from "@/utils/typeConverters";
 import {
   AlertDialog,
@@ -47,16 +47,35 @@ const OrderDetails = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  console.log("OrderDetails component mounted", { orderId, user, isAuthenticated });
 
   useEffect(() => {
     const fetchOrder = async () => {
-      if (!orderId) return;
+      if (!orderId) {
+        console.log("No orderId provided");
+        setError("No order ID provided");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
+        console.log("Fetching order:", orderId);
         const orderData = await getOrderById(orderId);
-        const convertedOrder = orderData ? convertToOrder(orderData) : null;
-        setOrder(convertedOrder);
+        console.log("Fetched order data:", orderData);
+        
+        if (orderData) {
+          const convertedOrder = convertToOrder(orderData);
+          console.log("Converted order:", convertedOrder);
+          setOrder(convertedOrder);
+        } else {
+          console.log("No order data found");
+          setOrder(null);
+        }
       } catch (error) {
         console.error("Failed to fetch order:", error);
+        setError("Failed to fetch order details");
         toast({
           title: "Error fetching order",
           description: "We couldn't load your order details.",
@@ -67,8 +86,13 @@ const OrderDetails = () => {
       }
     };
 
-    fetchOrder();
-  }, [orderId]);
+    if (isAuthenticated) {
+      fetchOrder();
+    } else {
+      console.log("User not authenticated, redirecting to login");
+      setIsLoading(false);
+    }
+  }, [orderId, isAuthenticated]);
 
   // Handle order cancellation
   const handleCancelOrder = async () => {
@@ -135,6 +159,40 @@ const OrderDetails = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow pt-24 pb-16 px-4">
+          <div className="container mx-auto max-w-4xl">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/orders")} 
+              className="mb-4"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Orders
+            </Button>
+            
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+                <ShoppingBag size={30} className="text-muted-foreground" />
+              </div>
+              <h3 className="font-medium text-xl mb-2">Error loading order</h3>
+              <p className="text-muted-foreground mb-6">
+                {error}
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
             </div>
           </div>
         </main>
@@ -259,7 +317,7 @@ const OrderDetails = () => {
               
               {/* Tracking timeline */}
               <div className="relative">
-                {order.tracking?.events.map((event, index) => {
+                {order.tracking?.events?.map((event, index) => {
                   const isLast = index === order.tracking!.events.length - 1;
                   
                   return (
@@ -291,7 +349,9 @@ const OrderDetails = () => {
                       </div>
                     </div>
                   );
-                })}
+                }) || (
+                  <p className="text-muted-foreground">No tracking information available yet.</p>
+                )}
               </div>
               
               {/* Driver information for out-for-delivery orders */}

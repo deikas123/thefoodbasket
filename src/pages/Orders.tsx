@@ -20,6 +20,9 @@ const Orders = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  console.log("Orders component mounted", { user, isAuthenticated, authLoading });
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -27,13 +30,19 @@ const Orders = () => {
         try {
           console.log("Fetching orders for user:", user.id);
           const orderTypes = await getUserOrders(user.id);
+          console.log("Fetched order types:", orderTypes);
           const convertedOrders = convertToOrders(orderTypes);
+          console.log("Converted orders:", convertedOrders);
           setOrders(convertedOrders);
+          setError(null);
         } catch (error) {
           console.error("Failed to fetch orders:", error);
+          setError("Failed to load orders");
         } finally {
           setIsLoading(false);
         }
+      } else if (!authLoading) {
+        setIsLoading(false);
       }
     };
 
@@ -62,19 +71,24 @@ const Orders = () => {
     }
   };
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow pt-24 pb-16 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">My Orders</h1>
-            <p className="text-muted-foreground mt-2">
-              View and track your orders
-            </p>
-          </div>
+  const handleViewOrder = (orderId: string) => {
+    console.log("Navigating to order:", orderId);
+    navigate(`/orders/${orderId}`);
+  };
 
-          {isLoading ? (
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow pt-24 pb-16 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold">My Orders</h1>
+              <p className="text-muted-foreground mt-2">
+                View and track your orders
+              </p>
+            </div>
+
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="w-full animate-pulse">
@@ -89,7 +103,58 @@ const Orders = () => {
                 </Card>
               ))}
             </div>
-          ) : orders.length === 0 ? (
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow pt-24 pb-16 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold">My Orders</h1>
+              <p className="text-muted-foreground mt-2">
+                View and track your orders
+              </p>
+            </div>
+
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+                <ShoppingBag size={30} className="text-muted-foreground" />
+              </div>
+              <h3 className="font-medium text-xl mb-2">Error loading orders</h3>
+              <p className="text-muted-foreground mb-6">
+                {error}
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow pt-24 pb-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold">My Orders</h1>
+            <p className="text-muted-foreground mt-2">
+              View and track your orders
+            </p>
+          </div>
+
+          {orders.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center">
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
                 <ShoppingBag size={30} className="text-muted-foreground" />
@@ -123,7 +188,7 @@ const Orders = () => {
                       </div>
                       <Button 
                         variant="outline"
-                        onClick={() => navigate(`/orders/${order.id}`)}
+                        onClick={() => handleViewOrder(order.id)}
                       >
                         View Details
                       </Button>
