@@ -64,7 +64,7 @@ const Settings = () => {
         throw error;
       }
       
-      const defaultSettings = {
+      const defaultSettings: DeliverySettings = {
         minimum_checkout_amount: 1500,
         free_delivery_threshold: 5000,
         express_delivery_enabled: true,
@@ -311,107 +311,21 @@ const Settings = () => {
                     Manage available delivery options and pricing
                   </CardDescription>
                 </div>
-                <Dialog open={isDeliveryDialogOpen} onOpenChange={setIsDeliveryDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => { resetDeliveryForm(); setEditingMethod(null); }}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Method
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <form onSubmit={handleDeliveryMethodSubmit}>
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingMethod ? "Edit Delivery Method" : "Add Delivery Method"}
-                        </DialogTitle>
-                        <DialogDescription>
-                          Configure delivery method settings and pricing
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="method-name">Method Name</Label>
-                          <Input
-                            id="method-name"
-                            value={deliveryFormData.name}
-                            onChange={(e) => setDeliveryFormData(prev => ({ ...prev, name: e.target.value }))}
-                            placeholder="e.g., Standard Delivery"
-                            required
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="base-price">Base Price (KSH)</Label>
-                            <Input
-                              id="base-price"
-                              type="number"
-                              step="0.01"
-                              value={deliveryFormData.base_price}
-                              onChange={(e) => setDeliveryFormData(prev => ({ ...prev, base_price: e.target.value }))}
-                              placeholder="250"
-                              required
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="price-per-km">Price per KM (KSH)</Label>
-                            <Input
-                              id="price-per-km"
-                              type="number"
-                              step="0.01"
-                              value={deliveryFormData.price_per_km}
-                              onChange={(e) => setDeliveryFormData(prev => ({ ...prev, price_per_km: e.target.value }))}
-                              placeholder="50"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="delivery-days">Estimated Delivery Days</Label>
-                          <Select 
-                            value={deliveryFormData.estimated_delivery_days} 
-                            onValueChange={(value) => setDeliveryFormData(prev => ({ ...prev, estimated_delivery_days: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1">1 Day</SelectItem>
-                              <SelectItem value="2">2 Days</SelectItem>
-                              <SelectItem value="3">3 Days</SelectItem>
-                              <SelectItem value="5">5 Days</SelectItem>
-                              <SelectItem value="7">7 Days</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id="is-express"
-                              checked={deliveryFormData.is_express}
-                              onCheckedChange={(checked) => setDeliveryFormData(prev => ({ ...prev, is_express: checked }))}
-                            />
-                            <Label htmlFor="is-express">Express Method</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id="is-active"
-                              checked={deliveryFormData.active}
-                              onCheckedChange={(checked) => setDeliveryFormData(prev => ({ ...prev, active: checked }))}
-                            />
-                            <Label htmlFor="is-active">Active</Label>
-                          </div>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsDeliveryDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button type="submit" disabled={updateSettingsMutation.isPending}>
-                          {editingMethod ? "Update" : "Add"} Method
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                <Button onClick={() => { 
+                  setDeliveryFormData({
+                    name: "",
+                    base_price: "",
+                    price_per_km: "",
+                    estimated_delivery_days: "2",
+                    is_express: false,
+                    active: true
+                  });
+                  setEditingMethod(null);
+                  setIsDeliveryDialogOpen(true);
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Method
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -442,14 +356,30 @@ const Settings = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEditMethod(method)}
+                        onClick={() => {
+                          setEditingMethod(method);
+                          setDeliveryFormData({
+                            name: method.name,
+                            base_price: method.base_price.toString(),
+                            price_per_km: method.price_per_km?.toString() || "",
+                            estimated_delivery_days: method.estimated_delivery_days.toString(),
+                            is_express: method.is_express,
+                            active: method.active
+                          });
+                          setIsDeliveryDialogOpen(true);
+                        }}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteMethod(method.id)}
+                        onClick={() => {
+                          if (!settings) return;
+                          const updatedMethods = settings.delivery_methods.filter(m => m.id !== method.id);
+                          const updatedSettings = { ...settings, delivery_methods: updatedMethods };
+                          updateSettingsMutation.mutate(updatedSettings);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -483,6 +413,131 @@ const Settings = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delivery Method Dialog */}
+      <Dialog open={isDeliveryDialogOpen} onOpenChange={setIsDeliveryDialogOpen}>
+        <DialogContent>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (!settings) return;
+
+            const methodData = {
+              id: editingMethod?.id || Date.now().toString(),
+              name: deliveryFormData.name,
+              base_price: parseFloat(deliveryFormData.base_price),
+              price_per_km: deliveryFormData.price_per_km ? parseFloat(deliveryFormData.price_per_km) : undefined,
+              estimated_delivery_days: parseInt(deliveryFormData.estimated_delivery_days),
+              is_express: deliveryFormData.is_express,
+              active: deliveryFormData.active
+            };
+
+            let updatedMethods;
+            if (editingMethod) {
+              updatedMethods = settings.delivery_methods.map(method => 
+                method.id === editingMethod.id ? methodData : method
+              );
+            } else {
+              updatedMethods = [...settings.delivery_methods, methodData];
+            }
+
+            const updatedSettings = { ...settings, delivery_methods: updatedMethods };
+            updateSettingsMutation.mutate(updatedSettings);
+            
+            setIsDeliveryDialogOpen(false);
+            setEditingMethod(null);
+          }}>
+            <DialogHeader>
+              <DialogTitle>
+                {editingMethod ? "Edit Delivery Method" : "Add Delivery Method"}
+              </DialogTitle>
+              <DialogDescription>
+                Configure delivery method settings and pricing
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="method-name">Method Name</Label>
+                <Input
+                  id="method-name"
+                  value={deliveryFormData.name}
+                  onChange={(e) => setDeliveryFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., Standard Delivery"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="base-price">Base Price (KSH)</Label>
+                  <Input
+                    id="base-price"
+                    type="number"
+                    step="0.01"
+                    value={deliveryFormData.base_price}
+                    onChange={(e) => setDeliveryFormData(prev => ({ ...prev, base_price: e.target.value }))}
+                    placeholder="250"
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="price-per-km">Price per KM (KSH)</Label>
+                  <Input
+                    id="price-per-km"
+                    type="number"
+                    step="0.01"
+                    value={deliveryFormData.price_per_km}
+                    onChange={(e) => setDeliveryFormData(prev => ({ ...prev, price_per_km: e.target.value }))}
+                    placeholder="50"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="delivery-days">Estimated Delivery Days</Label>
+                <Select 
+                  value={deliveryFormData.estimated_delivery_days} 
+                  onValueChange={(value) => setDeliveryFormData(prev => ({ ...prev, estimated_delivery_days: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Day</SelectItem>
+                    <SelectItem value="2">2 Days</SelectItem>
+                    <SelectItem value="3">3 Days</SelectItem>
+                    <SelectItem value="5">5 Days</SelectItem>
+                    <SelectItem value="7">7 Days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is-express"
+                    checked={deliveryFormData.is_express}
+                    onCheckedChange={(checked) => setDeliveryFormData(prev => ({ ...prev, is_express: checked }))}
+                  />
+                  <Label htmlFor="is-express">Express Method</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is-active"
+                    checked={deliveryFormData.active}
+                    onCheckedChange={(checked) => setDeliveryFormData(prev => ({ ...prev, active: checked }))}
+                  />
+                  <Label htmlFor="is-active">Active</Label>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsDeliveryDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateSettingsMutation.isPending}>
+                {editingMethod ? "Update" : "Add"} Method
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
