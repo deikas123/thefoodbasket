@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Create staff function called');
+    
     // Create a Supabase client with service role key for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -27,38 +29,56 @@ serve(async (req) => {
 
     // Verify the requesting user is an admin
     const authHeader = req.headers.get('Authorization')!
+    if (!authHeader) {
+      console.error('No authorization header found');
+      return new Response(
+        JSON.stringify({ error: 'Authorization header required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
     const token = authHeader.replace('Bearer ', '')
+    console.log('Verifying user token...');
     
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     if (authError || !user) {
+      console.error('Auth error:', authError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized - invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    console.log('User verified:', user.id);
+
     // Check if user has admin role
-    const { data: userRole } = await supabaseAdmin
+    const { data: userRole, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .single()
 
-    if (!userRole || userRole.role !== 'admin') {
+    if (roleError || !userRole || userRole.role !== 'admin') {
+      console.error('Role check failed:', roleError, userRole);
       return new Response(
         JSON.stringify({ error: 'Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    console.log('Admin role verified');
+
     const { email, password, firstName, lastName, role } = await req.json()
 
     if (!email || !password || !firstName || !lastName || !role) {
+      console.error('Missing required fields');
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing required fields: email, password, firstName, lastName, role' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('Creating user with email:', email, 'and role:', role);
 
     // Create the user
     const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
@@ -73,12 +93,14 @@ serve(async (req) => {
     })
 
     if (createUserError || !authData.user) {
-      console.error('Error creating user:', createUserError)
+      console.error('Error creating user:', createUserError);
       return new Response(
         JSON.stringify({ error: createUserError?.message || 'Failed to create user' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('User created successfully:', authData.user.id);
 
     // Create the profile
     const { error: profileError } = await supabaseAdmin
@@ -90,24 +112,29 @@ serve(async (req) => {
       })
 
     if (profileError) {
-      console.error('Profile creation error:', profileError)
+      console.error('Profile creation error:', profileError);
+      // Don't fail the entire operation for profile creation
+    } else {
+      console.log('Profile created successfully');
     }
 
     // Assign the role
-    const { error: roleError } = await supabaseAdmin
+    const { error: roleAssignError } = await supabaseAdmin
       .from('user_roles')
       .upsert({
         user_id: authData.user.id,
         role: role
       })
 
-    if (roleError) {
-      console.error('Role assignment error:', roleError)
+    if (roleAssignError) {
+      console.error('Role assignment error:', roleAssignError);
       return new Response(
-        JSON.stringify({ error: 'Failed to assign role' }),
+        JSON.stringify({ error: 'Failed to assign role: ' + roleAssignError.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('Role assigned successfully');
 
     return new Response(
       JSON.stringify({ 
@@ -124,9 +151,9 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error: ' + error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

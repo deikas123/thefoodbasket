@@ -32,8 +32,10 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
       // Get the current session for authorization
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        throw new Error('No active session');
+        throw new Error('No active session found. Please log in again.');
       }
+
+      console.log('Session found, calling edge function...');
 
       // Call the Edge Function
       const { data: result, error } = await supabase.functions.invoke('create-staff', {
@@ -49,28 +51,30 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
         },
       });
 
+      console.log('Edge function response:', { result, error });
+
       if (error) {
         console.error('Edge function error:', error);
         throw new Error(error.message || 'Failed to create staff member');
       }
 
       if (result?.error) {
-        console.error('Staff creation error:', result.error);
+        console.error('Staff creation error from function:', result.error);
         throw new Error(result.error);
       }
 
       if (!result?.success) {
-        throw new Error('Failed to create staff member');
+        throw new Error('Failed to create staff member - no success response');
       }
 
       console.log('Staff member created successfully:', result.user);
       return result.user;
     },
-    onSuccess: () => {
-      console.log('Staff creation successful');
+    onSuccess: (createdUser) => {
+      console.log('Staff creation successful, created user:', createdUser);
       toast({
         title: "Success",
-        description: "Staff member created successfully.",
+        description: `Staff member ${createdUser.firstName} ${createdUser.lastName} created successfully.`,
       });
       queryClient.invalidateQueries({ queryKey: ["staff-members"] });
       setFormData({
@@ -94,6 +98,8 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('Form submitted with data:', { ...formData, password: '[REDACTED]' });
     
     // Validate form data
     if (!formData.email || !formData.password || !formData.firstName || !formData.lastName || !formData.role) {
@@ -126,7 +132,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
       return;
     }
 
-    console.log('Submitting staff creation form:', { ...formData, password: '[REDACTED]' });
+    console.log('Form validation passed, creating staff member...');
     createStaffMutation.mutate(formData);
   };
 
@@ -157,6 +163,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 required
                 disabled={createStaffMutation.isPending}
+                placeholder="Enter first name"
               />
             </div>
             <div className="space-y-2">
@@ -167,6 +174,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 required
                 disabled={createStaffMutation.isPending}
+                placeholder="Enter last name"
               />
             </div>
           </div>
@@ -180,6 +188,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
               disabled={createStaffMutation.isPending}
+              placeholder="Enter email address"
             />
           </div>
           
@@ -193,6 +202,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
               required
               minLength={6}
               disabled={createStaffMutation.isPending}
+              placeholder="Enter password (min 6 characters)"
             />
           </div>
           

@@ -25,24 +25,16 @@ const StaffManagement = () => {
   const queryClient = useQueryClient();
 
   // Fetch all staff members
-  const { data: staffMembers, isLoading } = useQuery({
+  const { data: staffMembers, isLoading, error } = useQuery({
     queryKey: ["staff-members"],
     queryFn: async () => {
       console.log("Fetching staff members...");
       
       try {
-        // Get all user roles that are not customers
+        // First, get all user roles that are not customers
         const { data: userRoles, error: rolesError } = await supabase
           .from('user_roles')
-          .select(`
-            user_id, 
-            role,
-            profiles!inner(
-              id,
-              first_name,
-              last_name
-            )
-          `)
+          .select('user_id, role')
           .neq('role', 'customer');
           
         if (rolesError) {
@@ -53,18 +45,35 @@ const StaffManagement = () => {
         console.log("User roles found:", userRoles);
         
         if (!userRoles || userRoles.length === 0) {
+          console.log("No staff roles found");
           return [];
         }
         
-        // Transform the data to match our interface
-        const staffData: StaffMember[] = userRoles.map((item: any) => {
-          const profile = item.profiles;
+        // Get user IDs for staff members
+        const staffUserIds = userRoles.map(role => role.user_id);
+        
+        // Fetch profiles for these users
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', staffUserIds);
+          
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
+          throw profilesError;
+        }
+        
+        console.log("Profiles found:", profiles);
+        
+        // Combine the data
+        const staffData: StaffMember[] = userRoles.map((roleData) => {
+          const profile = profiles?.find(p => p.id === roleData.user_id);
           return {
-            id: item.user_id,
-            email: `${profile.first_name?.toLowerCase() || 'user'}@foodbasket.com`, // Placeholder email
-            firstName: profile.first_name || '',
-            lastName: profile.last_name || '',
-            role: item.role as UserRole,
+            id: roleData.user_id,
+            email: `${profile?.first_name?.toLowerCase() || 'user'}@foodbasket.com`, // Placeholder email
+            firstName: profile?.first_name || 'Unknown',
+            lastName: profile?.last_name || 'User',
+            role: roleData.role as UserRole,
             createdAt: new Date().toISOString() // Placeholder date
           };
         });
@@ -73,7 +82,7 @@ const StaffManagement = () => {
         return staffData;
       } catch (error) {
         console.error("Error in staff query:", error);
-        return [];
+        throw error;
       }
     }
   });
@@ -135,6 +144,10 @@ const StaffManagement = () => {
     }
   };
 
+  if (error) {
+    console.error("Staff management error:", error);
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -147,7 +160,11 @@ const StaffManagement = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div>Loading staff members...</div>
+            <div className="text-center py-8">Loading staff members...</div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">
+              Error loading staff members: {error.message}
+            </div>
           ) : staffMembers?.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No staff members found
