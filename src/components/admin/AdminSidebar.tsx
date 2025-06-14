@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { 
@@ -34,6 +33,7 @@ const AdminSidebar = () => {
     { name: "Orders", icon: Package, path: "/admin/orders" },
     { name: "Users", icon: Users, path: "/admin/users" },
     { name: "Deliveries", icon: Truck, path: "/admin/deliveries" },
+    { name: "Delivery Options", icon: Truck, path: "/admin/delivery-options" },
     { name: "Delivery Zones", icon: MapPin, path: "/admin/delivery-zones" },
     { name: "Banners", icon: Image, path: "/admin/banners" },
     { name: "Coupons", icon: Ticket, path: "/admin/discount-codes" },
