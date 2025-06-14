@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, Truck } from "lucide-react";
+import { formatCurrency } from "@/utils/currencyFormatter";
 import { Order } from "@/types";
 
 interface DeliveryInfoProps {
@@ -34,7 +35,7 @@ const DeliveryInfo = ({ order }: DeliveryInfoProps) => {
             </h3>
             <p className="text-sm">
               {order.deliveryMethod.name} <br />
-              ${order.deliveryMethod.price.toFixed(2)} <br />
+              {formatCurrency(order.deliveryMethod.price)} <br />
               {order.deliveryMethod.estimatedDelivery}
             </p>
           </div>

@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/utils/currencyFormatter";
 import { Order } from "@/types";
 
 interface OrderItemsListProps {
@@ -30,9 +31,9 @@ const OrderItemsList = ({ order }: OrderItemsListProps) => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                <p className="font-medium">{formatCurrency(item.price * item.quantity)}</p>
                 <p className="text-sm text-muted-foreground">
-                  ${item.price.toFixed(2)} each
+                  {formatCurrency(item.price)} each
                 </p>
               </div>
             </div>

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CreditCard, RefreshCcw } from "lucide-react";
+import { formatCurrency } from "@/utils/currencyFormatter";
 import { Order } from "@/types";
 
 interface OrderSummaryCardProps {
@@ -19,19 +20,19 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
         <div className="space-y-4">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>${order.subtotal.toFixed(2)}</span>
+            <span>{formatCurrency(order.subtotal)}</span>
           </div>
           
           <div className="flex justify-between">
             <span className="text-muted-foreground">Delivery</span>
-            <span>${order.deliveryFee.toFixed(2)}</span>
+            <span>{formatCurrency(order.deliveryFee)}</span>
           </div>
           
           <Separator />
           
           <div className="flex justify-between font-medium">
             <span>Total</span>
-            <span>${order.total.toFixed(2)}</span>
+            <span>{formatCurrency(order.total)}</span>
           </div>
           
           <div className="flex items-center pt-2">
