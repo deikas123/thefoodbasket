@@ -6,8 +6,64 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Settings = () => {
+  const [deliverySettings, setDeliverySettings] = useState({
+    minimumCheckout: 1500,
+    freeDeliveryThreshold: 2000,
+    expressDeliveryEnabled: true
+  });
+
+  const queryClient = useQueryClient();
+
+  const { data: currentSettings } = useQuery({
+    queryKey: ["delivery-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('website_sections')
+        .select('settings')
+        .eq('type', 'delivery_settings')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data?.settings || deliverySettings;
+    }
+  });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (newSettings: typeof deliverySettings) => {
+      const { error } = await supabase
+        .from('website_sections')
+        .upsert({
+          name: 'delivery_settings',
+          type: 'delivery_settings',
+          title: 'Delivery Settings',
+          settings: {
+            minimum_checkout_amount: newSettings.minimumCheckout,
+            free_delivery_threshold: newSettings.freeDeliveryThreshold,
+            express_delivery_enabled: newSettings.expressDeliveryEnabled
+          }
+        }, { onConflict: 'type' });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["delivery-settings"] });
+      toast.success("Settings updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update settings: " + error.message);
+    }
+  });
+
+  const handleDeliverySettingsUpdate = () => {
+    updateSettingsMutation.mutate(deliverySettings);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -77,23 +133,81 @@ const Settings = () => {
           <Card>
             <CardHeader>
               <CardTitle>Delivery Settings</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Configure delivery options and minimum order amounts
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="min-order">Minimum Order Amount (KSH)</Label>
-                  <Input id="min-order" type="number" placeholder="500" />
+                  <Label htmlFor="min-checkout">Minimum Checkout Amount (KSH)</Label>
+                  <Input 
+                    id="min-checkout" 
+                    type="number" 
+                    value={deliverySettings.minimumCheckout}
+                    onChange={(e) => setDeliverySettings(prev => ({
+                      ...prev,
+                      minimumCheckout: parseInt(e.target.value) || 0
+                    }))}
+                    placeholder="1500" 
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Minimum order amount required for checkout
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="free-delivery">Free Delivery Threshold (KSH)</Label>
-                  <Input id="free-delivery" type="number" placeholder="2000" />
+                  <Input 
+                    id="free-delivery" 
+                    type="number" 
+                    value={deliverySettings.freeDeliveryThreshold}
+                    onChange={(e) => setDeliverySettings(prev => ({
+                      ...prev,
+                      freeDeliveryThreshold: parseInt(e.target.value) || 0
+                    }))}
+                    placeholder="2000" 
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Orders above this amount get free delivery
+                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Switch id="express-delivery" />
+                <Switch 
+                  id="express-delivery" 
+                  checked={deliverySettings.expressDeliveryEnabled}
+                  onCheckedChange={(checked) => setDeliverySettings(prev => ({
+                    ...prev,
+                    expressDeliveryEnabled: checked
+                  }))}
+                />
                 <Label htmlFor="express-delivery">Enable Express Delivery</Label>
               </div>
-              <Button>Save Delivery Settings</Button>
+              <Button 
+                onClick={handleDeliverySettingsUpdate}
+                disabled={updateSettingsMutation.isPending}
+              >
+                {updateSettingsMutation.isPending ? "Saving..." : "Save Delivery Settings"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Delivery Methods Management</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Manage available delivery options for customers
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  To manage delivery methods, pricing, and zones, visit the dedicated Delivery Options page.
+                </p>
+                <Button variant="outline" asChild>
+                  <a href="/admin/delivery-options">Manage Delivery Options</a>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
