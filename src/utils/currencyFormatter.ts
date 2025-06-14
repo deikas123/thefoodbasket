@@ -1,11 +1,10 @@
 
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-KE', {
-    style: 'currency',
-    currency: 'KES',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  // Use a more explicit approach to ensure KSH is always displayed
+  return `KSH ${amount.toLocaleString('en-KE', { 
+    minimumFractionDigits: 0, 
+    maximumFractionDigits: 2 
+  })}`;
 };
 
 // Alternative simple formatter for cases where Intl might not work as expected
