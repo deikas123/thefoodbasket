@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -61,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       (event, session) => {
         setSession(session);
         if (session?.user) {
-          fetchUserProfile(session.user);
+          fetchUserProfile(session.user, false); // Don't redirect on auth state change
         } else {
           setUser(null);
           setLoading(false);
@@ -73,7 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        fetchUserProfile(session.user);
+        fetchUserProfile(session.user, false); // Don't redirect on initial load
       } else {
         setLoading(false);
       }
@@ -82,7 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (authUser: SupabaseUser) => {
+  const fetchUserProfile = async (authUser: SupabaseUser, shouldRedirect: boolean = false) => {
     try {
       // Get user profile
       const { data: profile, error } = await supabase
@@ -117,13 +116,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log("Setting user with role:", userData.role);
       setUser(userData);
 
-      // Redirect based on role after login
-      if (userRole === 'admin') {
-        // Redirect admin to admin dashboard
-        navigate('/admin');
-      } else if (userRole && userRole !== 'customer') {
-        // Redirect other staff to their dashboard
-        navigate('/staff');
+      // Only redirect after login, not on page load
+      if (shouldRedirect) {
+        if (userRole === 'admin') {
+          // Redirect admin to admin dashboard
+          navigate('/admin');
+        } else if (userRole && userRole !== 'customer') {
+          // Redirect other staff to their dashboard
+          navigate('/staff');
+        }
       }
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
@@ -137,7 +138,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      // Auth state change listener will handle the rest
+      // Get the user and redirect after successful login
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await fetchUserProfile(user, true); // Redirect after login
+      }
     } catch (error: any) {
       console.error('Error signing in:', error.message);
       throw error;
