@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import { getKYCVerificationsForAdmin, updateKYCVerification } from "@/services/adminService";
+import { getKYCVerificationsForAdmin, updateKYCVerification } from "@/services/admin";
 import { KYCVerification } from "@/types/kyc";
 
 const PayLaterVerification = () => {
