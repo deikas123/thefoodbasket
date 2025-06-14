@@ -17,7 +17,8 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
-  MapPin
+  MapPin,
+  Heart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,8 @@ const AdminSidebar = () => {
     { name: "Daily Offers", icon: BadgePercent, path: "/admin/daily-offers" },
     { name: "Pay Later Verification", icon: FileCheck, path: "/admin/pay-later-verification" },
     { name: "Notifications", icon: Bell, path: "/admin/notifications" },
-    { name: "Content Management", icon: Image, path: "/admin/content-management" },
+    { name: "Content Management", icon: Image, path: "/admin/content" },
+    { name: "Loyalty Management", icon: Heart, path: "/admin/loyalty" },
     { name: "Settings", icon: Settings, path: "/admin/settings" },
   ];
 
