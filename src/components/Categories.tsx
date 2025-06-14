@@ -58,11 +58,19 @@ const Categories = () => {
                 src={category.image || '/placeholder.svg'}
                 alt={category.name}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
               />
               
               {/* Category Name Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4">
-                <h3 className="text-white font-medium text-lg">{category.name}</h3>
+                <div className="text-white">
+                  <h3 className="font-medium text-lg">{category.name}</h3>
+                  {category.productCount !== undefined && (
+                    <p className="text-sm opacity-90">{category.productCount} products</p>
+                  )}
+                </div>
               </div>
             </Link>
           ))}

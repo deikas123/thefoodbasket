@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getProductsByCategory, getCategories } from "@/services/product";
+import { getProductsByCategory, getCategoryById } from "@/services/product";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductsGrid from "@/components/ProductsGrid";
@@ -17,13 +17,11 @@ const CategoryPage = () => {
     enabled: !!slug,
   });
   
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["categories"],
-    queryFn: getCategories,
+  const { data: category, isLoading: categoryLoading } = useQuery({
+    queryKey: ["category", slug],
+    queryFn: () => getCategoryById(slug || ""),
+    enabled: !!slug,
   });
-  
-  // Find current category from categories
-  const currentCategory = categories?.find(cat => cat.id === slug);
   
   useEffect(() => {
     if (slug) {
@@ -37,17 +35,34 @@ const CategoryPage = () => {
       
       <main className="flex-grow container mx-auto px-4 py-12">
         {/* Category header */}
-        {categoriesLoading ? (
+        {categoryLoading ? (
           <div className="mb-8">
             <Skeleton className="h-10 w-2/3 max-w-md mb-2" />
             <Skeleton className="h-4 w-1/2 max-w-sm" />
           </div>
-        ) : currentCategory ? (
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">{currentCategory.name}</h1>
-            {currentCategory.description && (
-              <p className="text-gray-600">{currentCategory.description}</p>
+        ) : category ? (
+          <div className="mb-8 flex items-start gap-6">
+            {category.image && (
+              <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder.svg';
+                  }}
+                />
+              </div>
             )}
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{category.name}</h1>
+              {category.description && (
+                <p className="text-gray-600 mb-2">{category.description}</p>
+              )}
+              <p className="text-sm text-gray-500">
+                {category.productCount || 0} products available
+              </p>
+            </div>
           </div>
         ) : error ? (
           <div className="mb-8">

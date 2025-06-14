@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
 import { Category } from "@/services/product/categoryService";
 
 interface CategoryFormDialogProps {
@@ -46,7 +45,7 @@ const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{mode === "add" ? "Add New Category" : "Edit Category"}</DialogTitle>
           <DialogDescription>
@@ -59,7 +58,7 @@ const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
         <form onSubmit={onSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor={`${mode}-name`}>Name *</Label>
+              <Label htmlFor={`${mode}-name`}>Category Name *</Label>
               <Input
                 id={`${mode}-name`}
                 value={formData.name}
@@ -68,6 +67,7 @@ const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
                 required
               />
             </div>
+            
             <div className="grid gap-2">
               <Label htmlFor={`${mode}-description`}>Description</Label>
               <Textarea
@@ -78,22 +78,39 @@ const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
                 rows={3}
               />
             </div>
+            
             <div className="grid gap-2">
-              <Label htmlFor={`${mode}-image`}>Image URL</Label>
+              <Label htmlFor={`${mode}-image`}>Category Image URL *</Label>
               <Input
                 id={`${mode}-image`}
                 value={formData.image}
                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="https://example.com/image.jpg"
+                placeholder="https://example.com/category-image.jpg"
+                type="url"
               />
               <p className="text-xs text-muted-foreground">
-                {mode === "add" 
-                  ? "Leave empty to use a placeholder image" 
-                  : "Leave empty to keep existing image"
-                }
+                Enter a direct URL to an image (JPG, PNG, WebP)
               </p>
+              
+              {/* Image Preview */}
+              {formData.image && (
+                <div className="mt-2">
+                  <Label className="text-sm text-muted-foreground">Preview:</Label>
+                  <div className="mt-1 border rounded-lg overflow-hidden w-full h-32 bg-gray-100">
+                    <img
+                      src={formData.image}
+                      alt="Category preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+          
           <DialogFooter>
             <Button 
               type="button" 
