@@ -187,6 +187,25 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
             </span>
           </div>
           
+          {/* Stock quantity display */}
+          <div className="mb-2">
+            {product.stock > 0 ? (
+              <span className={`text-xs font-medium ${
+                product.stock <= 5 
+                  ? 'text-orange-600' 
+                  : product.stock <= 10 
+                    ? 'text-yellow-600' 
+                    : 'text-green-600'
+              }`}>
+                {product.stock} left in stock
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-red-600">
+                Out of stock
+              </span>
+            )}
+          </div>
+          
           {/* Price */}
           <div className="mb-3">
             {product.discountPercentage && product.discountPercentage > 0 ? (
