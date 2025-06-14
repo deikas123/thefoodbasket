@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, Save, Plus, Edit, Trash2 } from "lucide-react";
+import { Settings as SettingsIcon, Save, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -184,7 +184,7 @@ const Settings = () => {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center space-x-2">
-        <Settings className="h-6 w-6" />
+        <SettingsIcon className="h-6 w-6" />
         <h1 className="text-2xl font-bold">Admin Settings</h1>
       </div>
 
