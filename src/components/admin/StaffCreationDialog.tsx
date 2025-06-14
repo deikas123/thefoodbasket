@@ -28,15 +28,17 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
 
   const createStaffMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      // Create the user account using Supabase Admin API
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Create the user account using regular signup
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        email_confirm: true, // Auto-confirm email for staff accounts
-        user_metadata: {
-          first_name: data.firstName,
-          last_name: data.lastName,
-          role: data.role
+        options: {
+          data: {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            role: data.role
+          },
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
@@ -46,6 +48,9 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
         throw new Error("Failed to create user");
       }
 
+      // Wait a moment for the profile to be created by the trigger
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Assign the role to the new user
       await assignUserRole(authData.user.id, data.role);
 
@@ -54,7 +59,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Staff member created successfully",
+        description: "Staff member created successfully. They will need to verify their email before they can log in.",
       });
       queryClient.invalidateQueries({ queryKey: ["staff-members"] });
       setFormData({
@@ -67,6 +72,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
       onClose();
     },
     onError: (error: any) => {
+      console.error('Staff creation error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to create staff member",
@@ -102,7 +108,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
         <DialogHeader>
           <DialogTitle>Create New Staff Member</DialogTitle>
           <DialogDescription>
-            Create a new staff account with specific role permissions.
+            Create a new staff account with specific role permissions. The staff member will need to verify their email before they can log in.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
