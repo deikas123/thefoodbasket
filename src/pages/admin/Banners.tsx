@@ -54,6 +54,69 @@ const Banners = () => {
     }
   });
 
+  const createBannerMutation = useMutation({
+    mutationFn: async (bannerData: Omit<Banner, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from("banners")
+        .insert([bannerData])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["banners"] });
+      toast.success("Banner created successfully!");
+      setIsDialogOpen(false);
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error("Failed to create banner: " + error.message);
+    }
+  });
+
+  const updateBannerMutation = useMutation({
+    mutationFn: async ({ id, ...bannerData }: Partial<Banner> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("banners")
+        .update(bannerData)
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["banners"] });
+      toast.success("Banner updated successfully!");
+      setIsDialogOpen(false);
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error("Failed to update banner: " + error.message);
+    }
+  });
+
+  const deleteBannerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("banners")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["banners"] });
+      toast.success("Banner deleted successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete banner: " + error.message);
+    }
+  });
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -83,6 +146,38 @@ const Banners = () => {
     setIsDialogOpen(true);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title || !formData.image || !formData.start_date || !formData.end_date) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const bannerData = {
+      title: formData.title,
+      subtitle: formData.subtitle || null,
+      image: formData.image,
+      link: formData.link || null,
+      start_date: formData.start_date + 'T00:00:00Z',
+      end_date: formData.end_date + 'T23:59:59Z',
+      active: formData.active,
+      priority: formData.priority
+    };
+
+    if (editingBanner) {
+      updateBannerMutation.mutate({ id: editingBanner.id, ...bannerData });
+    } else {
+      createBannerMutation.mutate(bannerData);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this banner?")) {
+      deleteBannerMutation.mutate(id);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -107,95 +202,103 @@ const Banners = () => {
                 Configure banner settings and content
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Banner title"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="subtitle">Subtitle</Label>
-                <Input
-                  id="subtitle"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-                  placeholder="Banner subtitle"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="image">Image URL</Label>
-                <Input
-                  id="image"
-                  value={formData.image}
-                  onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="link">Link URL</Label>
-                <Input
-                  id="link"
-                  value={formData.link}
-                  onChange={(e) => setFormData(prev => ({ ...prev, link: e.target.value }))}
-                  placeholder="https://example.com"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="start_date">Start Date</Label>
+                  <Label htmlFor="title">Title</Label>
                   <Input
-                    id="start_date"
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Banner title"
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="end_date">End Date</Label>
+                  <Label htmlFor="subtitle">Subtitle</Label>
                   <Input
-                    id="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                    id="subtitle"
+                    value={formData.subtitle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+                    placeholder="Banner subtitle"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="image">Image URL</Label>
+                  <Input
+                    id="image"
+                    value={formData.image}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
+                    placeholder="https://example.com/image.jpg"
                     required
                   />
                 </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="link">Link URL</Label>
+                  <Input
+                    id="link"
+                    value={formData.link}
+                    onChange={(e) => setFormData(prev => ({ ...prev, link: e.target.value }))}
+                    placeholder="https://example.com"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="start_date">Start Date</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="end_date">End Date</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={formData.end_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Input
+                    id="priority"
+                    type="number"
+                    value={formData.priority}
+                    onChange={(e) => setFormData(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                    min="1"
+                    required
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="active"
+                    checked={formData.active}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, active: checked }))}
+                  />
+                  <Label htmlFor="active">Active</Label>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Input
-                  id="priority"
-                  type="number"
-                  value={formData.priority}
-                  onChange={(e) => setFormData(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
-                  min="1"
-                  required
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="active"
-                  checked={formData.active}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, active: checked }))}
-                />
-                <Label htmlFor="active">Active</Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {editingBanner ? "Update Banner" : "Create Banner"}
-              </Button>
-            </DialogFooter>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createBannerMutation.isPending || updateBannerMutation.isPending}
+                >
+                  {createBannerMutation.isPending || updateBannerMutation.isPending
+                    ? (editingBanner ? "Updating..." : "Creating...")
+                    : (editingBanner ? "Update Banner" : "Create Banner")
+                  }
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -266,6 +369,8 @@ const Banners = () => {
                 <Button
                   variant="destructive"
                   size="sm"
+                  onClick={() => handleDelete(banner.id)}
+                  disabled={deleteBannerMutation.isPending}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
