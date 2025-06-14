@@ -259,7 +259,7 @@ const OrderFulfillmentDashboard = () => {
                               {Array.isArray(order.items) ? order.items.length : 0} items
                             </div>
                           </TableCell>
-                          <TableCell>{formatCurrency(order.total)}}</TableCell>
+                          <TableCell>{formatCurrency(order.total)}</TableCell>
                           <TableCell>{formatDate(order.updated_at)}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={getStatusBadgeVariant(order.status)}>
