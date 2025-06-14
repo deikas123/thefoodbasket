@@ -116,6 +116,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       console.log("Setting user with role:", userData.role);
       setUser(userData);
+
+      // Redirect based on role after login
+      if (userRole && userRole !== 'customer') {
+        // Redirect staff to their dashboard
+        navigate('/staff');
+      }
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
     } finally {

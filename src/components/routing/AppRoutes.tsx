@@ -20,6 +20,7 @@ const Wishlist = lazy(() => import("@/pages/Wishlist"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const AdminRoutes = lazy(() => import("./AdminRoutes"));
 const DeliveryRoutes = lazy(() => import("./DeliveryRoutes"));
+const StaffRoutes = lazy(() => import("./StaffRoutes"));
 
 import Timer from "@/pages/Timer";
 
@@ -70,6 +71,9 @@ const AppRoutes = () => {
         
         {/* Delivery Routes */}
         <Route path="/delivery/*" element={<DeliveryRoutes />} />
+        
+        {/* Staff Routes */}
+        <Route path="/staff/*" element={<StaffRoutes />} />
         
         {/* Catch all route */}
         <Route path="*" element={<NotFound />} />
