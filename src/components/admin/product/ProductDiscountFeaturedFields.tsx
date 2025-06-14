@@ -3,18 +3,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
-
-interface ProductFormValues {
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  stock: number;
-  featured: boolean;
-  discountPercentage?: number;
-  tags: string[];
-}
+import { ProductFormValues } from "@/types/productForm";
 
 interface ProductDiscountFeaturedFieldsProps {
   form: UseFormReturn<ProductFormValues>;

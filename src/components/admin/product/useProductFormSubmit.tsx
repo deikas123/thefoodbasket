@@ -4,18 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductType } from "@/types/supabase";
 import { toast } from "sonner";
-
-interface ProductFormValues {
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  stock: number;
-  featured: boolean;
-  discountPercentage?: number;
-  tags: string[];
-}
+import { ProductFormValues } from "@/types/productForm";
 
 interface UseProductFormSubmitProps {
   product: ProductType | null;

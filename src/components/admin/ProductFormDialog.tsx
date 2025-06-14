@@ -2,7 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductType } from "@/types/supabase";
@@ -14,6 +13,7 @@ import ProductCategoryField from "./product/ProductCategoryField";
 import ProductDiscountFeaturedFields from "./product/ProductDiscountFeaturedFields";
 import ProductTagsField from "./product/ProductTagsField";
 import { useProductFormSubmit } from "./product/useProductFormSubmit";
+import { productSchema, ProductFormValues } from "@/types/productForm";
 
 import {
   Dialog,
@@ -30,20 +30,6 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { getAllTags } from "@/services/product/tagService";
-
-const productSchema = z.object({
-  name: z.string().min(2, { message: "Name is required" }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
-  price: z.coerce.number().positive({ message: "Price must be positive" }),
-  image: z.string().min(1, { message: "Image is required" }),
-  category: z.string().min(1, { message: "Category is required" }),
-  stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer" }),
-  featured: z.boolean().default(false),
-  discountPercentage: z.coerce.number().min(0).max(100).optional(),
-  tags: z.array(z.string()).default([]),
-});
-
-type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormDialogProps {
   open: boolean;
