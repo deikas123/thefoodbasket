@@ -13,6 +13,7 @@ interface PaymentStepProps {
   items: CartItem[];
   total: number;
   selectedDelivery: DeliveryOption | null;
+  deliveryAddress?: any;
   onNext: () => void;
   onPrev: () => void;
   isProcessing: boolean;
@@ -24,6 +25,7 @@ const PaymentStep = ({
   items,
   total,
   selectedDelivery,
+  deliveryAddress,
   onNext,
   onPrev,
   isProcessing
@@ -51,7 +53,8 @@ const PaymentStep = ({
         <OrderSummary 
           items={items}
           subtotal={total}
-          deliveryFee={selectedDelivery?.base_price || 0}
+          selectedDelivery={selectedDelivery}
+          deliveryAddress={deliveryAddress}
         />
         
         <div className="mt-4 space-y-3">

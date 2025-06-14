@@ -132,6 +132,7 @@ const Checkout = () => {
               items={items}
               total={total}
               selectedDelivery={selectedDelivery}
+              deliveryAddress={deliveryAddress}
               onNext={handlePlaceOrder}
               onPrev={prevStep}
               isProcessing={isProcessing}

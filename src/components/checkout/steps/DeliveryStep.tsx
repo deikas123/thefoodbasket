@@ -78,7 +78,8 @@ const DeliveryStep = ({
         <OrderSummary 
           items={items}
           subtotal={total}
-          deliveryFee={selectedDelivery?.base_price || 0}
+          selectedDelivery={selectedDelivery}
+          deliveryAddress={deliveryAddress}
         />
         
         <div className="mt-4">

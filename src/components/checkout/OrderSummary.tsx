@@ -9,31 +9,68 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { addToAutoReplenish } from "@/services/autoReplenishService";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { DeliveryOption } from "@/services/deliveryOptionsService";
+import { calculateDeliveryFee } from "@/services/deliveryCalculationService";
 
 interface OrderSummaryProps {
   items: CartItem[];
   subtotal: number;
-  deliveryFee: number;
+  deliveryFee?: number;
   discount?: number;
+  selectedDelivery?: DeliveryOption | null;
+  deliveryAddress?: any;
 }
 
 const OrderSummary = ({ 
   items, 
   subtotal, 
-  deliveryFee,
-  discount = 0
+  deliveryFee = 0,
+  discount = 0,
+  selectedDelivery,
+  deliveryAddress
 }: OrderSummaryProps) => {
-  // Calculate total
-  const total = subtotal + deliveryFee - discount;
+  const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(deliveryFee);
   const { isAuthenticated } = useAuth();
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
-  const [frequency, setFrequency] = useState(30); // Default 30 days
+  const [frequency, setFrequency] = useState(30);
   const [quantity, setQuantity] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Calculate delivery fee when delivery option or address changes
+  useEffect(() => {
+    const calculateFee = async () => {
+      if (selectedDelivery && deliveryAddress?.location) {
+        try {
+          const result = await calculateDeliveryFee(
+            {
+              deliveryLocation: deliveryAddress.location,
+              orderTotal: subtotal
+            },
+            selectedDelivery.id
+          );
+          setCalculatedDeliveryFee(result.deliveryFee);
+        } catch (error) {
+          console.error('Error calculating delivery fee:', error);
+          // Fallback to base price if calculation fails
+          setCalculatedDeliveryFee(selectedDelivery.base_price || 0);
+        }
+      } else if (selectedDelivery) {
+        // Use base price if no location is available
+        setCalculatedDeliveryFee(selectedDelivery.base_price || 0);
+      } else {
+        setCalculatedDeliveryFee(deliveryFee);
+      }
+    };
+
+    calculateFee();
+  }, [selectedDelivery, deliveryAddress, subtotal, deliveryFee]);
+
+  // Calculate total using the calculated delivery fee
+  const total = subtotal + calculatedDeliveryFee - discount;
 
   const handleAddToAutoReplenish = async () => {
     if (!selectedItem) return;
@@ -123,7 +160,7 @@ const OrderSummary = ({
           
           <div className="flex justify-between">
             <span className="text-muted-foreground">Delivery</span>
-            <span>{formatCurrency(deliveryFee)}</span>
+            <span>{formatCurrency(calculatedDeliveryFee)}</span>
           </div>
           
           {discount > 0 && (
