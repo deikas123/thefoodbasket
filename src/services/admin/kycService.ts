@@ -1,11 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { KYCVerification } from "@/types/kyc";
-import { toast } from "@/components/ui/use-toast";
 
 // Get KYC verifications for admin review
 export const getKYCVerificationsForAdmin = async (): Promise<KYCVerification[]> => {
   try {
+    console.log('Fetching KYC verifications for admin');
+    
     const { data, error } = await supabase
       .from('kyc_verifications')
       .select(`
@@ -22,6 +23,8 @@ export const getKYCVerificationsForAdmin = async (): Promise<KYCVerification[]> 
       console.error("Error fetching KYC verifications:", error);
       throw error;
     }
+
+    console.log('KYC verifications fetched:', data?.length || 0);
 
     return (data || []).map(item => ({
       id: item.id,
@@ -53,6 +56,8 @@ export const updateKYCVerification = async (
   }
 ): Promise<boolean> => {
   try {
+    console.log('Updating KYC verification:', id, updateData);
+    
     const { error } = await supabase
       .from('kyc_verifications')
       .update({
@@ -64,19 +69,10 @@ export const updateKYCVerification = async (
 
     if (error) {
       console.error("Error updating KYC verification:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update verification status: " + error.message,
-        variant: "destructive",
-      });
-      return false;
+      throw error;
     }
 
-    toast({
-      title: "Success",
-      description: `Verification ${updateData.status} successfully!`,
-    });
-
+    console.log('KYC verification updated successfully');
     return true;
   } catch (error) {
     console.error("Error in updateKYCVerification:", error);

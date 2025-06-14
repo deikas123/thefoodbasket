@@ -4,13 +4,37 @@ import { supabase } from "@/integrations/supabase/client";
 export const uploadKYCDocument = async (file: File, userId: string, documentType: 'id' | 'address'): Promise<string> => {
   console.log('Uploading KYC document:', { fileName: file.name, userId, documentType });
   
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}/${documentType}-${Date.now()}.${fileExt}`;
-  
-  // For now, we'll create a mock URL since storage isn't set up
-  // In a real implementation, you'd upload to Supabase Storage
-  const mockUrl = `https://example.com/kyc-documents/${fileName}`;
-  
-  console.log('Mock URL created:', mockUrl);
-  return mockUrl;
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${documentType}-${Date.now()}.${fileExt}`;
+    
+    console.log('Uploading to storage path:', fileName);
+    
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('kyc-documents')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      console.error('Storage upload error:', error);
+      throw new Error(`Failed to upload file: ${error.message}`);
+    }
+    
+    console.log('File uploaded successfully:', data.path);
+    
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('kyc-documents')
+      .getPublicUrl(fileName);
+    
+    console.log('Generated public URL:', publicUrl);
+    return publicUrl;
+    
+  } catch (error) {
+    console.error('Error uploading KYC document:', error);
+    throw error;
+  }
 };

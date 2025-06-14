@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { getKYCVerificationsForAdmin, updateKYCVerification } from "@/services/admin";
@@ -21,6 +21,7 @@ const PayLaterVerification = () => {
   const [currentVerification, setCurrentVerification] = useState<KYCVerification | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
   
   useEffect(() => {
     // Verify user is admin
@@ -35,21 +36,20 @@ const PayLaterVerification = () => {
   const fetchVerifications = async () => {
     setLoading(true);
     try {
+      console.log('Fetching verifications...');
       const data = await getKYCVerificationsForAdmin();
+      console.log('Verifications loaded:', data);
       setVerifications(data);
     } catch (error) {
       console.error("Error fetching verifications:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch KYC verifications",
-        variant: "destructive",
-      });
+      toast.error("Failed to fetch KYC verifications");
     } finally {
       setLoading(false);
     }
   };
   
   const handleOpenDialog = (verification: KYCVerification) => {
+    console.log('Opening dialog for verification:', verification);
     setCurrentVerification(verification);
     setAdminNotes(verification.adminNotes || "");
     setDialogOpen(true);
@@ -58,57 +58,57 @@ const PayLaterVerification = () => {
   const handleApprove = async () => {
     if (!currentVerification) return;
     
+    setUpdating(true);
     try {
-      await updateKYCVerification(currentVerification.id, {
+      console.log('Approving verification:', currentVerification.id);
+      const success = await updateKYCVerification(currentVerification.id, {
         status: "approved",
         adminNotes
       });
-      toast({
-        title: "Success",
-        description: "Verification approved successfully",
-      });
-      setDialogOpen(false);
-      fetchVerifications();
+      
+      if (success) {
+        toast.success("Verification approved successfully");
+        setDialogOpen(false);
+        fetchVerifications();
+      } else {
+        toast.error("Failed to approve verification");
+      }
     } catch (error) {
       console.error("Error approving verification:", error);
-      toast({
-        title: "Error",
-        description: "Failed to approve verification",
-        variant: "destructive",
-      });
+      toast.error("Failed to approve verification");
+    } finally {
+      setUpdating(false);
     }
   };
   
   const handleReject = async () => {
     if (!currentVerification) return;
     
-    if (!adminNotes) {
-      toast({
-        title: "Error",
-        description: "Admin notes are required when rejecting verification",
-        variant: "destructive",
-      });
+    if (!adminNotes.trim()) {
+      toast.error("Admin notes are required when rejecting verification");
       return;
     }
     
+    setUpdating(true);
     try {
-      await updateKYCVerification(currentVerification.id, {
+      console.log('Rejecting verification:', currentVerification.id);
+      const success = await updateKYCVerification(currentVerification.id, {
         status: "rejected",
         adminNotes
       });
-      toast({
-        title: "Success",
-        description: "Verification rejected",
-      });
-      setDialogOpen(false);
-      fetchVerifications();
+      
+      if (success) {
+        toast.success("Verification rejected");
+        setDialogOpen(false);
+        fetchVerifications();
+      } else {
+        toast.error("Failed to reject verification");
+      }
     } catch (error) {
       console.error("Error rejecting verification:", error);
-      toast({
-        title: "Error",
-        description: "Failed to reject verification",
-        variant: "destructive",
-      });
+      toast.error("Failed to reject verification");
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -134,11 +134,14 @@ const PayLaterVerification = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Pay Later Verifications</h1>
+        <Button onClick={fetchVerifications} disabled={loading}>
+          {loading ? "Loading..." : "Refresh"}
+        </Button>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>Pay Later Verifications</CardTitle>
+          <CardTitle>KYC Verifications ({verifications.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -149,7 +152,7 @@ const PayLaterVerification = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
+                  <TableHead>User ID</TableHead>
                   <TableHead>Submitted On</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Documents</TableHead>
@@ -166,7 +169,9 @@ const PayLaterVerification = () => {
                 ) : (
                   verifications.map((verification) => (
                     <TableRow key={verification.id}>
-                      <TableCell>{verification.userId}</TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {verification.userId.substring(0, 8)}...
+                      </TableCell>
                       <TableCell>{new Date(verification.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>{getStatusBadge(verification.status)}</TableCell>
                       <TableCell>
@@ -176,7 +181,7 @@ const PayLaterVerification = () => {
                               href={verification.idDocumentUrl} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center"
+                              className="text-blue-600 hover:underline flex items-center text-sm"
                             >
                               ID <ExternalLink className="h-3 w-3 ml-1" />
                             </a>
@@ -186,9 +191,9 @@ const PayLaterVerification = () => {
                               href={verification.addressProofUrl} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center"
+                              className="text-blue-600 hover:underline flex items-center text-sm"
                             >
-                              Address Proof <ExternalLink className="h-3 w-3 ml-1" />
+                              Address <ExternalLink className="h-3 w-3 ml-1" />
                             </a>
                           )}
                         </div>
@@ -196,8 +201,8 @@ const PayLaterVerification = () => {
                       <TableCell className="text-right">
                         <Button 
                           variant="outline" 
+                          size="sm"
                           onClick={() => handleOpenDialog(verification)}
-                          disabled={verification.status !== "pending"}
                         >
                           Review
                         </Button>
@@ -214,11 +219,23 @@ const PayLaterVerification = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Review Verification</DialogTitle>
+            <DialogTitle>Review KYC Verification</DialogTitle>
           </DialogHeader>
           
           {currentVerification && (
             <div className="py-4 space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  User ID: {currentVerification.userId}
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Submitted: {new Date(currentVerification.createdAt).toLocaleString()}
+                </p>
+                <p className="text-sm mb-4">
+                  Current Status: {getStatusBadge(currentVerification.status)}
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-medium mb-2">ID Document</h3>
@@ -228,6 +245,11 @@ const PayLaterVerification = () => {
                         src={currentVerification.idDocumentUrl} 
                         alt="ID Document"
                         className="object-contain w-full h-full"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.parentElement!.innerHTML = '<div class="flex items-center justify-center h-full text-muted-foreground">Preview not available</div>';
+                        }}
                       />
                       <a 
                         href={currentVerification.idDocumentUrl}
@@ -251,6 +273,11 @@ const PayLaterVerification = () => {
                         src={currentVerification.addressProofUrl} 
                         alt="Address Proof"
                         className="object-contain w-full h-full"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.parentElement!.innerHTML = '<div class="flex items-center justify-center h-full text-muted-foreground">Preview not available</div>';
+                        }}
                       />
                       <a 
                         href={currentVerification.addressProofUrl}
@@ -280,24 +307,24 @@ const PayLaterVerification = () => {
           )}
           
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={updating}>
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleReject}
-              disabled={!currentVerification}
+              disabled={!currentVerification || updating || currentVerification.status !== "pending"}
               className="gap-1"
             >
-              <X className="h-4 w-4" /> Reject
+              <X className="h-4 w-4" /> {updating ? "Rejecting..." : "Reject"}
             </Button>
             <Button
               variant="default"
               onClick={handleApprove}
-              disabled={!currentVerification}
+              disabled={!currentVerification || updating || currentVerification.status !== "pending"}
               className="gap-1"
             >
-              <Check className="h-4 w-4" /> Approve
+              <Check className="h-4 w-4" /> {updating ? "Approving..." : "Approve"}
             </Button>
           </DialogFooter>
         </DialogContent>
