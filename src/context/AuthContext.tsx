@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const user = await signInUser(email, password);
       if (user) {
-        const { userData } = await updateAuthProfile(user, true);
+        const { userData } = await updateAuthProfile(user);
         if (userData) {
           handleRoleBasedRedirect(userData.role);
         }
