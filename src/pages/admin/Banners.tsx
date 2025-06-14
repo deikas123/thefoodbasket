@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 
 interface Banner {
   id: string;
@@ -193,7 +193,7 @@ const Banners = () => {
               <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingBanner ? "Edit Banner" : "New Banner"}
@@ -223,16 +223,14 @@ const Banners = () => {
                     placeholder="Banner subtitle"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="image">Image URL</Label>
-                  <Input
-                    id="image"
-                    value={formData.image}
-                    onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                    placeholder="https://example.com/image.jpg"
-                    required
-                  />
-                </div>
+                
+                {/* Image Upload Field */}
+                <ImageUploadField
+                  label="Banner Image"
+                  value={formData.image}
+                  onChange={(value) => setFormData(prev => ({ ...prev, image: value }))}
+                />
+                
                 <div className="grid gap-2">
                   <Label htmlFor="link">Link URL</Label>
                   <Input
