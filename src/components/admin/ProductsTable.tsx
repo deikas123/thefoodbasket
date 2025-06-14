@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +36,24 @@ const AdminProductsTable = () => {
       console.error("Error deleting product:", error);
     }
   });
+  
+  // Handle image URL - support both base64 and regular URLs
+  const getImageUrl = (imageData: string) => {
+    if (!imageData) return '/placeholder.svg';
+    
+    // If it's already a base64 data URL, return as is
+    if (imageData.startsWith('data:')) {
+      return imageData;
+    }
+    
+    // If it's a regular URL, return as is
+    if (imageData.startsWith('http') || imageData.startsWith('/')) {
+      return imageData;
+    }
+    
+    // Otherwise, assume it's base64 without the data URL prefix
+    return `data:image/jpeg;base64,${imageData}`;
+  };
   
   const filteredProducts = allProducts?.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -102,9 +119,12 @@ const AdminProductsTable = () => {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-3">
                         <img 
-                          src={product.image} 
+                          src={getImageUrl(product.image)} 
                           alt={product.name}
                           className="h-10 w-10 rounded-md object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
                         />
                         {product.name}
                       </div>

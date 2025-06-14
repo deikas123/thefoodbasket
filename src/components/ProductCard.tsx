@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -21,8 +20,26 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
 
+  // Handle image URL - support both base64 and regular URLs
+  const getImageUrl = (imageData: string) => {
+    if (!imageData) return '/placeholder.svg';
+    
+    // If it's already a base64 data URL, return as is
+    if (imageData.startsWith('data:')) {
+      return imageData;
+    }
+    
+    // If it's a regular URL, return as is
+    if (imageData.startsWith('http') || imageData.startsWith('/')) {
+      return imageData;
+    }
+    
+    // Otherwise, assume it's base64 without the data URL prefix
+    return `data:image/jpeg;base64,${imageData}`;
+  };
+
   // First image if multiple images
-  const mainImage = product.image ? product.image.split(',')[0].trim() : '/placeholder.svg';
+  const mainImage = getImageUrl(product.image);
   
   const getDiscountedPrice = () => {
     if (!product.discountPercentage) return product.price;
@@ -103,11 +120,18 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
     <Link to={`/product/${product.id}`} className={`group ${className || ''}`}>
       <div className="border rounded-lg overflow-hidden transition-all hover:shadow-md">
         <div className="relative h-48 bg-gray-100">
-          {/* Product image */}
+          {/* Product image with error handling */}
           <img
             src={mainImage}
             alt={product.name}
             className="w-full h-full object-cover object-center"
+            onError={(e) => {
+              console.log('Image failed to load:', mainImage);
+              e.currentTarget.src = '/placeholder.svg';
+            }}
+            onLoad={() => {
+              console.log('Image loaded successfully:', mainImage);
+            }}
           />
           
           {/* Discount badge */}
