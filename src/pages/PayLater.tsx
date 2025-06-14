@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,18 +30,29 @@ const PayLater = () => {
         
         const { data, error } = await supabase
           .from('kyc_verifications')
-          .select('status')
+          .select('status, id_document_url, address_proof_url')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no record exists
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+        if (error) {
           console.error('Error checking KYC status:', error);
+          setKycStatus(null); // Set to null if there's an error
         } else if (data) {
-          console.log('Existing KYC status found:', data.status);
-          setKycStatus(data.status as 'pending' | 'approved' | 'rejected');
+          // Only set status if documents were actually submitted
+          if (data.id_document_url || data.address_proof_url) {
+            console.log('Existing KYC status found:', data.status);
+            setKycStatus(data.status as 'pending' | 'approved' | 'rejected');
+          } else {
+            console.log('KYC record exists but no documents submitted');
+            setKycStatus(null);
+          }
+        } else {
+          console.log('No KYC record found for user');
+          setKycStatus(null);
         }
       } catch (error) {
         console.error('Unexpected error checking KYC status:', error);
+        setKycStatus(null);
       } finally {
         setCheckingStatus(false);
       }
@@ -66,12 +78,14 @@ const PayLater = () => {
       // Submit KYC verification to Supabase
       const { data, error } = await supabase
         .from('kyc_verifications')
-        .insert([{
+        .upsert([{
           user_id: user.id,
           id_document_url: formData.idDocumentUrl,
           address_proof_url: formData.addressProofUrl,
           status: 'pending'
-        }])
+        }], {
+          onConflict: 'user_id'
+        })
         .select()
         .single();
 
