@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!authState.user) throw new Error("User not authenticated");
     
     try {
-      // Update the profile with user ID and data
+      // Update the profile using the string overload
       await updateUserProfile(authState.user.id, userData);
       
       // Refresh the user data by fetching the updated profile
