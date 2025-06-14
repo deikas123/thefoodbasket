@@ -1,13 +1,13 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import BannerFormDialog from "@/components/admin/banners/BannerFormDialog";
 import BannersList from "@/components/admin/banners/BannersList";
+import { seedDefaultBanners } from "@/utils/seedBanners";
 
 interface Banner {
   id: string;
@@ -115,6 +115,17 @@ const Banners = () => {
     }
   });
 
+  const seedBannersMutation = useMutation({
+    mutationFn: seedDefaultBanners,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["banners"] });
+      toast.success("Default banners added successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to seed banners: " + error.message);
+    }
+  });
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -185,23 +196,33 @@ const Banners = () => {
             Manage promotional banners and advertisements
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
-            </Button>
-          </DialogTrigger>
-          <BannerFormDialog
-            isOpen={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-            editingBanner={editingBanner}
-            formData={formData}
-            setFormData={setFormData}
-            onSubmit={handleSubmit}
-            isCreating={createBannerMutation.isPending}
-            isUpdating={updateBannerMutation.isPending}
-          />
-        </Dialog>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => seedBannersMutation.mutate()}
+            disabled={seedBannersMutation.isPending}
+          >
+            <Database className="mr-2 h-4 w-4" />
+            {seedBannersMutation.isPending ? "Adding..." : "Add Default Banners"}
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
+              </Button>
+            </DialogTrigger>
+            <BannerFormDialog
+              isOpen={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+              editingBanner={editingBanner}
+              formData={formData}
+              setFormData={setFormData}
+              onSubmit={handleSubmit}
+              isCreating={createBannerMutation.isPending}
+              isUpdating={updateBannerMutation.isPending}
+            />
+          </Dialog>
+        </div>
       </div>
 
       <BannersList

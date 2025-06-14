@@ -4,32 +4,43 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock banner data - in a real app, this would come from API/database
-const defaultBanners = [
-  {
-    id: "1",
-    imageUrl: "https://images.unsplash.com/photo-1606913084603-3e7702b01627?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    title: "Summer Specials",
-    subtitle: "Fresh produce at unbeatable prices!",
-    link: "/shop?category=fruits",
-    active: true
-  },
-  {
-    id: "2",
-    imageUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1574&q=80",
-    title: "Organic Vegetables",
-    subtitle: "Straight from local farmers",
-    link: "/shop?category=vegetables",
-    active: true
-  }
-];
+interface Banner {
+  id: string;
+  title: string;
+  subtitle?: string;
+  image: string;
+  link?: string;
+  start_date: string;
+  end_date: string;
+  active: boolean;
+  priority: number;
+  created_at: string;
+  updated_at: string;
+}
 
 const AdminBanner = () => {
   const { user } = useAuth();
-  const [banners, setBanners] = useState(defaultBanners);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
+  
+  const { data: banners = [], isLoading } = useQuery({
+    queryKey: ["banners"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("banners")
+        .select("*")
+        .eq("active", true)
+        .gte("end_date", new Date().toISOString())
+        .lte("start_date", new Date().toISOString())
+        .order("priority", { ascending: true });
+      
+      if (error) throw error;
+      return data as Banner[];
+    }
+  });
   
   useEffect(() => {
     // Auto-rotation for banners every 5 seconds
@@ -42,7 +53,7 @@ const AdminBanner = () => {
     return () => clearInterval(interval);
   }, [banners.length, isEditing]);
   
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
@@ -50,29 +61,49 @@ const AdminBanner = () => {
     // For demo purposes, we'll use a local URL
     const fileUrl = URL.createObjectURL(file);
     
-    // Add new banner to the list
-    setBanners([
-      ...banners,
-      {
-        id: `new-${Date.now()}`,
-        imageUrl: fileUrl,
-        title: "New Promotion",
-        subtitle: "Click to edit",
-        link: "/shop",
-        active: true
-      }
-    ]);
-    
-    toast.success("Banner added successfully!");
+    try {
+      const { error } = await supabase
+        .from("banners")
+        .insert([{
+          title: "New Promotion",
+          subtitle: "Click to edit",
+          image: fileUrl,
+          link: "/shop",
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+          active: true,
+          priority: banners.length + 1
+        }]);
+      
+      if (error) throw error;
+      toast.success("Banner added successfully!");
+    } catch (error) {
+      toast.error("Failed to add banner");
+    }
   };
   
-  const removeBanner = (id: string) => {
-    setBanners(banners.filter(banner => banner.id !== id));
-    setCurrentBannerIndex(0); // Reset to first banner
-    toast.success("Banner removed successfully!");
+  const removeBanner = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("banners")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+      setCurrentBannerIndex(0); // Reset to first banner
+      toast.success("Banner removed successfully!");
+    } catch (error) {
+      toast.error("Failed to remove banner");
+    }
   };
   
-  const currentBanner = banners[currentBannerIndex];
+  if (isLoading) {
+    return (
+      <div className="w-full h-80 bg-primary/5 flex items-center justify-center rounded-xl">
+        <p className="text-muted-foreground">Loading banners...</p>
+      </div>
+    );
+  }
   
   if (!banners.length) {
     return (
@@ -99,12 +130,14 @@ const AdminBanner = () => {
     );
   }
   
+  const currentBanner = banners[currentBannerIndex];
+  
   return (
     <div className="relative w-full overflow-hidden rounded-xl">
       {/* Banner Image */}
       <div className="relative w-full h-80 overflow-hidden rounded-xl">
         <img
-          src={currentBanner.imageUrl}
+          src={currentBanner.image}
           alt={currentBanner.title}
           className="w-full h-full object-cover transition-transform duration-700 transform hover:scale-105"
         />
