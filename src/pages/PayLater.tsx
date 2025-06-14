@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, ArrowLeft, Home, ShoppingCart, CreditCard } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import KYCVerificationForm from "@/components/payLater/KYCVerificationForm";
 import PayLaterOption from "@/components/payLater/PayLaterOption";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 
 const PayLater = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [kycStatus, setKycStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
 
@@ -76,6 +78,33 @@ const PayLater = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
+        {/* Navigation Header */}
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Link to="/">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+            </Link>
+            <Link to="/shop">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Shop
+              </Button>
+            </Link>
+          </div>
+        </div>
+
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-4">Pay Later Options</h1>
           <p className="text-muted-foreground">
@@ -166,6 +195,29 @@ const PayLater = () => {
               features={["Up to 6 months", "Fixed monthly payments", "Competitive interest rates"]}
               isEnabled={kycStatus === 'approved'}
             />
+          </div>
+        </div>
+
+        {/* Bottom Navigation */}
+        <div className="flex justify-center mt-8 pt-8 border-t">
+          <div className="flex items-center gap-4">
+            <Link to="/orders">
+              <Button variant="outline" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                My Orders
+              </Button>
+            </Link>
+            <Link to="/wallet">
+              <Button variant="outline" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                My Wallet
+              </Button>
+            </Link>
+            <Link to="/profile">
+              <Button variant="outline">
+                My Profile
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
