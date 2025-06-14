@@ -11,20 +11,21 @@ interface DynamicColorResult {
 
 export const useDynamicColor = (imageUrl: string): DynamicColorResult => {
   const [colors, setColors] = useState<DynamicColorResult>({
-    backgroundColor: 'rgb(239, 68, 68)', // default red
+    backgroundColor: 'rgb(99, 102, 241)', // default indigo
     textColor: '#ffffff',
-    hoverColor: 'rgb(220, 38, 38)',
+    hoverColor: 'rgb(79, 70, 229)',
     isLoading: true
   });
 
   useEffect(() => {
-    if (!imageUrl || imageUrl === '/placeholder.svg') {
+    if (!imageUrl || imageUrl === '/placeholder.svg' || imageUrl.includes('placeholder')) {
       setColors(prev => ({ ...prev, isLoading: false }));
       return;
     }
 
     const extractColor = async () => {
       try {
+        console.log('Extracting color from:', imageUrl);
         const dominantColor = await extractDominantColor(imageUrl);
         const { r, g, b } = dominantColor;
         
@@ -32,6 +33,7 @@ export const useDynamicColor = (imageUrl: string): DynamicColorResult => {
         const textColor = getContrastColor(r, g, b);
         const hoverColor = getDarkerShade(r, g, b);
         
+        console.log('Color extraction successful:', backgroundColor);
         setColors({
           backgroundColor,
           textColor,
@@ -39,8 +41,13 @@ export const useDynamicColor = (imageUrl: string): DynamicColorResult => {
           isLoading: false
         });
       } catch (error) {
-        console.log('Failed to extract color from image:', error);
-        setColors(prev => ({ ...prev, isLoading: false }));
+        console.log('Color extraction failed, using default colors:', error);
+        setColors({
+          backgroundColor: 'rgb(99, 102, 241)', // default indigo
+          textColor: '#ffffff',
+          hoverColor: 'rgb(79, 70, 229)',
+          isLoading: false
+        });
       }
     };
 

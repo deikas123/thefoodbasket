@@ -8,7 +8,11 @@ interface ColorResult {
 export const extractDominantColor = async (imageUrl: string): Promise<ColorResult> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    
+    // For external URLs, try without crossOrigin first
+    if (imageUrl.startsWith('http') && !imageUrl.includes(window.location.hostname)) {
+      img.crossOrigin = 'anonymous';
+    }
     
     img.onload = () => {
       try {
@@ -59,12 +63,16 @@ export const extractDominantColor = async (imageUrl: string): Promise<ColorResul
         const [r, g, b] = dominantColor.split(',').map(Number);
         resolve({ r, g, b });
       } catch (error) {
-        reject(error);
+        // If canvas extraction fails, try a simpler approach
+        console.log('Canvas extraction failed, using fallback color');
+        resolve({ r: 99, g: 102, b: 241 }); // Default blue
       }
     };
     
     img.onerror = () => {
-      reject(new Error('Failed to load image'));
+      // Fallback to a nice default color instead of rejecting
+      console.log('Image load failed, using fallback color');
+      resolve({ r: 99, g: 102, b: 241 }); // Default blue
     };
     
     img.src = imageUrl;

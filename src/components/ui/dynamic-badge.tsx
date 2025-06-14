@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { useDynamicColor } from "@/hooks/useDynamicColor"
 
 const dynamicBadgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
@@ -31,16 +31,16 @@ function DynamicBadge({ className, variant, imageUrl, style, ...props }: Dynamic
   const dynamicStyle = variant === "default" && !isLoading ? {
     backgroundColor,
     color: textColor,
-    transition: 'all 0.2s ease',
     ...style,
-    ':hover': {
-      backgroundColor: hoverColor,
-    }
   } : style;
 
   return (
     <div 
-      className={cn(dynamicBadgeVariants({ variant }), className)} 
+      className={cn(
+        dynamicBadgeVariants({ variant }), 
+        variant === "default" && !isLoading && "hover:brightness-110",
+        className
+      )} 
       style={dynamicStyle}
       {...props} 
     />
