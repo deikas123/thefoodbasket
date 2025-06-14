@@ -72,8 +72,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Refresh the user data by fetching the updated profile
       if (authState.session?.user) {
-        const { userData: refreshedUser } = await updateUserProfile(authState.session.user);
-        return refreshedUser || authState.user;
+        const result = await updateUserProfile(authState.session.user);
+        return result.userData || authState.user;
       }
       
       return authState.user;
