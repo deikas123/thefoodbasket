@@ -14,8 +14,11 @@ const PayLater = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [kycStatus, setKycStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: { idDocumentUrl: string; addressProofUrl: string }) => {
+    console.log('Starting KYC submission:', formData);
+    
     if (!user) {
+      console.error('No user found');
       toast.error("Please login to continue");
       return;
     }
@@ -23,13 +26,15 @@ const PayLater = () => {
     setIsLoading(true);
     
     try {
+      console.log('Inserting KYC data for user:', user.id);
+      
       // Submit KYC verification to Supabase
       const { data, error } = await supabase
         .from('kyc_verifications')
         .insert([{
           user_id: user.id,
-          id_document_url: formData.idDocument,
-          address_proof_url: formData.addressProof,
+          id_document_url: formData.idDocumentUrl,
+          address_proof_url: formData.addressProofUrl,
           status: 'pending'
         }])
         .select()
@@ -46,7 +51,7 @@ const PayLater = () => {
       toast.success("KYC verification submitted successfully! We'll review your documents within 24-48 hours.");
       
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Unexpected error during KYC submission:', error);
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);

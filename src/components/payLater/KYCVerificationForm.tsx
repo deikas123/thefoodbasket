@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Check, Loader2 } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 
 interface KYCVerificationFormProps {
   onSubmit: (formData: any) => Promise<void>;
@@ -19,16 +19,26 @@ const KYCVerificationForm = ({ onSubmit, isLoading }: KYCVerificationFormProps) 
     e.preventDefault();
     
     if (!idDocumentFile || !addressProofFile) {
+      console.error('Missing required files');
       return;
     }
     
+    console.log('Submitting KYC form with files:', {
+      idDocument: idDocumentFile.name,
+      addressProof: addressProofFile.name
+    });
+    
     // Create form data with file URLs (in real app, you'd upload to storage first)
     const formData = {
-      idDocument: `uploads/${idDocumentFile.name}`,
-      addressProof: `uploads/${addressProofFile.name}`
+      idDocumentUrl: `uploads/${idDocumentFile.name}`,
+      addressProofUrl: `uploads/${addressProofFile.name}`
     };
     
-    await onSubmit(formData);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      console.error('KYC submission failed:', error);
+    }
   };
   
   return (
