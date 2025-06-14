@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
@@ -62,7 +61,7 @@ export interface User {
   dietaryPreferences?: string[];
 }
 
-export type UserRole = "admin" | "customer" | "delivery";
+export type UserRole = "admin" | "customer" | "delivery" | "customer_service" | "accountant";
 
 export interface Address {
   id: string;
