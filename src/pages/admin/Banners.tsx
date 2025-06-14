@@ -1,15 +1,13 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PlusCircle, Edit, Trash2, Image } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import ImageUploadField from "@/components/admin/ImageUploadField";
+import BannerFormDialog from "@/components/admin/banners/BannerFormDialog";
+import BannersList from "@/components/admin/banners/BannersList";
 
 interface Banner {
   id: string;
@@ -193,190 +191,26 @@ const Banners = () => {
               <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingBanner ? "Edit Banner" : "New Banner"}
-              </DialogTitle>
-              <DialogDescription>
-                Configure banner settings and content
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Banner title"
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="subtitle">Subtitle</Label>
-                  <Input
-                    id="subtitle"
-                    value={formData.subtitle}
-                    onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-                    placeholder="Banner subtitle"
-                  />
-                </div>
-                
-                {/* Image Upload Field */}
-                <ImageUploadField
-                  label="Banner Image"
-                  value={formData.image}
-                  onChange={(value) => setFormData(prev => ({ ...prev, image: value }))}
-                />
-                
-                <div className="grid gap-2">
-                  <Label htmlFor="link">Link URL</Label>
-                  <Input
-                    id="link"
-                    value={formData.link}
-                    onChange={(e) => setFormData(prev => ({ ...prev, link: e.target.value }))}
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="start_date">Start Date</Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="end_date">End Date</Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Input
-                    id="priority"
-                    type="number"
-                    value={formData.priority}
-                    onChange={(e) => setFormData(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
-                    min="1"
-                    required
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="active"
-                    checked={formData.active}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, active: checked }))}
-                  />
-                  <Label htmlFor="active">Active</Label>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createBannerMutation.isPending || updateBannerMutation.isPending}
-                >
-                  {createBannerMutation.isPending || updateBannerMutation.isPending
-                    ? (editingBanner ? "Updating..." : "Creating...")
-                    : (editingBanner ? "Update Banner" : "Create Banner")
-                  }
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
+          <BannerFormDialog
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            editingBanner={editingBanner}
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            isCreating={createBannerMutation.isPending}
+            isUpdating={updateBannerMutation.isPending}
+          />
         </Dialog>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-10">Loading banners...</div>
-      ) : banners?.length === 0 ? (
-        <div className="text-center py-10">
-          <Image className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No banners</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by creating a new banner.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {banners?.map((banner) => (
-            <Card key={banner.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{banner.title}</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    {banner.active ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {banner.subtitle && (
-                  <CardDescription>{banner.subtitle}</CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-gray-100 rounded-md overflow-hidden mb-3">
-                  <img 
-                    src={banner.image} 
-                    alt={banner.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Priority:</span>
-                    <span>{banner.priority}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Start:</span>
-                    <span>{new Date(banner.start_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">End:</span>
-                    <span>{new Date(banner.end_date).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(banner)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(banner.id)}
-                  disabled={deleteBannerMutation.isPending}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+      <BannersList
+        banners={banners}
+        isLoading={isLoading}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        isDeleting={deleteBannerMutation.isPending}
+      />
     </div>
   );
 };
