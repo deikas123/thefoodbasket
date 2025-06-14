@@ -17,6 +17,10 @@ const AdminNotifications = lazy(() => import("@/pages/admin/Notifications"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 const DeliveryOptions = lazy(() => import("@/pages/admin/DeliveryOptions"));
 const DeliveryZones = lazy(() => import("@/pages/admin/DeliveryZones"));
+const Orders = lazy(() => import("@/pages/admin/Orders"));
+const Users = lazy(() => import("@/pages/admin/Users"));
+const Deliveries = lazy(() => import("@/pages/admin/Deliveries"));
+const Banners = lazy(() => import("@/pages/admin/Banners"));
 
 const AdminRoutes = () => {
   return (
@@ -60,14 +64,14 @@ const AdminRoutes = () => {
       <Route path="orders" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
-            <AdminDashboard />
+            <Orders />
           </AdminLayout>
         </Suspense>
       } />
       <Route path="users" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
-            <AdminDashboard />
+            <Users />
           </AdminLayout>
         </Suspense>
       } />
@@ -78,10 +82,17 @@ const AdminRoutes = () => {
           </AdminLayout>
         </Suspense>
       } />
+      <Route path="deliveries" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminLayout>
+            <Deliveries />
+          </AdminLayout>
+        </Suspense>
+      } />
       <Route path="banners" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
-            <AdminDashboard />
+            <Banners />
           </AdminLayout>
         </Suspense>
       } />
@@ -116,7 +127,7 @@ const AdminRoutes = () => {
       <Route path="settings" element={
         <Suspense fallback={<LoadingFallback />}>
           <AdminLayout>
-            <AdminDashboard />
+            <DeliveryOptions />
           </AdminLayout>
         </Suspense>
       } />
