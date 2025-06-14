@@ -101,19 +101,35 @@ const AdminUsersTable = () => {
         
         console.log("User roles found:", userRoles);
         
+        // Get actual auth users to get real email addresses
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        
+        if (authError) {
+          console.error("Error fetching auth users:", authError);
+        }
+        
+        console.log("Auth users found:", authUsers?.users?.length || 0);
+        
         // Create a map of roles by user_id for quick lookup
         const roleMap = new Map();
         if (userRoles) {
           userRoles.forEach(r => roleMap.set(r.user_id, r.role));
         }
         
+        // Create a map of emails by user_id
+        const emailMap = new Map();
+        if (authUsers?.users) {
+          authUsers.users.forEach(user => emailMap.set(user.id, user.email));
+        }
+        
         // Combine the data
         const userData: User[] = profiles.map((profile) => {
           const role = roleMap.get(profile.id) || 'customer';
+          const email = emailMap.get(profile.id) || `${profile.first_name?.toLowerCase() || 'user'}@foodbasket.com`;
           
           return {
             id: profile.id,
-            email: `${profile.first_name?.toLowerCase() || 'user'}@foodbasket.com`, // Placeholder email
+            email: email,
             firstName: profile.first_name || 'Unknown',
             lastName: profile.last_name || 'User',
             role: role as UserRole,
