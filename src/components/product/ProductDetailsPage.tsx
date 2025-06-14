@@ -68,7 +68,7 @@ const ProductDetailsPage = () => {
             </div>
           )}
           
-          {/* Product reviews section - single instance */}
+          {/* Product reviews section */}
           {product && (
             <div className="mt-16">
               <Separator className="mb-8" />
