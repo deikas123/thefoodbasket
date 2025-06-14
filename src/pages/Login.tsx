@@ -102,12 +102,6 @@ const Login = () => {
                 </div>
               </div>
               
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md text-xs text-blue-600 dark:text-blue-300">
-                <p className="font-medium">Demo Credentials:</p>
-                <p>Admin: admin@foodbasket.com / password123</p>
-                <p>Customer: customer@example.com / password123</p>
-              </div>
-              
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
