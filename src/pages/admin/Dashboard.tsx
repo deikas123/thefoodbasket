@@ -12,7 +12,7 @@ import {
   DollarSign
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getAdminDashboardStats } from "@/services/adminService";
+import { getAdminDashboardStats } from "@/services/admin";
 import AdminProductsTable from "@/components/admin/ProductsTable";
 import AdminOrdersTable from "@/components/admin/OrdersTable";
 import AdminUsersTable from "@/components/admin/UsersTable";
