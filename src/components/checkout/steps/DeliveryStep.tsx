@@ -80,16 +80,10 @@ const DeliveryStep = ({
           subtotal={total}
           selectedDelivery={selectedDelivery}
           deliveryAddress={deliveryAddress}
-        >
-          <Button 
-            className="w-full" 
-            size="lg" 
-            onClick={handleNext}
-            disabled={isProcessing}
-          >
-            Continue to Payment
-          </Button>
-        </OrderSummary>
+          onNext={handleNext}
+          isProcessing={isProcessing}
+          buttonText="Continue to Payment"
+        />
       </div>
     </div>
   );

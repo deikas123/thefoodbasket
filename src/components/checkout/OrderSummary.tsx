@@ -23,6 +23,9 @@ interface OrderSummaryProps {
   selectedDelivery?: DeliveryOption | null;
   deliveryAddress?: any;
   children?: React.ReactNode;
+  onNext?: () => void;
+  isProcessing?: boolean;
+  buttonText?: string;
 }
 
 const OrderSummary = ({ 
@@ -32,14 +35,17 @@ const OrderSummary = ({
   discount = 0,
   selectedDelivery,
   deliveryAddress,
-  children
+  children,
+  onNext,
+  isProcessing = false,
+  buttonText = "Continue"
 }: OrderSummaryProps) => {
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(deliveryFee);
   const { isAuthenticated } = useAuth();
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
   const [frequency, setFrequency] = useState(30);
   const [quantity, setQuantity] = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessingAutoReplenish, setIsProcessingAutoReplenish] = useState(false);
 
   // Calculate delivery fee when delivery option or address changes
   useEffect(() => {
@@ -76,7 +82,7 @@ const OrderSummary = ({
   const handleAddToAutoReplenish = async () => {
     if (!selectedItem) return;
     
-    setIsProcessing(true);
+    setIsProcessingAutoReplenish(true);
     try {
       const success = await addToAutoReplenish(selectedItem.product.id, quantity, frequency);
       
@@ -95,7 +101,7 @@ const OrderSummary = ({
         variant: "destructive",
       });
     } finally {
-      setIsProcessing(false);
+      setIsProcessingAutoReplenish(false);
     }
   };
   
@@ -179,6 +185,19 @@ const OrderSummary = ({
           <span>{formatCurrency(total)}</span>
         </div>
 
+        {onNext && (
+          <div className="mt-4">
+            <Button 
+              className="w-full" 
+              size="lg" 
+              onClick={onNext}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Processing..." : buttonText}
+            </Button>
+          </div>
+        )}
+
         {children && (
           <div className="mt-4">
             {children}
@@ -257,9 +276,9 @@ const OrderSummary = ({
               </DialogClose>
               <Button 
                 onClick={handleAddToAutoReplenish} 
-                disabled={isProcessing}
+                disabled={isProcessingAutoReplenish}
               >
-                {isProcessing ? "Processing..." : "Confirm"}
+                {isProcessingAutoReplenish ? "Processing..." : "Confirm"}
               </Button>
             </DialogFooter>
           </DialogContent>
