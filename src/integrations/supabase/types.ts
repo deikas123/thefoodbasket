@@ -289,6 +289,45 @@ export type Database = {
           },
         ]
       }
+      delivery_options: {
+        Row: {
+          active: boolean
+          base_price: number
+          created_at: string
+          description: string | null
+          estimated_delivery_days: number
+          id: string
+          is_express: boolean
+          name: string
+          price_per_km: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_price?: number
+          created_at?: string
+          description?: string | null
+          estimated_delivery_days?: number
+          id?: string
+          is_express?: boolean
+          name: string
+          price_per_km?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_price?: number
+          created_at?: string
+          description?: string | null
+          estimated_delivery_days?: number
+          id?: string
+          is_express?: boolean
+          name?: string
+          price_per_km?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_zones: {
         Row: {
           active: boolean
