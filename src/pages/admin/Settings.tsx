@@ -32,6 +32,8 @@ interface DeliverySettings {
 }
 
 const Settings = () => {
+  console.log("Settings component rendering");
+  
   const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
   const [editingMethod, setEditingMethod] = useState<DeliveryMethod | null>(null);
   const [deliveryFormData, setDeliveryFormData] = useState({
@@ -45,18 +47,24 @@ const Settings = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading, error } = useQuery({
     queryKey: ["admin-settings"],
     queryFn: async () => {
+      console.log("Fetching admin settings");
       const { data, error } = await supabase
         .from('website_sections')
         .select('settings')
         .eq('type', 'admin_settings')
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error;
+      console.log("Query result:", { data, error });
       
-      return data?.settings || {
+      if (error && error.code !== 'PGRST116') {
+        console.error("Settings query error:", error);
+        throw error;
+      }
+      
+      const defaultSettings = {
         minimum_checkout_amount: 1500,
         free_delivery_threshold: 5000,
         express_delivery_enabled: true,
@@ -82,11 +90,16 @@ const Settings = () => {
           }
         ]
       };
+      
+      const result = data?.settings || defaultSettings;
+      console.log("Returning settings:", result);
+      return result;
     }
   });
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: DeliverySettings) => {
+      console.log("Updating settings:", newSettings);
       const { error } = await supabase
         .from('website_sections')
         .upsert({
@@ -96,13 +109,17 @@ const Settings = () => {
           settings: newSettings
         }, { onConflict: 'type' });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Update error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
       toast.success("Settings updated successfully");
     },
     onError: (error) => {
+      console.error("Mutation error:", error);
       toast.error("Error updating settings: " + error.message);
     }
   });
@@ -177,8 +194,43 @@ const Settings = () => {
     });
   };
 
+  console.log("Render state:", { isLoading, error, settings });
+
   if (isLoading) {
-    return <div className="p-6">Loading settings...</div>;
+    return (
+      <div className="p-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <SettingsIcon className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Admin Settings</h1>
+        </div>
+        <div>Loading settings...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error("Settings error:", error);
+    return (
+      <div className="p-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <SettingsIcon className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Admin Settings</h1>
+        </div>
+        <div className="text-red-500">Error loading settings: {error.message}</div>
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <SettingsIcon className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Admin Settings</h1>
+        </div>
+        <div>No settings found</div>
+      </div>
+    );
   }
 
   return (
