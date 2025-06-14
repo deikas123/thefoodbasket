@@ -4,6 +4,7 @@ import { Edit, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { DeliveryOption } from "@/services/deliveryOptionsService";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface DeliveryOptionsListProps {
   options: DeliveryOption[] | undefined;
@@ -60,12 +61,12 @@ const DeliveryOptionsList = ({ options, isLoading, onEdit, onDelete, isDeleting 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Base Price:</span>
-                <span>${option.base_price}</span>
+                <span>{formatCurrency(option.base_price)}</span>
               </div>
               {option.price_per_km && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Per KM:</span>
-                  <span>${option.price_per_km}</span>
+                  <span>{formatCurrency(option.price_per_km)}</span>
                 </div>
               )}
               <div className="flex justify-between">

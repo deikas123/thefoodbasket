@@ -76,26 +76,26 @@ const DeliveryOptionForm = ({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="base_price">Base Price ($)</Label>
+              <Label htmlFor="base_price">Base Price (KSH)</Label>
               <Input
                 id="base_price"
                 type="number"
                 step="0.01"
                 value={formData.base_price}
                 onChange={(e) => setFormData(prev => ({ ...prev, base_price: e.target.value }))}
-                placeholder="5.99"
+                placeholder="150"
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="price_per_km">Price per KM ($)</Label>
+              <Label htmlFor="price_per_km">Price per KM (KSH)</Label>
               <Input
                 id="price_per_km"
                 type="number"
                 step="0.01"
                 value={formData.price_per_km}
                 onChange={(e) => setFormData(prev => ({ ...prev, price_per_km: e.target.value }))}
-                placeholder="1.50"
+                placeholder="50"
               />
             </div>
           </div>

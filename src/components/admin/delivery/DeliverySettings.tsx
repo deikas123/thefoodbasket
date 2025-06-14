@@ -26,7 +26,7 @@ interface DeliverySettings {
 
 const DeliverySettings = () => {
   const [settings, setSettings] = React.useState<DeliverySettings>({
-    minimum_checkout_amount: 50,
+    minimum_checkout_amount: 1500, // Updated to KSH equivalent
     warehouse_location: { lat: -1.2921, lng: 36.8219 }, // Nairobi default
     scheduled_delivery: {
       pricing_type: 'free',
@@ -92,7 +92,7 @@ const DeliverySettings = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-2">
-          <Label htmlFor="min-checkout">Minimum Checkout Amount ($)</Label>
+          <Label htmlFor="min-checkout">Minimum Checkout Amount (KSH)</Label>
           <Input
             id="min-checkout"
             type="number"
@@ -170,7 +170,7 @@ const DeliverySettings = () => {
 
           {settings.scheduled_delivery.pricing_type === 'fixed' && (
             <div className="grid gap-2">
-              <Label htmlFor="fixed-price">Fixed Price ($)</Label>
+              <Label htmlFor="fixed-price">Fixed Price (KSH)</Label>
               <Input
                 id="fixed-price"
                 type="number"
