@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -84,7 +83,8 @@ const Orders = () => {
   };
 
   const handleViewOrder = (orderId: string) => {
-    console.log("Navigating to order details:", orderId);
+    console.log("Navigating to order details with ID:", orderId);
+    // Use absolute path to ensure proper navigation
     navigate(`/orders/${orderId}`);
   };
 
