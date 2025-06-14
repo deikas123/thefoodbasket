@@ -18,6 +18,7 @@ const Orders = lazy(() => import("@/pages/Orders"));
 const OrderDetails = lazy(() => import("@/pages/OrderDetails"));
 const Notifications = lazy(() => import("@/pages/Notifications"));
 const Wishlist = lazy(() => import("@/pages/Wishlist"));
+const PayLater = lazy(() => import("@/pages/PayLater"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const AdminRoutes = lazy(() => import("./AdminRoutes"));
 const DeliveryRoutes = lazy(() => import("./DeliveryRoutes"));
@@ -66,6 +67,7 @@ const AppRoutes = () => {
         <Route path="/orders/:orderId" element={<OrderDetails />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/pay-later" element={<PayLater />} />
         <Route path="/timer" element={<Timer />} />
         
         {/* Admin Routes */}
