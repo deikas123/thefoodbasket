@@ -1,38 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+
+import { createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
-import { getUserRole } from "@/services/roleService";
-
-export interface User {
-  id: string;
-  email?: string;
-  first_name?: string;
-  last_name?: string;
-  role?: string;
-  addresses?: any[]; // Added for compatibility with existing code
-  photoURL?: string; // Added for compatibility with existing code
-  firstName?: string; // Added for compatibility with existing code
-  lastName?: string; // Added for compatibility with existing code
-  phone?: string; // Added for compatibility with existing code
-  dietaryPreferences?: string[]; // Added for compatibility with existing code
-}
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  session: Session | null;
-  supabaseClient: typeof supabase;
-  // Added for compatibility with existing code
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  updateProfile: (userData: Partial<User>) => Promise<User>;
-  register: (userData: any) => Promise<any>;
-}
+import { useAuthState } from "@/hooks/useAuthState";
+import { signInUser, signOutUser, updateUserProfile, registerUser } from "@/services/authOperations";
+import { AuthContextType, User } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -49,146 +21,61 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { authState, setAuthState, updateUserProfile } = useAuthState();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        if (session?.user) {
-          fetchUserProfile(session.user, false); // Don't redirect on auth state change
-        } else {
-          setUser(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUserProfile(session.user, false); // Don't redirect on initial load
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchUserProfile = async (authUser: SupabaseUser, shouldRedirect: boolean = false) => {
-    try {
-      // Get user profile
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-      }
-
-      // Get user role
-      const userRole = await getUserRole(authUser.id);
-      console.log("User role from database:", userRole);
-
-      const userData: User = {
-        id: authUser.id,
-        email: authUser.email || '',
-        first_name: profile?.first_name || '',
-        last_name: profile?.last_name || '',
-        role: userRole || 'customer',
-        // Add compatibility fields
-        firstName: profile?.first_name || '',
-        lastName: profile?.last_name || '',
-        photoURL: profile?.avatar_url || '',
-        phone: profile?.phone || '',
-        dietaryPreferences: profile?.dietary_preferences || [],
-        addresses: profile?.addresses || [],
-      };
-
-      console.log("Setting user with role:", userData.role);
-      setUser(userData);
-
-      // Only redirect after login, not on page load
-      if (shouldRedirect) {
-        if (userRole === 'admin') {
-          // Redirect admin to admin dashboard
-          navigate('/admin');
-        } else if (userRole && userRole !== 'customer') {
-          // Redirect other staff to their dashboard
-          navigate('/staff');
-        }
-      }
-    } catch (error) {
-      console.error('Unexpected error fetching profile:', error);
-    } finally {
-      setLoading(false);
+  const handleRoleBasedRedirect = (userRole: string | undefined) => {
+    if (userRole === 'admin') {
+      navigate('/admin');
+    } else if (userRole && userRole !== 'customer') {
+      navigate('/staff');
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
+    setAuthState(prev => ({ ...prev, loading: true }));
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      // Get the user and redirect after successful login
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await signInUser(email, password);
       if (user) {
-        await fetchUserProfile(user, true); // Redirect after login
+        const { userData } = await updateUserProfile(user, true);
+        if (userData) {
+          handleRoleBasedRedirect(userData.role);
+        }
       }
     } catch (error: any) {
       console.error('Error signing in:', error.message);
       throw error;
     } finally {
-      setLoading(false);
+      setAuthState(prev => ({ ...prev, loading: false }));
     }
   };
 
   const signOut = async () => {
-    setLoading(true);
+    setAuthState(prev => ({ ...prev, loading: true }));
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      navigate('/'); // Redirect to home page after sign out
+      await signOutUser();
+      setAuthState(prev => ({ ...prev, user: null }));
+      navigate('/');
     } catch (error: any) {
       console.error('Error signing out:', error.message);
     } finally {
-      setLoading(false);
+      setAuthState(prev => ({ ...prev, loading: false }));
     }
   };
 
   const updateProfile = async (userData: Partial<User>): Promise<User> => {
-    if (!user) throw new Error("User not authenticated");
+    if (!authState.user) throw new Error("User not authenticated");
     
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: userData.firstName || userData.first_name,
-          last_name: userData.lastName || userData.last_name,
-          phone: userData.phone,
-          dietary_preferences: userData.dietaryPreferences
-        })
-        .eq('id', user.id);
-        
-      if (error) {
-        throw error;
-      }
+      await updateUserProfile(authState.user.id, userData);
       
       // Refresh user data
-      if (session?.user) {
-        await fetchUserProfile(session.user);
+      if (authState.session?.user) {
+        const { userData: refreshedUser } = await updateUserProfile(authState.session.user);
+        return refreshedUser || authState.user;
       }
       
-      return user;
+      return authState.user;
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
@@ -196,51 +83,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const register = async (userData: any) => {
-    setLoading(true);
+    setAuthState(prev => ({ ...prev, loading: true }));
     try {
-      const { email, password, firstName, lastName } = userData;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName
-          }
-        }
-      });
-      
-      if (error) throw error;
-      
-      return data.user;
+      const user = await registerUser(userData);
+      return user;
     } catch (error: any) {
       console.error('Error registering:', error.message);
       throw error;
     } finally {
-      setLoading(false);
+      setAuthState(prev => ({ ...prev, loading: false }));
     }
   };
 
   const value: AuthContextType = {
-    user,
-    loading,
+    user: authState.user,
+    loading: authState.loading,
     signIn,
     signOut,
-    session,
+    session: authState.session,
     supabaseClient: supabase,
     // Added for compatibility with existing code
     login: signIn,
     logout: signOut,
-    isAuthenticated: !!user,
-    isLoading: loading,
+    isAuthenticated: !!authState.user,
+    isLoading: authState.loading,
     updateProfile,
     register
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {!authState.loading && children}
     </AuthContext.Provider>
   );
 };
