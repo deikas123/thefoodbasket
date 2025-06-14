@@ -7,6 +7,7 @@ const Home = lazy(() => import("@/pages/Index"));
 const Shop = lazy(() => import("@/pages/Shop"));
 const About = lazy(() => import("@/pages/About"));
 const ProductDetails = lazy(() => import("@/pages/ProductDetails"));
+const Category = lazy(() => import("@/pages/Category"));
 const FoodBaskets = lazy(() => import("@/pages/FoodBaskets"));
 const AutoReplenish = lazy(() => import("@/pages/AutoReplenish"));
 const Login = lazy(() => import("@/pages/Login"));
@@ -54,6 +55,7 @@ const AppRoutes = () => {
         <Route path="/shop" element={<Shop />} />
         <Route path="/about" element={<About />} />
         <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/categories/:slug" element={<Category />} />
         <Route path="/food-baskets" element={<FoodBaskets />} />
         <Route path="/auto-replenish" element={<AutoReplenish />} />
         <Route path="/login" element={<Login />} />
