@@ -1,13 +1,19 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductType } from "@/types/supabase";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
+import ProductBasicFields from "./product/ProductBasicFields";
+import ProductPriceStockFields from "./product/ProductPriceStockFields";
+import ProductCategoryField from "./product/ProductCategoryField";
+import ProductDiscountFeaturedFields from "./product/ProductDiscountFeaturedFields";
+import ProductTagsField from "./product/ProductTagsField";
+import { useProductFormSubmit } from "./product/useProductFormSubmit";
 
 import {
   Dialog,
@@ -21,22 +27,9 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { getAllTags } from "@/services/product/tagService";
-import { Badge } from "@/components/ui/badge";
 
 const productSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
@@ -59,9 +52,6 @@ interface ProductFormDialogProps {
 }
 
 const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogProps) => {
-  const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // Fetch categories from database
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -123,6 +113,9 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
     },
   });
 
+  // Form submission hook
+  const { onSubmit, isSubmitting } = useProductFormSubmit({ product, onOpenChange });
+
   // Update form values when product changes
   useEffect(() => {
     if (product) {
@@ -152,144 +145,6 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
     }
   }, [product, form, productTags]);
 
-  // Handle form submission
-  const onSubmit = async (values: ProductFormValues) => {
-    setIsSubmitting(true);
-    try {
-      console.log("Starting form submission...");
-      
-      // First, get the category_id from the category slug
-      const { data: categoryData, error: categoryError } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('slug', values.category)
-        .single();
-      
-      if (categoryError || !categoryData) {
-        console.error("Error finding category:", categoryError || "Category not found");
-        toast.error("Error: Category not found");
-        setIsSubmitting(false);
-        return;
-      }
-      
-      if (product) {
-        // Update existing product
-        const { error } = await supabase
-          .from('products')
-          .update({
-            name: values.name,
-            description: values.description,
-            price: values.price,
-            image: values.image,
-            category_id: categoryData.id,
-            stock: values.stock,
-            featured: values.featured,
-            discount_percentage: values.discountPercentage || null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', product.id);
-
-        if (error) {
-          console.error("Error updating product:", error);
-          toast.error("Failed to update product");
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Update product tags
-        await supabase
-          .from('product_tag_relations')
-          .delete()
-          .eq('product_id', product.id);
-        
-        if (values.tags.length > 0) {
-          const tagRelations = values.tags.map(tagId => ({
-            product_id: product.id,
-            tag_id: tagId
-          }));
-          
-          const { error: tagError } = await supabase
-            .from('product_tag_relations')
-            .insert(tagRelations);
-            
-          if (tagError) {
-            console.error("Error updating product tags:", tagError);
-            toast.error("Failed to update product tags");
-          }
-        }
-        
-        toast.success("Product updated successfully");
-      } else {
-        // Create new product
-        const { data, error } = await supabase
-          .from('products')
-          .insert({
-            name: values.name,
-            description: values.description,
-            price: values.price,
-            image: values.image,
-            category_id: categoryData.id,
-            stock: values.stock,
-            featured: values.featured,
-            discount_percentage: values.discountPercentage || null,
-            rating: 0,
-            num_reviews: 0,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Error creating product:", error);
-          toast.error("Failed to create product");
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Add product tags if any selected
-        if (values.tags.length > 0) {
-          const tagRelations = values.tags.map(tagId => ({
-            product_id: data.id,
-            tag_id: tagId
-          }));
-          
-          const { error: tagError } = await supabase
-            .from('product_tag_relations')
-            .insert(tagRelations);
-            
-          if (tagError) {
-            console.error("Error adding product tags:", tagError);
-            toast.error("Failed to add product tags");
-          }
-        }
-        
-        toast.success("Product created successfully");
-      }
-
-      // Invalidate queries to refresh product data
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      
-      // Close dialog
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error("Error saving product:", error);
-      toast.error("Failed to save product: " + (error.message || "Unknown error"));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const toggleTag = (tagId: string) => {
-    const currentTags = form.getValues("tags");
-    const updatedTags = currentTags.includes(tagId)
-      ? currentTags.filter(id => id !== tagId)
-      : [...currentTags, tagId];
-    
-    form.setValue("tags", updatedTags);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -299,78 +154,8 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter product name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Enter product description" 
-                      className="min-h-[100px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        step="0.01"
-                        placeholder="0.00" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="stock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stock</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        placeholder="0" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <ProductBasicFields form={form} />
+            <ProductPriceStockFields form={form} />
 
             <FormField
               control={form.control}
@@ -384,114 +169,13 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
                       onChange={field.onChange}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectItem key={category.id} value={category.slug}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                      {(!categories || categories.length === 0) && (
-                        <SelectItem value="" disabled>
-                          No categories available
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="discountPercentage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Discount Percentage</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min="0" 
-                      max="100"
-                      placeholder="0" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="featured"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Featured Product</FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="tags"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Product Tags</FormLabel>
-                  <div className="border rounded-md p-3">
-                    <div className="flex flex-wrap gap-2">
-                      {availableTags?.map(tag => {
-                        const isSelected = form.getValues("tags").includes(tag.id);
-                        return (
-                          <Badge
-                            key={tag.id}
-                            variant={isSelected ? "default" : "outline"}
-                            className={`cursor-pointer ${isSelected ? 'bg-primary' : ''}`}
-                            onClick={() => toggleTag(tag.id)}
-                          >
-                            {tag.name}
-                          </Badge>
-                        );
-                      })}
-                      
-                      {(!availableTags || availableTags.length === 0) && (
-                        <p className="text-sm text-muted-foreground">No tags available. Create tags in the Tags management section.</p>
-                      )}
-                    </div>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <ProductCategoryField form={form} categories={categories} />
+            <ProductDiscountFeaturedFields form={form} />
+            <ProductTagsField form={form} availableTags={availableTags} />
 
             <DialogFooter>
               <Button 
