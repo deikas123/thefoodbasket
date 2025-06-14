@@ -20,6 +20,9 @@ export const uploadKYCDocument = async (file: File, userId: string, documentType
     
     if (error) {
       console.error('Storage upload error:', error);
+      if (error.message.includes('not found') || error.message.includes('bucket')) {
+        throw new Error(`Storage bucket 'kyc-documents' not found. Please contact support.`);
+      }
       throw new Error(`Failed to upload file: ${error.message}`);
     }
     

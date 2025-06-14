@@ -22,7 +22,10 @@ const PayLater = () => {
   // Check existing KYC status on component mount
   useEffect(() => {
     const checkKYCStatus = async () => {
-      if (!user) return;
+      if (!user) {
+        setCheckingStatus(false);
+        return;
+      }
       
       setCheckingStatus(true);
       try {
@@ -32,11 +35,11 @@ const PayLater = () => {
           .from('kyc_verifications')
           .select('status, id_document_url, address_proof_url')
           .eq('user_id', user.id)
-          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no record exists
+          .maybeSingle();
 
         if (error) {
           console.error('Error checking KYC status:', error);
-          setKycStatus(null); // Set to null if there's an error
+          setKycStatus(null);
         } else if (data) {
           // Only set status if documents were actually submitted
           if (data.id_document_url || data.address_proof_url) {
