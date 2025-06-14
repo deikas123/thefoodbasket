@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Gift, CreditCard, Award, Copy, CheckCircle2 } from "lucide-react";
+import LoyaltyPointsRedemption from "@/components/LoyaltyPointsRedemption";
 
 // Mock data for demonstration - would come from API in a real app
 const promoCodesData = [
@@ -62,6 +62,11 @@ const Promotions = () => {
     setTimeout(() => {
       setCopiedCode(null);
     }, 3000);
+  };
+  
+  const handleRedemptionSuccess = () => {
+    // Refresh loyalty points data
+    console.log("Redemption successful, refreshing data...");
   };
   
   return (
@@ -126,60 +131,58 @@ const Promotions = () => {
                       </ul>
                     </div>
                   </CardContent>
-                  <CardFooter>
-                    <Button className="w-full sm:w-auto">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Redeem Points
-                    </Button>
-                  </CardFooter>
                 </Card>
                 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Points History</CardTitle>
-                    <CardDescription>
-                      Your recent points activity
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="bg-muted/50 p-3 rounded-lg">
-                      <div className="flex justify-between items-center mb-1">
-                        <p className="font-medium">Order #12345</p>
-                        <p className="text-green-600 font-medium">+45 pts</p>
+                <div className="space-y-4">
+                  <LoyaltyPointsRedemption
+                    availablePoints={loyaltyPoints}
+                    onRedemptionSuccess={handleRedemptionSuccess}
+                  />
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Points History</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="font-medium">Order #12345</p>
+                          <p className="text-green-600 font-medium">+45 pts</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">June 10, 2023</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">June 10, 2023</p>
-                    </div>
-                    
-                    <div className="bg-muted/50 p-3 rounded-lg">
-                      <div className="flex justify-between items-center mb-1">
-                        <p className="font-medium">Product Review</p>
-                        <p className="text-green-600 font-medium">+20 pts</p>
+                      
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="font-medium">Product Review</p>
+                          <p className="text-green-600 font-medium">+20 pts</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">June 5, 2023</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">June 5, 2023</p>
-                    </div>
-                    
-                    <div className="bg-muted/50 p-3 rounded-lg">
-                      <div className="flex justify-between items-center mb-1">
-                        <p className="font-medium">Order #12344</p>
-                        <p className="text-green-600 font-medium">+32 pts</p>
+                      
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="font-medium">Order #12344</p>
+                          <p className="text-green-600 font-medium">+32 pts</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">June 1, 2023</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">June 1, 2023</p>
-                    </div>
-                    
-                    <div className="bg-muted/50 p-3 rounded-lg">
-                      <div className="flex justify-between items-center mb-1">
-                        <p className="font-medium">Discount Redemption</p>
-                        <p className="text-red-600 font-medium">-100 pts</p>
+                      
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="font-medium">Discount Redemption</p>
+                          <p className="text-red-600 font-medium">-100 pts</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">May 15, 2023</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">May 15, 2023</p>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button variant="outline" className="w-full">
-                      View All Activity
-                    </Button>
-                  </CardFooter>
-                </Card>
+                    </CardContent>
+                    <CardFooter>
+                      <Button variant="outline" className="w-full">
+                        View All Activity
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
             

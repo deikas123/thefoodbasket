@@ -575,6 +575,66 @@ export type Database = {
         }
         Relationships: []
       }
+      loyalty_redemptions: {
+        Row: {
+          created_at: string
+          id: string
+          ksh_value: number
+          order_id: string | null
+          points_redeemed: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ksh_value: number
+          order_id?: string | null
+          points_redeemed: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ksh_value?: number
+          order_id?: string | null
+          points_redeemed?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      loyalty_settings: {
+        Row: {
+          created_at: string
+          id: string
+          ksh_per_point: number
+          min_redemption_points: number
+          points_per_ksh: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ksh_per_point?: number
+          min_redemption_points?: number
+          points_per_ksh?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ksh_per_point?: number
+          min_redemption_points?: number
+          points_per_ksh?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string

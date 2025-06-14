@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Category } from "@/services/product/categoryService";
+import CategoryImageUpload from "./CategoryImageUpload";
 
 interface CategoryFormDialogProps {
   isOpen: boolean;
@@ -79,36 +79,10 @@ const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
               />
             </div>
             
-            <div className="grid gap-2">
-              <Label htmlFor={`${mode}-image`}>Category Image URL *</Label>
-              <Input
-                id={`${mode}-image`}
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="https://example.com/category-image.jpg"
-                type="url"
-              />
-              <p className="text-xs text-muted-foreground">
-                Enter a direct URL to an image (JPG, PNG, WebP)
-              </p>
-              
-              {/* Image Preview */}
-              {formData.image && (
-                <div className="mt-2">
-                  <Label className="text-sm text-muted-foreground">Preview:</Label>
-                  <div className="mt-1 border rounded-lg overflow-hidden w-full h-32 bg-gray-100">
-                    <img
-                      src={formData.image}
-                      alt="Category preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder.svg';
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+            <CategoryImageUpload
+              value={formData.image}
+              onChange={(image) => setFormData({ ...formData, image })}
+            />
           </div>
           
           <DialogFooter>
