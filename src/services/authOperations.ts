@@ -53,19 +53,33 @@ export const signOutUser = async () => {
   if (error) throw error;
 };
 
-export const updateUserProfile = async (userId: string, userData: Partial<User>) => {
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      first_name: userData.firstName || userData.first_name,
-      last_name: userData.lastName || userData.last_name,
-      phone: userData.phone,
-      dietary_preferences: userData.dietaryPreferences
-    })
-    .eq('id', userId);
+// Updated function signature to accept either SupabaseUser or string ID
+export const updateUserProfile = async (userOrId: SupabaseUser | string, userData?: Partial<User>) => {
+  if (typeof userOrId === 'string') {
+    // This is a user ID string, update profile with userData
+    const userId = userOrId;
+    if (!userData) {
+      throw new Error('userData is required when userId is provided as string');
+    }
     
-  if (error) {
-    throw error;
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        first_name: userData.firstName || userData.first_name,
+        last_name: userData.lastName || userData.last_name,
+        phone: userData.phone,
+        dietary_preferences: userData.dietaryPreferences
+      })
+      .eq('id', userId);
+      
+    if (error) {
+      throw error;
+    }
+  } else {
+    // This is a SupabaseUser object, fetch profile
+    const authUser = userOrId;
+    const userData = await fetchUserProfile(authUser);
+    return { userData, shouldRedirect: false };
   }
 };
 
