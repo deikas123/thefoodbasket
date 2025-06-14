@@ -1,4 +1,3 @@
-
 import { createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -67,7 +66,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!authState.user) throw new Error("User not authenticated");
     
     try {
-      // Update the profile using the string overload
+      // Use the string overload of updateUserProfile
       await updateUserProfile(authState.user.id, userData);
       
       // Refresh the user data by fetching the updated profile
