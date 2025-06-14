@@ -80,9 +80,7 @@ const DeliveryStep = ({
           subtotal={total}
           selectedDelivery={selectedDelivery}
           deliveryAddress={deliveryAddress}
-        />
-        
-        <div className="mt-4">
+        >
           <Button 
             className="w-full" 
             size="lg" 
@@ -91,7 +89,7 @@ const DeliveryStep = ({
           >
             Continue to Payment
           </Button>
-        </div>
+        </OrderSummary>
       </div>
     </div>
   );

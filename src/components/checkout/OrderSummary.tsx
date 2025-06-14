@@ -1,4 +1,3 @@
-
 import { CartItem } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, RefreshCw } from "lucide-react";
@@ -23,6 +22,7 @@ interface OrderSummaryProps {
   discount?: number;
   selectedDelivery?: DeliveryOption | null;
   deliveryAddress?: any;
+  children?: React.ReactNode;
 }
 
 const OrderSummary = ({ 
@@ -31,7 +31,8 @@ const OrderSummary = ({
   deliveryFee = 0,
   discount = 0,
   selectedDelivery,
-  deliveryAddress
+  deliveryAddress,
+  children
 }: OrderSummaryProps) => {
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(deliveryFee);
   const { isAuthenticated } = useAuth();
@@ -177,6 +178,12 @@ const OrderSummary = ({
           <span>Total</span>
           <span>{formatCurrency(total)}</span>
         </div>
+
+        {children && (
+          <div className="mt-4">
+            {children}
+          </div>
+        )}
 
         {/* Auto Replenish Dialog */}
         <Dialog open={!!selectedItem} onOpenChange={(isOpen) => !isOpen && setSelectedItem(null)}>

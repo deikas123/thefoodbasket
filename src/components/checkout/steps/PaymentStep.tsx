@@ -55,27 +55,27 @@ const PaymentStep = ({
           subtotal={total}
           selectedDelivery={selectedDelivery}
           deliveryAddress={deliveryAddress}
-        />
-        
-        <div className="mt-4 space-y-3">
-          <Button 
-            className="w-full" 
-            size="lg" 
-            onClick={onNext}
-            disabled={isProcessing}
-          >
-            {isProcessing ? "Processing..." : "Place Order"}
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="w-full" 
-            onClick={onPrev}
-            disabled={isProcessing}
-          >
-            Back to Delivery
-          </Button>
-        </div>
+        >
+          <div className="space-y-3">
+            <Button 
+              className="w-full" 
+              size="lg" 
+              onClick={onNext}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Processing..." : "Place Order"}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={onPrev}
+              disabled={isProcessing}
+            >
+              Back to Delivery
+            </Button>
+          </div>
+        </OrderSummary>
       </div>
     </div>
   );
