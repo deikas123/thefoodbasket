@@ -17,9 +17,10 @@ interface DatePickerProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   showTimePicker?: boolean;
+  disabled?: (date: Date) => boolean;
 }
 
-export function DatePicker({ date, setDate, showTimePicker = false }: DatePickerProps) {
+export function DatePicker({ date, setDate, showTimePicker = false, disabled }: DatePickerProps) {
   const [selectedHour, setSelectedHour] = React.useState<string>("12");
   const [selectedMinute, setSelectedMinute] = React.useState<string>("00");
   
@@ -67,6 +68,7 @@ export function DatePicker({ date, setDate, showTimePicker = false }: DatePicker
           mode="single"
           selected={date}
           onSelect={setDate}
+          disabled={disabled}
           initialFocus
         />
         
