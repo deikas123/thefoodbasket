@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import AdminLayout from "@/layouts/AdminLayout";
 import { getKYCVerificationsForAdmin, updateKYCVerification } from "@/services/adminService";
 import { KYCVerification } from "@/types/kyc";
 
@@ -26,7 +25,7 @@ const PayLaterVerification = () => {
   useEffect(() => {
     // Verify user is admin
     if (user?.role !== "admin") {
-      navigate("/");
+      navigate("/admin/login");
       return;
     }
 
@@ -36,7 +35,6 @@ const PayLaterVerification = () => {
   const fetchVerifications = async () => {
     setLoading(true);
     try {
-      // This is a mock implementation since we don't have the real function yet
       const data = await getKYCVerificationsForAdmin();
       setVerifications(data);
     } catch (error) {
@@ -127,8 +125,17 @@ const PayLaterVerification = () => {
     }
   };
 
+  // Don't render if not admin
+  if (user?.role !== "admin") {
+    return null;
+  }
+
   return (
-    <AdminLayout>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold tracking-tight">Pay Later Verifications</h1>
+      </div>
+      
       <Card>
         <CardHeader>
           <CardTitle>Pay Later Verifications</CardTitle>
@@ -295,7 +302,7 @@ const PayLaterVerification = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </div>
   );
 };
 

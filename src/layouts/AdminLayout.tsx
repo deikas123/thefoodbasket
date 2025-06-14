@@ -19,10 +19,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     
     // Check if user is authenticated
     if (!user) {
+      console.log("No user found, redirecting to login");
       toast.error("Authentication Required", {
         description: "Please log in to access the admin panel"
       });
-      navigate("/login", { state: { from: window.location.pathname } });
+      navigate("/admin/login", { replace: true });
       return;
     }
     
@@ -30,20 +31,17 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     
     // Check if user is admin
     if (user.role !== "admin") {
+      console.log("User is not admin, redirecting to home");
       toast.error("Access Denied", {
         description: "You do not have admin privileges"
       });
-      navigate("/");
+      navigate("/", { replace: true });
+      return;
     }
   }, [user, navigate]);
 
   // Don't render the admin layout if no user or not an admin
-  if (!user) {
-    return null;
-  }
-  
-  // Additional check to prevent non-admin users from seeing the admin layout
-  if (user.role !== "admin") {
+  if (!user || user.role !== "admin") {
     return null;
   }
 
