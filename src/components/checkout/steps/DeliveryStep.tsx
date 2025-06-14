@@ -8,6 +8,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import { CartItem } from "@/types";
 import { DeliveryOption } from "@/services/deliveryOptionsService";
 import { toast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 interface DeliveryStepProps {
   deliveryAddress: any;
@@ -30,6 +31,11 @@ const DeliveryStep = ({
   onNext,
   isProcessing
 }: DeliveryStepProps) => {
+  const [scheduleData, setScheduleData] = useState<{ date: Date | undefined; timeSlot: string }>({
+    date: undefined,
+    timeSlot: ""
+  });
+
   const handleNext = () => {
     if (!deliveryAddress.street || !deliveryAddress.city) {
       toast({
@@ -39,7 +45,38 @@ const DeliveryStep = ({
       });
       return;
     }
+
+    // Check if scheduled delivery is selected and validate schedule
+    if (selectedDelivery?.id === "scheduled") {
+      if (!scheduleData.date || !scheduleData.timeSlot) {
+        toast({
+          title: "Please complete the delivery schedule",
+          description: "You need to select both a date and time slot for scheduled delivery.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if the selected date is in the future
+      const selectedDate = new Date(scheduleData.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        toast({
+          title: "Invalid delivery date",
+          description: "Please select a future date for delivery.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     onNext();
+  };
+
+  const handleScheduleChange = (schedule: { date: Date | undefined; timeSlot: string }) => {
+    setScheduleData(schedule);
   };
 
   return (
@@ -69,6 +106,7 @@ const DeliveryStep = ({
             <DeliveryOptionsNew 
               selectedDelivery={selectedDelivery}
               setSelectedDelivery={setSelectedDelivery}
+              onScheduleChange={handleScheduleChange}
             />
           </CardContent>
         </Card>
