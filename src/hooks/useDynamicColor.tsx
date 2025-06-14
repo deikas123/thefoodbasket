@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { extractDominantColor, getContrastColor, getDarkerShade } from '@/utils/colorExtractor';
 
 interface DynamicColorResult {
@@ -11,24 +11,42 @@ interface DynamicColorResult {
 
 export const useDynamicColor = (imageUrl: string): DynamicColorResult => {
   const [colors, setColors] = useState<DynamicColorResult>({
-    backgroundColor: 'rgb(99, 102, 241)', // default indigo
+    backgroundColor: 'rgb(59, 130, 246)', // default blue
     textColor: '#ffffff',
-    hoverColor: 'rgb(79, 70, 229)',
+    hoverColor: 'rgb(37, 99, 235)',
     isLoading: true
   });
+  
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!imageUrl || imageUrl === '/placeholder.svg' || imageUrl.includes('placeholder')) {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Skip extraction for placeholder images
+    if (!imageUrl || 
+        imageUrl === '/placeholder.svg' || 
+        imageUrl.includes('placeholder') ||
+        imageUrl.includes('data:image/svg')) {
       setColors(prev => ({ ...prev, isLoading: false }));
       return;
     }
 
+    abortControllerRef.current = new AbortController();
+    const controller = abortControllerRef.current;
+
     const extractColor = async () => {
       try {
-        console.log('Extracting color from:', imageUrl);
-        const dominantColor = await extractDominantColor(imageUrl);
-        const { r, g, b } = dominantColor;
+        if (controller.signal.aborted) return;
         
+        console.log('Extracting color from:', imageUrl.substring(0, 100) + '...');
+        const dominantColor = await extractDominantColor(imageUrl);
+        
+        if (controller.signal.aborted) return;
+        
+        const { r, g, b } = dominantColor;
         const backgroundColor = `rgb(${r}, ${g}, ${b})`;
         const textColor = getContrastColor(r, g, b);
         const hoverColor = getDarkerShade(r, g, b);
@@ -41,17 +59,25 @@ export const useDynamicColor = (imageUrl: string): DynamicColorResult => {
           isLoading: false
         });
       } catch (error) {
-        console.log('Color extraction failed, using default colors:', error);
-        setColors({
-          backgroundColor: 'rgb(99, 102, 241)', // default indigo
-          textColor: '#ffffff',
-          hoverColor: 'rgb(79, 70, 229)',
-          isLoading: false
-        });
+        if (!controller.signal.aborted) {
+          console.log('Color extraction failed, using default colors:', error);
+          setColors({
+            backgroundColor: 'rgb(59, 130, 246)', // default blue
+            textColor: '#ffffff',
+            hoverColor: 'rgb(37, 99, 235)',
+            isLoading: false
+          });
+        }
       }
     };
 
     extractColor();
+    
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [imageUrl]);
 
   return colors;
