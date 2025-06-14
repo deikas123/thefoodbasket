@@ -10,16 +10,17 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
       
     if (error) {
-      if (error.code === 'PGRST116') {
-        // Role not found, user is a regular customer
-        console.log("getRoleService - No specific role found for user, defaulting to customer");
-        return 'customer';
-      }
       console.error("getRoleService - Error fetching user role:", error);
       throw error;
+    }
+    
+    if (!data) {
+      // Role not found, user is a regular customer
+      console.log("getRoleService - No specific role found for user, defaulting to customer");
+      return 'customer';
     }
     
     console.log("getRoleService - Role found in database:", data.role);
@@ -34,19 +35,24 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
 export const assignUserRole = async (userId: string, role: UserRole): Promise<void> => {
   console.log("assignUserRole - Assigning role:", role, "to user:", userId);
   
+  if (!userId || !role) {
+    throw new Error("User ID and role are required");
+  }
+  
   try {
     // Check if user already has a role
     const { data: existingRole, error: fetchError } = await supabase
       .from('user_roles')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .maybeSingle();
       
-    if (fetchError) {
+    if (fetchError && fetchError.code !== 'PGRST116') {
       console.error("Error checking existing role:", fetchError);
       throw fetchError;
     }
     
-    if (existingRole && existingRole.length > 0) {
+    if (existingRole) {
       // Update existing role
       console.log("assignUserRole - Updating existing role");
       const { error } = await supabase

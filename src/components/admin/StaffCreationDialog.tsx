@@ -30,50 +30,61 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
     mutationFn: async (data: typeof formData) => {
       console.log('Creating staff member:', data);
       
-      // Create the user account using admin API
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: data.email,
-        password: data.password,
-        email_confirm: true, // Auto-confirm email for staff
-        user_metadata: {
-          first_name: data.firstName,
-          last_name: data.lastName,
-          role: data.role
-        }
-      });
-
-      if (authError) {
-        console.error('Auth creation error:', authError);
-        throw authError;
-      }
-
-      if (!authData.user) {
-        throw new Error("Failed to create user");
-      }
-
-      console.log('User created:', authData.user.id);
-
-      // Create or update the profile manually
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: authData.user.id,
-          first_name: data.firstName,
-          last_name: data.lastName
+      try {
+        // Create the user account using admin API
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: data.email,
+          password: data.password,
+          email_confirm: true, // Auto-confirm email for staff
+          user_metadata: {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            role: data.role
+          }
         });
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        // Don't throw here, just log the error
+        if (authError) {
+          console.error('Auth creation error:', authError);
+          throw new Error(authError.message || 'Failed to create user account');
+        }
+
+        if (!authData.user) {
+          throw new Error("Failed to create user - no user data returned");
+        }
+
+        console.log('User created:', authData.user.id);
+
+        // Create the profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: authData.user.id,
+            first_name: data.firstName,
+            last_name: data.lastName
+          });
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Continue anyway as this is not critical
+        }
+
+        // Assign the role to the new user
+        try {
+          await assignUserRole(authData.user.id, data.role);
+          console.log('Role assigned successfully:', data.role);
+        } catch (roleError) {
+          console.error('Role assignment error:', roleError);
+          throw new Error('Failed to assign role to user');
+        }
+
+        return authData.user;
+      } catch (error: any) {
+        console.error('Staff creation failed:', error);
+        throw error;
       }
-
-      // Assign the role to the new user
-      await assignUserRole(authData.user.id, data.role);
-      console.log('Role assigned:', data.role);
-
-      return authData.user;
     },
     onSuccess: () => {
+      console.log('Staff creation successful');
       toast({
         title: "Success",
         description: "Staff member created successfully.",
@@ -89,10 +100,10 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
       onClose();
     },
     onError: (error: any) => {
-      console.error('Staff creation error:', error);
+      console.error('Staff creation error in onError:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create staff member",
+        description: error?.message || "Failed to create staff member. Please try again.",
         variant: "destructive",
       });
     }
@@ -100,6 +111,8 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form data
     if (!formData.email || !formData.password || !formData.firstName || !formData.lastName || !formData.role) {
       toast({
         title: "Error",
@@ -108,6 +121,29 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
       });
       return;
     }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Password validation
+    if (formData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('Submitting staff creation form:', { ...formData, password: '[REDACTED]' });
     createStaffMutation.mutate(formData);
   };
 
@@ -137,6 +173,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 required
+                disabled={createStaffMutation.isPending}
               />
             </div>
             <div className="space-y-2">
@@ -146,6 +183,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 required
+                disabled={createStaffMutation.isPending}
               />
             </div>
           </div>
@@ -158,6 +196,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
+              disabled={createStaffMutation.isPending}
             />
           </div>
           
@@ -170,12 +209,17 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
               minLength={6}
+              disabled={createStaffMutation.isPending}
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={formData.role} onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}>
+            <Select 
+              value={formData.role} 
+              onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
+              disabled={createStaffMutation.isPending}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
@@ -190,7 +234,12 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
           </div>
           
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={createStaffMutation.isPending}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose} 
+              disabled={createStaffMutation.isPending}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={createStaffMutation.isPending}>
