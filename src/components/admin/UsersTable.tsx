@@ -8,52 +8,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Eye, Search, UserPlus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, UserRole } from "@/types";
+import { UserRole } from "@/types/supabase";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
-// Sample data - would come from an API in a real app
-const sampleUsers: User[] = [
-  {
-    id: "user1",
-    email: "john.doe@example.com",
-    firstName: "John",
-    lastName: "Doe",
-    role: "customer",
-    addresses: [],
-    loyaltyPoints: 120,
-    createdAt: "2023-01-15T10:30:00Z",
-  },
-  {
-    id: "user2",
-    email: "jane.smith@example.com",
-    firstName: "Jane",
-    lastName: "Smith",
-    role: "customer",
-    addresses: [],
-    loyaltyPoints: 85,
-    createdAt: "2023-03-22T14:20:00Z",
-  },
-  {
-    id: "user3",
-    email: "admin@foodbasket.co.ke",
-    firstName: "Admin",
-    lastName: "User",
-    role: "admin",
-    addresses: [],
-    loyaltyPoints: 0,
-    createdAt: "2022-11-10T09:00:00Z",
-  },
-  {
-    id: "user4",
-    email: "michael.kamau@example.com",
-    firstName: "Michael",
-    lastName: "Kamau",
-    role: "delivery",
-    addresses: [],
-    loyaltyPoints: 0,
-    createdAt: "2023-05-05T11:30:00Z",
-  }
-];
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  loyaltyPoints: number;
+  createdAt: string;
+}
 
 const getRoleBadgeVariant = (role: UserRole) => {
   switch (role) {
@@ -63,8 +30,26 @@ const getRoleBadgeVariant = (role: UserRole) => {
       return "bg-blue-50 text-blue-700 border-blue-200";
     case "delivery":
       return "bg-green-50 text-green-700 border-green-200";
+    case "customer_service":
+      return "bg-orange-50 text-orange-700 border-orange-200";
+    case "order_fulfillment":
+      return "bg-indigo-50 text-indigo-700 border-indigo-200";
+    case "accountant":
+      return "bg-pink-50 text-pink-700 border-pink-200";
     default:
       return "bg-gray-50 text-gray-700 border-gray-200";
+  }
+};
+
+const formatRoleName = (role: UserRole) => {
+  switch (role) {
+    case 'customer_service': return 'Customer Service';
+    case 'order_fulfillment': return 'Order Fulfillment';
+    case 'delivery': return 'Delivery';
+    case 'accountant': return 'Accountant';
+    case 'admin': return 'Admin';
+    case 'customer': return 'Customer';
+    default: return role;
   }
 };
 
@@ -80,12 +65,69 @@ const AdminUsersTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   
-  // In a real application, this would fetch data from an API
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: () => {
-      // This is using mock data, but would be a fetch call in a real app
-      return Promise.resolve(sampleUsers);
+  // Fetch all users from the database
+  const { data: users, isLoading, error } = useQuery({
+    queryKey: ["admin-all-users"],
+    queryFn: async () => {
+      console.log("Fetching all users for admin...");
+      
+      try {
+        // Get all profiles
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
+          throw profilesError;
+        }
+        
+        console.log("Profiles found:", profiles);
+        
+        if (!profiles || profiles.length === 0) {
+          console.log("No profiles found");
+          return [];
+        }
+        
+        // Get all user roles
+        const { data: userRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id, role');
+          
+        if (rolesError) {
+          console.error("Error fetching user roles:", rolesError);
+        }
+        
+        console.log("User roles found:", userRoles);
+        
+        // Create a map of roles by user_id for quick lookup
+        const roleMap = new Map();
+        if (userRoles) {
+          userRoles.forEach(r => roleMap.set(r.user_id, r.role));
+        }
+        
+        // Combine the data
+        const userData: User[] = profiles.map((profile) => {
+          const role = roleMap.get(profile.id) || 'customer';
+          
+          return {
+            id: profile.id,
+            email: `${profile.first_name?.toLowerCase() || 'user'}@foodbasket.com`, // Placeholder email
+            firstName: profile.first_name || 'Unknown',
+            lastName: profile.last_name || 'User',
+            role: role as UserRole,
+            loyaltyPoints: profile.loyalty_points || 0,
+            createdAt: profile.created_at
+          };
+        });
+        
+        console.log("Final user data:", userData);
+        return userData;
+      } catch (error) {
+        console.error("Error in users query:", error);
+        throw error;
+      }
     }
   });
   
@@ -102,6 +144,10 @@ const AdminUsersTable = () => {
   const handleAddUser = () => {
     navigate("/admin/users/new");
   };
+  
+  if (error) {
+    console.error("Users table error:", error);
+  }
   
   return (
     <Card>
@@ -135,6 +181,10 @@ const AdminUsersTable = () => {
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">
+            Error loading users: {error.message}
+          </div>
         ) : (
           <div className="rounded-md border">
             <Table>
@@ -157,7 +207,7 @@ const AdminUsersTable = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={getRoleBadgeVariant(user.role)}>
-                        {user.role}
+                        {formatRoleName(user.role)}
                       </Badge>
                     </TableCell>
                     <TableCell>{formatDate(user.createdAt)}</TableCell>
@@ -177,7 +227,7 @@ const AdminUsersTable = () => {
                 {filteredUsers?.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-4">
-                      No users found
+                      {searchTerm ? "No users found matching your search" : "No users found"}
                     </TableCell>
                   </TableRow>
                 )}
