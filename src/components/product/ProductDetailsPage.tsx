@@ -60,19 +60,19 @@ const ProductDetailsPage = () => {
             category={category}
           />
           
-          {/* Product reviews section */}
-          {product && (
-            <div className="mt-16">
-              <Separator className="mb-8" />
-              <ProductReviews productId={product.id} />
-            </div>
-          )}
-          
           {/* Frequently purchased together section */}
           {product && (
             <div className="mt-16">
               <Separator className="mb-8" />
               <FrequentlyPurchasedTogether productId={product.id} />
+            </div>
+          )}
+          
+          {/* Product reviews section - single instance */}
+          {product && (
+            <div className="mt-16">
+              <Separator className="mb-8" />
+              <ProductReviews productId={product.id} />
             </div>
           )}
         </div>
