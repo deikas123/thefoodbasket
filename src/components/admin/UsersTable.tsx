@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,13 +101,13 @@ const AdminUsersTable = () => {
         console.log("User roles found:", userRoles);
         
         // Get actual auth users to get real email addresses
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
         
         if (authError) {
           console.error("Error fetching auth users:", authError);
         }
         
-        console.log("Auth users found:", authUsers?.users?.length || 0);
+        console.log("Auth users found:", authData?.users?.length || 0);
         
         // Create a map of roles by user_id for quick lookup
         const roleMap = new Map();
@@ -118,8 +117,8 @@ const AdminUsersTable = () => {
         
         // Create a map of emails by user_id
         const emailMap = new Map();
-        if (authUsers?.users) {
-          authUsers.users.forEach(user => emailMap.set(user.id, user.email));
+        if (authData?.users) {
+          authData.users.forEach((user: any) => emailMap.set(user.id, user.email));
         }
         
         // Combine the data
