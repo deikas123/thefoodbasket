@@ -22,11 +22,17 @@ import { formatCurrency } from "@/utils/currencyFormatter";
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   
-  const { data: stats, isLoading, error } = useQuery({
+  const { data: stats, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-dashboard-stats"],
     queryFn: getAdminDashboardStats,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: true,
   });
+
+  // Debug logging
+  useEffect(() => {
+    console.log("Dashboard data:", { stats, isLoading, error });
+  }, [stats, isLoading, error]);
   
   if (isLoading || !stats) {
     return (
@@ -54,9 +60,17 @@ const AdminDashboard = () => {
           <CardHeader>
             <CardTitle>Error Loading Dashboard</CardTitle>
             <CardDescription>
-              There was an error loading the dashboard data. Please try refreshing the page.
+              There was an error loading the dashboard data: {error.message}
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <button 
+              onClick={() => refetch()} 
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Retry
+            </button>
+          </CardContent>
         </Card>
       </div>
     );
@@ -76,15 +90,17 @@ const AdminDashboard = () => {
               {stats.revenueLastMonth > 0 ? (
                 stats.revenueThisMonth > stats.revenueLastMonth ? (
                   <span className="text-green-500 flex items-center">
-                    +{Math.round((stats.revenueThisMonth - stats.revenueLastMonth) / stats.revenueLastMonth * 100)}% <ArrowUpRight className="h-3 w-3" />
+                    +{Math.round(((stats.revenueThisMonth - stats.revenueLastMonth) / stats.revenueLastMonth) * 100)}% <ArrowUpRight className="h-3 w-3" />
+                  </span>
+                ) : stats.revenueThisMonth < stats.revenueLastMonth ? (
+                  <span className="text-red-500 flex items-center">
+                    -{Math.round(((stats.revenueLastMonth - stats.revenueThisMonth) / stats.revenueLastMonth) * 100)}% <ArrowUpRight className="h-3 w-3 rotate-90" />
                   </span>
                 ) : (
-                  <span className="text-red-500 flex items-center">
-                    -{Math.round((stats.revenueLastMonth - stats.revenueThisMonth) / stats.revenueLastMonth * 100)}% <ArrowUpRight className="h-3 w-3 rotate-90" />
-                  </span>
+                  <span className="text-gray-500">0%</span>
                 )
               ) : (
-                <span className="text-blue-500">First month</span>
+                <span className="text-blue-500">New data</span>
               )}
               from last month
             </p>
@@ -100,7 +116,7 @@ const AdminDashboard = () => {
             <div className="text-2xl font-bold">{stats.newCustomers}</div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <span className="text-green-500 flex items-center">
-                {stats.activeCustomers > 0 ? Math.round(stats.newCustomers / stats.activeCustomers * 100) : 0}% <ArrowUpRight className="h-3 w-3" />
+                {stats.activeCustomers > 0 ? Math.round((stats.newCustomers / stats.activeCustomers) * 100) : 0}% <ArrowUpRight className="h-3 w-3" />
               </span>
               of active users
             </p>
@@ -116,7 +132,7 @@ const AdminDashboard = () => {
             <div className="text-2xl font-bold">{stats.pendingOrders}</div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <span className="text-blue-500 flex items-center">
-                {stats.ordersThisMonth > 0 ? Math.round(stats.pendingOrders / stats.ordersThisMonth * 100) : 0}% <ArrowUpRight className="h-3 w-3 rotate-45" />
+                {stats.ordersThisMonth > 0 ? Math.round((stats.pendingOrders / stats.ordersThisMonth) * 100) : 0}% <ArrowUpRight className="h-3 w-3 rotate-45" />
               </span>
               of this month's orders
             </p>
@@ -132,7 +148,7 @@ const AdminDashboard = () => {
             <div className="text-2xl font-bold">{stats.ordersToday}</div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <span className="text-green-500 flex items-center">
-                {stats.ordersThisMonth > 0 ? Math.round(stats.ordersToday / stats.ordersThisMonth * 100) : 0}% <ArrowUpRight className="h-3 w-3" />
+                {stats.ordersThisMonth > 0 ? Math.round((stats.ordersToday / stats.ordersThisMonth) * 100) : 0}% <ArrowUpRight className="h-3 w-3" />
               </span>
               of monthly orders
             </p>
@@ -159,7 +175,7 @@ const AdminDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {stats.monthlyRevenue.length > 0 ? (
+                {stats.monthlyRevenue && stats.monthlyRevenue.length > 0 ? (
                   <LineChart 
                     data={stats.monthlyRevenue}
                     xAxisKey="month"
@@ -168,7 +184,7 @@ const AdminDashboard = () => {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    No revenue data available
+                    No revenue data available yet
                   </div>
                 )}
               </CardContent>
@@ -182,7 +198,7 @@ const AdminDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {stats.categorySales.length > 0 ? (
+                {stats.categorySales && stats.categorySales.length > 0 ? (
                   <PieChart 
                     data={stats.categorySales}
                     nameKey="name"
@@ -191,7 +207,7 @@ const AdminDashboard = () => {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    No category data available
+                    No category data available yet
                   </div>
                 )}
               </CardContent>
@@ -206,7 +222,7 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {stats.orderStatuses.length > 0 ? (
+              {stats.orderStatuses && stats.orderStatuses.length > 0 ? (
                 <BarChart 
                   data={stats.orderStatuses.map(item => ({
                     name: item.status,
@@ -218,11 +234,45 @@ const AdminDashboard = () => {
                 />
               ) : (
                 <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                  No order data available
+                  No order data available yet
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {stats.topSellingProducts && stats.topSellingProducts.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Selling Products</CardTitle>
+                <CardDescription>
+                  Best performing products by quantity sold
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {stats.topSellingProducts.map((product, index) => (
+                    <div key={product.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          #{index + 1}
+                        </span>
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {product.quantity} units sold
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatCurrency(product.revenue)}</p>
+                        <p className="text-sm text-muted-foreground">Revenue</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         
         <TabsContent value="products">
