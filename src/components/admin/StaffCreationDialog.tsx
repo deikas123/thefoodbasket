@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/supabase";
-import { assignUserRole } from "@/services/roleService";
 
 interface StaffCreationDialogProps {
   isOpen: boolean;
@@ -28,60 +27,44 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
 
   const createStaffMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      console.log('Creating staff member:', data);
+      console.log('Creating staff member via Edge Function:', { ...data, password: '[REDACTED]' });
       
-      try {
-        // Create the user account using admin API
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Get the current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No active session');
+      }
+
+      // Call the Edge Function
+      const { data: result, error } = await supabase.functions.invoke('create-staff', {
+        body: {
           email: data.email,
           password: data.password,
-          email_confirm: true, // Auto-confirm email for staff
-          user_metadata: {
-            first_name: data.firstName,
-            last_name: data.lastName,
-            role: data.role
-          }
-        });
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: data.role
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-        if (authError) {
-          console.error('Auth creation error:', authError);
-          throw new Error(authError.message || 'Failed to create user account');
-        }
-
-        if (!authData.user) {
-          throw new Error("Failed to create user - no user data returned");
-        }
-
-        console.log('User created:', authData.user.id);
-
-        // Create the profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: authData.user.id,
-            first_name: data.firstName,
-            last_name: data.lastName
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Continue anyway as this is not critical
-        }
-
-        // Assign the role to the new user
-        try {
-          await assignUserRole(authData.user.id, data.role);
-          console.log('Role assigned successfully:', data.role);
-        } catch (roleError) {
-          console.error('Role assignment error:', roleError);
-          throw new Error('Failed to assign role to user');
-        }
-
-        return authData.user;
-      } catch (error: any) {
-        console.error('Staff creation failed:', error);
-        throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to create staff member');
       }
+
+      if (result?.error) {
+        console.error('Staff creation error:', result.error);
+        throw new Error(result.error);
+      }
+
+      if (!result?.success) {
+        throw new Error('Failed to create staff member');
+      }
+
+      console.log('Staff member created successfully:', result.user);
+      return result.user;
     },
     onSuccess: () => {
       console.log('Staff creation successful');
