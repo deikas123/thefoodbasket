@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -59,14 +58,27 @@ interface ProductFormDialogProps {
   product: ProductType | null;
 }
 
-const categories = [
-  "fruits", "vegetables", "dairy", "bakery", "meat", "seafood", 
-  "snacks", "beverages", "frozen", "canned", "dry goods", "household"
-];
-
 const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch categories from database
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name, slug')
+        .order('name');
+      
+      if (error) {
+        console.error("Error fetching categories:", error);
+        return [];
+      }
+      
+      return data;
+    }
+  });
 
   // Fetch all available tags
   const { data: availableTags } = useQuery({
@@ -394,11 +406,16 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                      {categories?.map((category) => (
+                        <SelectItem key={category.id} value={category.slug}>
+                          {category.name}
                         </SelectItem>
                       ))}
+                      {(!categories || categories.length === 0) && (
+                        <SelectItem value="" disabled>
+                          No categories available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
