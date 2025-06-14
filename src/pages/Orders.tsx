@@ -26,22 +26,33 @@ const Orders = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      if (user && isAuthenticated) {
-        try {
-          console.log("Fetching orders for user:", user.id);
-          const orderTypes = await getUserOrders(user.id);
-          console.log("Fetched order types:", orderTypes);
+      if (!user || !isAuthenticated) {
+        console.log("No user or not authenticated, skipping order fetch");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        console.log("Fetching orders for user:", user.id);
+        setIsLoading(true);
+        setError(null);
+        
+        const orderTypes = await getUserOrders(user.id);
+        console.log("Fetched order types:", orderTypes);
+        
+        if (orderTypes && orderTypes.length > 0) {
           const convertedOrders = convertToOrders(orderTypes);
           console.log("Converted orders:", convertedOrders);
           setOrders(convertedOrders);
-          setError(null);
-        } catch (error) {
-          console.error("Failed to fetch orders:", error);
-          setError("Failed to load orders");
-        } finally {
-          setIsLoading(false);
+        } else {
+          console.log("No orders found for user");
+          setOrders([]);
         }
-      } else if (!authLoading) {
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+        setError("Failed to load orders. Please try again.");
+        setOrders([]);
+      } finally {
         setIsLoading(false);
       }
     };
@@ -54,6 +65,7 @@ const Orders = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
+      console.log("User not authenticated, redirecting to login");
       navigate("/login", { state: { from: "/orders" } });
     }
   }, [authLoading, isAuthenticated, navigate]);
@@ -72,10 +84,11 @@ const Orders = () => {
   };
 
   const handleViewOrder = (orderId: string) => {
-    console.log("Navigating to order:", orderId);
+    console.log("Navigating to order details:", orderId);
     navigate(`/orders/${orderId}`);
   };
 
+  // Show loading state
   if (authLoading || isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -110,6 +123,7 @@ const Orders = () => {
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="flex flex-col min-h-screen">

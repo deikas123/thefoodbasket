@@ -43,13 +43,13 @@ import { format } from "date-fns";
 const OrderDetails = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  console.log("OrderDetails component mounted", { orderId, user, isAuthenticated });
+  console.log("OrderDetails component mounted", { orderId, user, isAuthenticated, authLoading });
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -59,9 +59,17 @@ const OrderDetails = () => {
         setIsLoading(false);
         return;
       }
+
+      if (!user || !isAuthenticated) {
+        console.log("User not authenticated, waiting...");
+        return;
+      }
       
       try {
         console.log("Fetching order:", orderId);
+        setIsLoading(true);
+        setError(null);
+        
         const orderData = await getOrderById(orderId);
         console.log("Fetched order data:", orderData);
         
@@ -71,6 +79,7 @@ const OrderDetails = () => {
           setOrder(convertedOrder);
         } else {
           console.log("No order data found");
+          setError("Order not found");
           setOrder(null);
         }
       } catch (error) {
@@ -86,13 +95,18 @@ const OrderDetails = () => {
       }
     };
 
-    if (isAuthenticated) {
+    if (!authLoading) {
       fetchOrder();
-    } else {
-      console.log("User not authenticated, redirecting to login");
-      setIsLoading(false);
     }
-  }, [orderId, isAuthenticated]);
+  }, [orderId, user, isAuthenticated, authLoading]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      console.log("User not authenticated, redirecting to login");
+      navigate("/login", { state: { from: `/orders/${orderId}` } });
+    }
+  }, [authLoading, isAuthenticated, navigate, orderId]);
 
   // Handle order cancellation
   const handleCancelOrder = async () => {
@@ -134,13 +148,8 @@ const OrderDetails = () => {
     }
   };
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    navigate("/login", { state: { from: `/orders/${orderId}` } });
-    return null;
-  }
-
-  if (isLoading) {
+  // Show loading state
+  if (authLoading || isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -167,6 +176,7 @@ const OrderDetails = () => {
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -201,6 +211,7 @@ const OrderDetails = () => {
     );
   }
 
+  // Show order not found state
   if (!order) {
     return (
       <div className="flex flex-col min-h-screen">
