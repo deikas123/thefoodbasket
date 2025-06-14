@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/supabase";
 
 export const getUserRole = async (userId: string): Promise<UserRole | null> => {
-  console.log("Fetching role for user:", userId);
+  console.log("getRoleService - Fetching role for user:", userId);
+  
   const { data, error } = await supabase
     .from('user_roles')
     .select('role')
@@ -13,14 +14,14 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
   if (error) {
     if (error.code === 'PGRST116') {
       // Role not found, user is a regular customer
-      console.log("No specific role found for user, defaulting to customer");
+      console.log("getRoleService - No specific role found for user, defaulting to customer");
       return 'customer';
     }
-    console.error("Error fetching user role:", error);
+    console.error("getRoleService - Error fetching user role:", error);
     throw error;
   }
   
-  console.log("Role found in database:", data.role);
+  console.log("getRoleService - Role found in database:", data.role);
   return data.role as UserRole;
 };
 
