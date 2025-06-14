@@ -18,6 +18,10 @@ const DataPrivacyNotice = ({ onAccept }: DataPrivacyNoticeProps) => {
     }
   };
 
+  const handleCheckboxChange = (checked: boolean | "indeterminate") => {
+    setAccepted(checked === true);
+  };
+
   return (
     <Card className="border-blue-200 bg-blue-50/30">
       <CardHeader>
@@ -85,7 +89,7 @@ const DataPrivacyNotice = ({ onAccept }: DataPrivacyNoticeProps) => {
           <Checkbox 
             id="privacy-accept"
             checked={accepted}
-            onCheckedChange={setAccepted}
+            onCheckedChange={handleCheckboxChange}
           />
           <label 
             htmlFor="privacy-accept" 
