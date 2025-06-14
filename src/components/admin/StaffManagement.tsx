@@ -9,7 +9,6 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { UserRole } from "@/types/supabase";
-import { assignUserRole, getAllUserRoles } from "@/services/roleService";
 import StaffCreationDialog from "./StaffCreationDialog";
 
 interface StaffMember {
@@ -29,34 +28,67 @@ const StaffManagement = () => {
   const { data: staffMembers, isLoading } = useQuery({
     queryKey: ["staff-members"],
     queryFn: async () => {
-      // Get all users with roles
-      const userRoles = await getAllUserRoles();
+      console.log("Fetching staff members...");
       
-      // Filter out customers and get profile data
-      const staffRoles = userRoles.filter(ur => ur.role !== 'customer');
+      // Get all user roles that are not customers
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .neq('role', 'customer');
+        
+      if (rolesError) {
+        console.error("Error fetching user roles:", rolesError);
+        throw rolesError;
+      }
+      
+      console.log("User roles found:", userRoles);
+      
+      if (!userRoles || userRoles.length === 0) {
+        return [];
+      }
       
       const staffData: StaffMember[] = [];
       
-      for (const { userId, role } of staffRoles) {
-        // Get profile data
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
+      // Get profile and auth data for each staff member
+      for (const { user_id, role } of userRoles) {
+        try {
+          // Get profile data
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user_id)
+            .single();
           
-        if (profile) {
-          staffData.push({
-            id: userId,
-            email: `${profile.first_name?.toLowerCase()}.${profile.last_name?.toLowerCase()}@foodbasket.com`,
-            firstName: profile.first_name || '',
-            lastName: profile.last_name || '',
-            role: role,
-            createdAt: profile.created_at
-          });
+          // Get auth user data for email and creation date
+          const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(user_id);
+          
+          if (user && profile) {
+            staffData.push({
+              id: user_id,
+              email: user.email || 'No email',
+              firstName: profile.first_name || '',
+              lastName: profile.last_name || '',
+              role: role as UserRole,
+              createdAt: user.created_at
+            });
+          } else if (user) {
+            // Handle case where profile doesn't exist but user does
+            staffData.push({
+              id: user_id,
+              email: user.email || 'No email',
+              firstName: user.user_metadata?.first_name || '',
+              lastName: user.user_metadata?.last_name || '',
+              role: role as UserRole,
+              createdAt: user.created_at
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching data for user ${user_id}:`, error);
+          // Continue with next user instead of failing completely
         }
       }
       
+      console.log("Final staff data:", staffData);
       return staffData;
     }
   });
@@ -64,6 +96,17 @@ const StaffManagement = () => {
   // Delete staff member mutation
   const deleteStaffMutation = useMutation({
     mutationFn: async (staffId: string) => {
+      // First remove the role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', staffId);
+        
+      if (roleError) {
+        console.error("Error removing role:", roleError);
+      }
+      
+      // Then delete the user
       const { error } = await supabase.auth.admin.deleteUser(staffId);
       if (error) throw error;
     },

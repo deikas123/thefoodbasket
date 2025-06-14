@@ -28,38 +28,55 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
 
   const createStaffMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      // Create the user account using regular signup
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      console.log('Creating staff member:', data);
+      
+      // Create the user account using admin API
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: data.email,
         password: data.password,
-        options: {
-          data: {
-            first_name: data.firstName,
-            last_name: data.lastName,
-            role: data.role
-          },
-          emailRedirectTo: `${window.location.origin}/`
+        email_confirm: true, // Auto-confirm email for staff
+        user_metadata: {
+          first_name: data.firstName,
+          last_name: data.lastName,
+          role: data.role
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth creation error:', authError);
+        throw authError;
+      }
 
       if (!authData.user) {
         throw new Error("Failed to create user");
       }
 
-      // Wait a moment for the profile to be created by the trigger
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('User created:', authData.user.id);
+
+      // Create or update the profile manually
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: authData.user.id,
+          first_name: data.firstName,
+          last_name: data.lastName
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // Don't throw here, just log the error
+      }
 
       // Assign the role to the new user
       await assignUserRole(authData.user.id, data.role);
+      console.log('Role assigned:', data.role);
 
       return authData.user;
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Staff member created successfully. They will need to verify their email before they can log in.",
+        description: "Staff member created successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["staff-members"] });
       setFormData({
@@ -108,7 +125,7 @@ const StaffCreationDialog = ({ isOpen, onClose }: StaffCreationDialogProps) => {
         <DialogHeader>
           <DialogTitle>Create New Staff Member</DialogTitle>
           <DialogDescription>
-            Create a new staff account with specific role permissions. The staff member will need to verify their email before they can log in.
+            Create a new staff account with specific role permissions.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
