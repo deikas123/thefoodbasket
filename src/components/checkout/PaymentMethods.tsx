@@ -12,7 +12,7 @@ import {
   BanknoteIcon
 } from "lucide-react";
 import WalletPaymentOption from "@/components/wallet/WalletPaymentOption";
-import PayLaterOption from "@/components/payLater/PayLaterOption";
+import PayLaterCheckoutOption from "@/components/checkout/PayLaterCheckoutOption";
 
 interface PaymentMethodsProps {
   selectedPayment: PaymentMethod | null;
@@ -116,7 +116,7 @@ const PaymentMethods = ({
           
           {/* Pay Later Option */}
           <div className="mt-4">
-            <PayLaterOption 
+            <PayLaterCheckoutOption 
               totalAmount={orderTotal}
               onPayLaterSelect={handlePayLaterSelect}
             />
