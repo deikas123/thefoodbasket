@@ -7,7 +7,10 @@ interface CustomDaysSelectorProps {
   onDaysChange: (days: string[]) => void;
 }
 
-export const CustomDaysSelector = ({ selectedDays, onDaysChange }: CustomDaysSelectorProps) => {
+export const CustomDaysSelector = ({
+  selectedDays,
+  onDaysChange,
+}: CustomDaysSelectorProps) => {
   const daysOfWeek = [
     { value: "0", label: "Sunday" },
     { value: "1", label: "Monday" },
@@ -18,26 +21,30 @@ export const CustomDaysSelector = ({ selectedDays, onDaysChange }: CustomDaysSel
     { value: "6", label: "Saturday" },
   ];
 
-  const handleDayToggle = (dayValue: string) => {
-    onDaysChange(
-      selectedDays.includes(dayValue) 
-        ? selectedDays.filter(d => d !== dayValue)
-        : [...selectedDays, dayValue]
-    );
+  const handleDayChange = (dayValue: string, checked: boolean) => {
+    if (checked) {
+      onDaysChange([...selectedDays, dayValue]);
+    } else {
+      onDaysChange(selectedDays.filter(day => day !== dayValue));
+    }
   };
 
   return (
-    <div className="grid grid-cols-4 items-start gap-4">
-      <Label className="text-right mt-2">Days</Label>
-      <div className="col-span-3 space-y-2">
-        {daysOfWeek.map((day) => (
+    <div className="space-y-3">
+      <Label>Select days of the week</Label>
+      <div className="grid grid-cols-2 gap-3">
+        {daysOfWeek.map(day => (
           <div key={day.value} className="flex items-center space-x-2">
             <Checkbox
               id={`day-${day.value}`}
               checked={selectedDays.includes(day.value)}
-              onCheckedChange={() => handleDayToggle(day.value)}
+              onCheckedChange={(checked) => 
+                handleDayChange(day.value, checked as boolean)
+              }
             />
-            <Label htmlFor={`day-${day.value}`}>{day.label}</Label>
+            <Label htmlFor={`day-${day.value}`} className="text-sm">
+              {day.label}
+            </Label>
           </div>
         ))}
       </div>

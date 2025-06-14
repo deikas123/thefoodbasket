@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { getUserAutoReplenishItems, toggleAutoReplenishStatus, removeFromAutoReplenish, processAutoReplenishOrders } from "@/services/autoReplenishService";
-import { getProductById } from "@/services/productService";
+import { getUserAutoReplenishItems, toggleAutoReplenishStatus, removeFromAutoReplenish } from "@/services/autoReplenishService";
+import { getProductById } from "@/services/product";
 import { AutoReplenishItem } from "@/types/autoReplenish";
 import { Product } from "@/types";
 import Header from "@/components/Header";
@@ -29,8 +29,7 @@ import {
   CalendarClock,
   Clock,
   ShoppingCart,
-  PlusCircle,
-  Play
+  PlusCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -48,11 +47,10 @@ import { format, isAfter } from "date-fns";
 const AutoReplenishPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const [autoReplenishItems, setAutoReplenishItems] = useState<AutoReplenishItem[]>([]);
+  const [autoReplenishItems, setAutoReplenishItems] = useState<any[]>([]);
   const [products, setProducts] = useState<{[key: string]: Product}>({});
   const [isLoading, setIsLoading] = useState(true);
   const [processing, setProcessing] = useState<{[key: string]: boolean}>({});
-  const [isProcessingOrders, setIsProcessingOrders] = useState(false);
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -71,9 +69,9 @@ const AutoReplenishPage = () => {
         // Fetch product details for each item
         const productMap: {[key: string]: Product} = {};
         for (const item of items) {
-          const product = await getProductById(item.productId);
+          const product = await getProductById(item.product_id);
           if (product) {
-            productMap[item.productId] = product;
+            productMap[item.product_id] = product;
           }
         }
         setProducts(productMap);
@@ -86,28 +84,8 @@ const AutoReplenishPage = () => {
     
     fetchItems();
   }, [isAuthenticated, navigate]);
-
-  const handleProcessOrders = async () => {
-    setIsProcessingOrders(true);
-    try {
-      await processAutoReplenishOrders();
-      toast({
-        title: "Orders Processed",
-        description: "Auto-replenish orders have been processed successfully",
-      });
-    } catch (error) {
-      console.error("Error processing orders:", error);
-      toast({
-        title: "Error",
-        description: "Failed to process auto-replenish orders",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessingOrders(false);
-    }
-  };
   
-  const handleToggleStatus = async (item: AutoReplenishItem) => {
+  const handleToggleStatus = async (item: any) => {
     setProcessing(prev => ({ ...prev, [item.id]: true }));
     try {
       const newStatus = !item.active;
@@ -133,7 +111,7 @@ const AutoReplenishPage = () => {
     }
   };
   
-  const handleRemoveItem = async (item: AutoReplenishItem) => {
+  const handleRemoveItem = async (item: any) => {
     setProcessing(prev => ({ ...prev, [item.id]: true }));
     try {
       const success = await removeFromAutoReplenish(item.id);
@@ -154,18 +132,18 @@ const AutoReplenishPage = () => {
     }
   };
 
-  const formatSchedule = (item: AutoReplenishItem) => {
+  const formatSchedule = (item: any) => {
     if (item.custom_days && item.custom_days.length > 0) {
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const days = item.custom_days.map(d => dayNames[parseInt(d)]).join(', ');
+      const days = item.custom_days.map((d: string) => dayNames[parseInt(d)]).join(', ');
       return `${days} at ${item.custom_time || '09:00'}`;
     }
-    return `Every ${item.frequencyDays} days at ${item.custom_time || '09:00'}`;
+    return `Every ${item.frequency_days} days at ${item.custom_time || '09:00'}`;
   };
   
   // Group items by status (upcoming and inactive)
   const upcomingItems = autoReplenishItems.filter(item => 
-    item.active && isAfter(new Date(item.nextOrderDate), new Date())
+    item.active && isAfter(new Date(item.next_order_date), new Date())
   );
   
   const inactiveItems = autoReplenishItems.filter(item => !item.active);
@@ -183,15 +161,6 @@ const AutoReplenishPage = () => {
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Profile
-            </Button>
-            
-            <Button
-              onClick={handleProcessOrders}
-              disabled={isProcessingOrders}
-              className="self-end"
-            >
-              <Play className="mr-2 h-4 w-4" />
-              {isProcessingOrders ? "Processing..." : "Process Orders Now"}
             </Button>
           </div>
           
@@ -243,7 +212,7 @@ const AutoReplenishPage = () => {
                         </TableHeader>
                         <TableBody>
                           {upcomingItems.map((item) => {
-                            const product = products[item.productId];
+                            const product = products[item.product_id];
                             
                             return (
                               <TableRow key={item.id}>
@@ -271,7 +240,7 @@ const AutoReplenishPage = () => {
                                 <TableCell>
                                   <div className="flex items-center">
                                     <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
-                                    {format(new Date(item.nextOrderDate), "MMM d, yyyy")}
+                                    {format(new Date(item.next_order_date), "MMM d, yyyy")}
                                   </div>
                                 </TableCell>
                                 <TableCell>
@@ -356,7 +325,7 @@ const AutoReplenishPage = () => {
                         </TableHeader>
                         <TableBody>
                           {inactiveItems.map((item) => {
-                            const product = products[item.productId];
+                            const product = products[item.product_id];
                             
                             return (
                               <TableRow key={item.id}>
