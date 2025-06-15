@@ -41,19 +41,24 @@ const DeliverySettings = () => {
     queryFn: async () => {
       console.log("Fetching delivery settings...");
       
-      const { data, error } = await supabase
-        .from('website_sections')
-        .select('id, settings')
-        .eq('type', 'delivery_settings')
-        .maybeSingle();
-      
-      if (error) {
-        console.error("Error fetching delivery settings:", error);
+      try {
+        const { data, error } = await supabase
+          .from('website_sections')
+          .select('id, settings')
+          .eq('type', 'delivery_settings')
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error fetching delivery settings:", error);
+          throw error;
+        }
+        
+        console.log("Fetched delivery settings:", data);
+        return data?.settings || null;
+      } catch (error) {
+        console.error("Query error:", error);
         return null;
       }
-      
-      console.log("Fetched delivery settings:", data);
-      return data?.settings || null;
     }
   });
 
@@ -61,57 +66,62 @@ const DeliverySettings = () => {
     mutationFn: async (newSettings: DeliverySettings) => {
       console.log("Saving delivery settings:", newSettings);
       
-      // First check if a record exists
-      const { data: existingRecord, error: fetchError } = await supabase
-        .from('website_sections')
-        .select('id')
-        .eq('type', 'delivery_settings')
-        .maybeSingle();
-      
-      if (fetchError) {
-        console.error("Error checking existing record:", fetchError);
-        throw new Error(`Database error: ${fetchError.message}`);
-      }
+      try {
+        // First check if a record exists
+        const { data: existingRecord, error: fetchError } = await supabase
+          .from('website_sections')
+          .select('id')
+          .eq('type', 'delivery_settings')
+          .maybeSingle();
+        
+        if (fetchError) {
+          console.error("Error checking existing record:", fetchError);
+          throw new Error(`Database error: ${fetchError.message}`);
+        }
 
-      if (existingRecord) {
-        // Update existing record
-        const { data, error } = await supabase
-          .from('website_sections')
-          .update({
-            settings: newSettings,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingRecord.id)
-          .select('id, settings');
-        
-        if (error) {
-          console.error("Error updating delivery settings:", error);
-          throw new Error(`Update failed: ${error.message}`);
+        if (existingRecord) {
+          // Update existing record
+          const { data, error } = await supabase
+            .from('website_sections')
+            .update({
+              settings: newSettings,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingRecord.id)
+            .select('id, settings');
+          
+          if (error) {
+            console.error("Error updating delivery settings:", error);
+            throw new Error(`Update failed: ${error.message}`);
+          }
+          
+          console.log("Settings updated successfully:", data);
+          return data;
+        } else {
+          // Insert new record
+          const { data, error } = await supabase
+            .from('website_sections')
+            .insert({
+              name: 'delivery_settings',
+              type: 'delivery_settings',
+              title: 'Delivery Settings',
+              settings: newSettings,
+              position: 1,
+              active: true
+            })
+            .select('id, settings');
+          
+          if (error) {
+            console.error("Error inserting delivery settings:", error);
+            throw new Error(`Insert failed: ${error.message}`);
+          }
+          
+          console.log("Settings created successfully:", data);
+          return data;
         }
-        
-        console.log("Settings updated successfully:", data);
-        return data;
-      } else {
-        // Insert new record
-        const { data, error } = await supabase
-          .from('website_sections')
-          .insert({
-            name: 'delivery_settings',
-            type: 'delivery_settings',
-            title: 'Delivery Settings',
-            settings: newSettings,
-            position: 1,
-            active: true
-          })
-          .select('id, settings');
-        
-        if (error) {
-          console.error("Error inserting delivery settings:", error);
-          throw new Error(`Insert failed: ${error.message}`);
-        }
-        
-        console.log("Settings created successfully:", data);
-        return data;
+      } catch (error) {
+        console.error("Mutation error:", error);
+        throw error;
       }
     },
     onSuccess: () => {
