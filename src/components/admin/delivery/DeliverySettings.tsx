@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
@@ -42,6 +41,7 @@ const DeliverySettings = () => {
       console.log("Fetching delivery settings...");
       
       try {
+        // Use the service role or ensure we have proper permissions
         const { data, error } = await supabase
           .from('website_sections')
           .select('id, settings')
@@ -50,6 +50,7 @@ const DeliverySettings = () => {
         
         if (error) {
           console.error("Error fetching delivery settings:", error);
+          console.error("Error details:", JSON.stringify(error, null, 2));
           throw error;
         }
         
@@ -57,7 +58,7 @@ const DeliverySettings = () => {
         return data?.settings || null;
       } catch (error) {
         console.error("Query error:", error);
-        return null;
+        throw error; // Re-throw to handle in UI
       }
     }
   });
@@ -65,21 +66,27 @@ const DeliverySettings = () => {
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: DeliverySettings) => {
       console.log("Saving delivery settings:", newSettings);
+      console.log("Current user session:", await supabase.auth.getSession());
       
       try {
-        // First check if a record exists
+        // First check if a record exists - be very explicit about what we're selecting
+        console.log("Checking for existing delivery settings record...");
         const { data: existingRecord, error: fetchError } = await supabase
           .from('website_sections')
-          .select('id')
+          .select('id, name, type')
           .eq('type', 'delivery_settings')
           .maybeSingle();
         
         if (fetchError) {
           console.error("Error checking existing record:", fetchError);
-          throw new Error(`Database error: ${fetchError.message}`);
+          console.error("Fetch error details:", JSON.stringify(fetchError, null, 2));
+          throw new Error(`Failed to check existing settings: ${fetchError.message}`);
         }
 
+        console.log("Existing record check result:", existingRecord);
+
         if (existingRecord) {
+          console.log("Updating existing record with ID:", existingRecord.id);
           // Update existing record
           const { data, error } = await supabase
             .from('website_sections')
@@ -88,16 +95,18 @@ const DeliverySettings = () => {
               updated_at: new Date().toISOString()
             })
             .eq('id', existingRecord.id)
-            .select('id, settings');
+            .select('id, settings, updated_at');
           
           if (error) {
             console.error("Error updating delivery settings:", error);
+            console.error("Update error details:", JSON.stringify(error, null, 2));
             throw new Error(`Update failed: ${error.message}`);
           }
           
           console.log("Settings updated successfully:", data);
           return data;
         } else {
+          console.log("Creating new delivery settings record...");
           // Insert new record
           const { data, error } = await supabase
             .from('website_sections')
@@ -109,10 +118,11 @@ const DeliverySettings = () => {
               position: 1,
               active: true
             })
-            .select('id, settings');
+            .select('id, settings, created_at');
           
           if (error) {
             console.error("Error inserting delivery settings:", error);
+            console.error("Insert error details:", JSON.stringify(error, null, 2));
             throw new Error(`Insert failed: ${error.message}`);
           }
           
