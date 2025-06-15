@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { LoginFormData } from "@/types";
 import { Mail, Lock } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { toast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const { login, isLoading } = useAuth();
@@ -17,6 +18,7 @@ const Login = () => {
   const location = useLocation();
   
   const from = location.state?.from || "/";
+  const registrationSuccess = location.state?.registrationSuccess;
   
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -24,6 +26,16 @@ const Login = () => {
   });
   
   const [error, setError] = useState<string | null>(null);
+  
+  // Show success message if coming from registration
+  useEffect(() => {
+    if (registrationSuccess) {
+      toast({
+        title: "Welcome to The Food Basket!",
+        description: "Please sign in with your new account credentials.",
+      });
+    }
+  }, [registrationSuccess]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

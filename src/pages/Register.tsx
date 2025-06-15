@@ -45,12 +45,12 @@ const Register = () => {
       
       // Show success toast
       toast({
-        title: "Registration successful",
-        description: "Your account has been created.",
+        title: "Registration successful!",
+        description: "Your account has been created successfully. Please sign in to continue.",
       });
       
-      // Redirect to home page
-      navigate("/");
+      // Redirect to login page with success state
+      navigate("/login", { state: { registrationSuccess: true } });
     } catch (error: any) {
       // Handle registration errors
       console.error("Registration error:", error);
