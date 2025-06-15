@@ -12,9 +12,16 @@ export const useCheckout = () => {
   const { items, total, checkout } = useCart();
   const { user, isAuthenticated } = useAuth();
   
+  console.log("useCheckout initialized:", {
+    itemsCount: items.length,
+    total,
+    isAuthenticated,
+    userPresent: !!user
+  });
+  
   const [currentStep, setCurrentStep] = useState("delivery");
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(
-    user?.addresses.find(addr => addr.isDefault) || null
+    user?.addresses?.find(addr => addr.isDefault) || null
   );
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
@@ -22,6 +29,8 @@ export const useCheckout = () => {
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
 
   const nextStep = () => {
+    console.log("Moving to next step from:", currentStep);
+    
     if (currentStep === "delivery") {
       if (!selectedDelivery) {
         toast({
@@ -47,6 +56,8 @@ export const useCheckout = () => {
   };
   
   const prevStep = () => {
+    console.log("Moving to previous step from:", currentStep);
+    
     if (currentStep === "payment") {
       setCurrentStep("delivery");
     } else if (currentStep === "confirmation") {
@@ -55,6 +66,13 @@ export const useCheckout = () => {
   };
   
   const placeOrder = async (deliveryAddress: any) => {
+    console.log("Placing order with:", {
+      user: !!user,
+      selectedDelivery: !!selectedDelivery,
+      selectedPayment: !!selectedPayment,
+      deliveryAddress
+    });
+    
     if (!user || !selectedDelivery || !selectedPayment) {
       toast({
         title: "Incomplete information",
@@ -91,6 +109,8 @@ export const useCheckout = () => {
         deliveryOptionForCheckout,
         selectedPayment
       );
+      
+      console.log("Order placed successfully:", order);
       
       setCompletedOrder(order);
       setCurrentStep("confirmation");

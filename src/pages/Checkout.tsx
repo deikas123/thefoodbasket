@@ -7,7 +7,6 @@ import {
   ArrowLeft, 
   CreditCard, 
   Truck, 
-  Clock, 
   CheckCircle,
   ShoppingCart
 } from "lucide-react";
@@ -27,6 +26,8 @@ const steps = [
 ];
 
 const Checkout = () => {
+  console.log("Checkout component rendered");
+  
   const {
     currentStep,
     selectedAddress,
@@ -47,11 +48,20 @@ const Checkout = () => {
     navigate
   } = useCheckout();
 
+  console.log("Checkout state:", {
+    currentStep,
+    itemsCount: items.length,
+    isAuthenticated,
+    user: user ? "present" : "null"
+  });
+
   const [deliveryAddress, setDeliveryAddress] = useState(
     convertToDeliveryAddress(selectedAddress)
   );
   
+  // Show empty cart state if no items and not on confirmation step
   if (items.length === 0 && currentStep !== "confirmation") {
+    console.log("Showing empty cart state");
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -63,9 +73,21 @@ const Checkout = () => {
     );
   }
   
+  // Redirect to login if not authenticated (but not during confirmation)
   if (!isAuthenticated && currentStep !== "confirmation") {
+    console.log("User not authenticated, redirecting to login");
     navigate("/login", { state: { from: "/checkout" } });
-    return null;
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow pt-24 pb-16 px-4 flex items-center justify-center">
+          <div className="text-center">
+            <p>Redirecting to login...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   const handleAddressChange = (newAddress: any) => {
@@ -88,6 +110,8 @@ const Checkout = () => {
   const handlePlaceOrder = () => {
     placeOrder(deliveryAddress);
   };
+  
+  console.log("Rendering checkout with step:", currentStep);
   
   return (
     <div className="flex flex-col min-h-screen">
