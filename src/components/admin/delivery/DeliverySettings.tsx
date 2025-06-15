@@ -26,8 +26,8 @@ interface DeliverySettings {
 
 const DeliverySettings = () => {
   const [settings, setSettings] = React.useState<DeliverySettings>({
-    minimum_checkout_amount: 1500, // Updated to KSH equivalent
-    warehouse_location: { lat: -1.2921, lng: 36.8219 }, // Nairobi default
+    minimum_checkout_amount: 1500,
+    warehouse_location: { lat: -1.2921, lng: 36.8219 },
     scheduled_delivery: {
       pricing_type: 'free',
       min_days_advance: 1
@@ -40,24 +40,20 @@ const DeliverySettings = () => {
     queryKey: ["delivery-settings"],
     queryFn: async () => {
       console.log("Fetching delivery settings...");
-      try {
-        const { data, error } = await supabase
-          .from('website_sections')
-          .select('settings')
-          .eq('type', 'delivery_settings')
-          .maybeSingle();
-        
-        if (error) {
-          console.error("Error fetching delivery settings:", error);
-          throw error;
-        }
-        
-        console.log("Fetched delivery settings:", data);
-        return data?.settings || null;
-      } catch (error) {
-        console.error("Failed to fetch delivery settings:", error);
+      
+      const { data, error } = await supabase
+        .from('website_sections')
+        .select('id, settings')
+        .eq('type', 'delivery_settings')
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error fetching delivery settings:", error);
         return null;
       }
+      
+      console.log("Fetched delivery settings:", data);
+      return data?.settings || null;
     }
   });
 
@@ -65,72 +61,67 @@ const DeliverySettings = () => {
     mutationFn: async (newSettings: DeliverySettings) => {
       console.log("Saving delivery settings:", newSettings);
       
-      try {
-        // First, try to find existing record
-        const { data: existingRecord, error: fetchError } = await supabase
-          .from('website_sections')
-          .select('id')
-          .eq('type', 'delivery_settings')
-          .maybeSingle();
-        
-        if (fetchError) {
-          console.error("Error checking existing record:", fetchError);
-          throw fetchError;
-        }
+      // First check if a record exists
+      const { data: existingRecord, error: fetchError } = await supabase
+        .from('website_sections')
+        .select('id')
+        .eq('type', 'delivery_settings')
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.error("Error checking existing record:", fetchError);
+        throw new Error(`Database error: ${fetchError.message}`);
+      }
 
-        let result;
-        if (existingRecord) {
-          // Update existing record
-          const { data, error } = await supabase
-            .from('website_sections')
-            .update({
-              settings: newSettings,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', existingRecord.id)
-            .select('*');
-          
-          if (error) {
-            console.error("Error updating delivery settings:", error);
-            throw error;
-          }
-          result = data;
-        } else {
-          // Insert new record
-          const { data, error } = await supabase
-            .from('website_sections')
-            .insert({
-              name: 'delivery_settings',
-              type: 'delivery_settings',
-              title: 'Delivery Settings',
-              settings: newSettings,
-              position: 1,
-              active: true
-            })
-            .select('*');
-          
-          if (error) {
-            console.error("Error inserting delivery settings:", error);
-            throw error;
-          }
-          result = data;
+      if (existingRecord) {
+        // Update existing record
+        const { data, error } = await supabase
+          .from('website_sections')
+          .update({
+            settings: newSettings,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRecord.id)
+          .select('id, settings');
+        
+        if (error) {
+          console.error("Error updating delivery settings:", error);
+          throw new Error(`Update failed: ${error.message}`);
         }
         
-        console.log("Settings operation result:", result);
-        return result;
-      } catch (error) {
-        console.error("Failed to save delivery settings:", error);
-        throw error;
+        console.log("Settings updated successfully:", data);
+        return data;
+      } else {
+        // Insert new record
+        const { data, error } = await supabase
+          .from('website_sections')
+          .insert({
+            name: 'delivery_settings',
+            type: 'delivery_settings',
+            title: 'Delivery Settings',
+            settings: newSettings,
+            position: 1,
+            active: true
+          })
+          .select('id, settings');
+        
+        if (error) {
+          console.error("Error inserting delivery settings:", error);
+          throw new Error(`Insert failed: ${error.message}`);
+        }
+        
+        console.log("Settings created successfully:", data);
+        return data;
       }
     },
-    onSuccess: (data) => {
-      console.log("Settings saved successfully:", data);
+    onSuccess: () => {
+      console.log("Settings operation completed successfully");
       queryClient.invalidateQueries({ queryKey: ["delivery-settings"] });
-      toast.success("Settings updated successfully");
+      toast.success("Delivery settings saved successfully!");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Failed to save settings:", error);
-      toast.error(`Failed to save settings: ${error.message || 'Unknown error'}`);
+      toast.error(`Failed to save settings: ${error.message}`);
     }
   });
 
