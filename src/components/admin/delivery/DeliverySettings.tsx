@@ -36,48 +36,92 @@ const DeliverySettings = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: deliverySettings } = useQuery({
+  const { data: deliverySettings, isLoading } = useQuery({
     queryKey: ["delivery-settings"],
     queryFn: async () => {
+      console.log("Fetching delivery settings...");
       const { data, error } = await supabase
         .from('website_sections')
         .select('settings')
         .eq('type', 'delivery_settings')
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
-      return data?.settings || settings;
+      if (error) {
+        console.error("Error fetching delivery settings:", error);
+        throw error;
+      }
+      
+      console.log("Fetched delivery settings:", data);
+      return data?.settings || null;
     }
   });
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: DeliverySettings) => {
-      const { error } = await supabase
+      console.log("Saving delivery settings:", newSettings);
+      
+      const { data, error } = await supabase
         .from('website_sections')
         .upsert({
           name: 'delivery_settings',
           type: 'delivery_settings',
           title: 'Delivery Settings',
-          settings: newSettings
-        }, { onConflict: 'type' });
+          settings: newSettings,
+          position: 1,
+          active: true
+        }, { 
+          onConflict: 'type',
+          ignoreDuplicates: false
+        })
+        .select();
       
-      if (error) throw error;
+      console.log("Upsert result:", { data, error });
+      
+      if (error) {
+        console.error("Error saving delivery settings:", error);
+        throw error;
+      }
+      
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Settings saved successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["delivery-settings"] });
       toast.success("Settings updated successfully");
+    },
+    onError: (error) => {
+      console.error("Failed to save settings:", error);
+      toast.error(`Failed to save settings: ${error.message}`);
     }
   });
 
   const handleSettingsUpdate = () => {
+    console.log("Attempting to save settings:", settings);
     updateSettingsMutation.mutate(settings);
   };
 
   React.useEffect(() => {
     if (deliverySettings) {
+      console.log("Setting state with fetched settings:", deliverySettings);
       setSettings(deliverySettings);
     }
   }, [deliverySettings]);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Settings className="mr-2 h-5 w-5" />
+            Delivery Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Loading settings...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -98,10 +142,14 @@ const DeliverySettings = () => {
             type="number"
             step="0.01"
             value={settings.minimum_checkout_amount}
-            onChange={(e) => setSettings(prev => ({ 
-              ...prev, 
-              minimum_checkout_amount: parseFloat(e.target.value) || 0 
-            }))}
+            onChange={(e) => {
+              const newValue = parseFloat(e.target.value) || 0;
+              console.log("Minimum checkout amount changed to:", newValue);
+              setSettings(prev => ({ 
+                ...prev, 
+                minimum_checkout_amount: newValue
+              }));
+            }}
           />
         </div>
         
@@ -113,13 +161,17 @@ const DeliverySettings = () => {
               type="number"
               step="0.000001"
               value={settings.warehouse_location.lat}
-              onChange={(e) => setSettings(prev => ({ 
-                ...prev, 
-                warehouse_location: {
-                  ...prev.warehouse_location,
-                  lat: parseFloat(e.target.value) || 0
-                }
-              }))}
+              onChange={(e) => {
+                const newValue = parseFloat(e.target.value) || 0;
+                console.log("Warehouse latitude changed to:", newValue);
+                setSettings(prev => ({ 
+                  ...prev, 
+                  warehouse_location: {
+                    ...prev.warehouse_location,
+                    lat: newValue
+                  }
+                }));
+              }}
             />
           </div>
           <div className="grid gap-2">
@@ -129,13 +181,17 @@ const DeliverySettings = () => {
               type="number"
               step="0.000001"
               value={settings.warehouse_location.lng}
-              onChange={(e) => setSettings(prev => ({ 
-                ...prev, 
-                warehouse_location: {
-                  ...prev.warehouse_location,
-                  lng: parseFloat(e.target.value) || 0
-                }
-              }))}
+              onChange={(e) => {
+                const newValue = parseFloat(e.target.value) || 0;
+                console.log("Warehouse longitude changed to:", newValue);
+                setSettings(prev => ({ 
+                  ...prev, 
+                  warehouse_location: {
+                    ...prev.warehouse_location,
+                    lng: newValue
+                  }
+                }));
+              }}
             />
           </div>
         </div>
@@ -147,15 +203,16 @@ const DeliverySettings = () => {
             <Label htmlFor="pricing-type">Pricing Type</Label>
             <Select 
               value={settings.scheduled_delivery.pricing_type} 
-              onValueChange={(value: 'free' | 'fixed' | 'percentage') => 
+              onValueChange={(value: 'free' | 'fixed' | 'percentage') => {
+                console.log("Pricing type changed to:", value);
                 setSettings(prev => ({ 
                   ...prev, 
                   scheduled_delivery: {
                     ...prev.scheduled_delivery,
                     pricing_type: value
                   }
-                }))
-              }
+                }));
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select pricing type" />
@@ -176,13 +233,17 @@ const DeliverySettings = () => {
                 type="number"
                 step="0.01"
                 value={settings.scheduled_delivery.fixed_price || 0}
-                onChange={(e) => setSettings(prev => ({ 
-                  ...prev, 
-                  scheduled_delivery: {
-                    ...prev.scheduled_delivery,
-                    fixed_price: parseFloat(e.target.value) || 0
-                  }
-                }))}
+                onChange={(e) => {
+                  const newValue = parseFloat(e.target.value) || 0;
+                  console.log("Fixed price changed to:", newValue);
+                  setSettings(prev => ({ 
+                    ...prev, 
+                    scheduled_delivery: {
+                      ...prev.scheduled_delivery,
+                      fixed_price: newValue
+                    }
+                  }));
+                }}
               />
             </div>
           )}
@@ -197,13 +258,17 @@ const DeliverySettings = () => {
                 min="0"
                 max="100"
                 value={settings.scheduled_delivery.percentage_of_subtotal || 0}
-                onChange={(e) => setSettings(prev => ({ 
-                  ...prev, 
-                  scheduled_delivery: {
-                    ...prev.scheduled_delivery,
-                    percentage_of_subtotal: parseFloat(e.target.value) || 0
-                  }
-                }))}
+                onChange={(e) => {
+                  const newValue = parseFloat(e.target.value) || 0;
+                  console.log("Percentage changed to:", newValue);
+                  setSettings(prev => ({ 
+                    ...prev, 
+                    scheduled_delivery: {
+                      ...prev.scheduled_delivery,
+                      percentage_of_subtotal: newValue
+                    }
+                  }));
+                }}
               />
             </div>
           )}
@@ -215,19 +280,27 @@ const DeliverySettings = () => {
               type="number"
               min="0"
               value={settings.scheduled_delivery.min_days_advance || 1}
-              onChange={(e) => setSettings(prev => ({ 
-                ...prev, 
-                scheduled_delivery: {
-                  ...prev.scheduled_delivery,
-                  min_days_advance: parseInt(e.target.value) || 1
-                }
-              }))}
+              onChange={(e) => {
+                const newValue = parseInt(e.target.value) || 1;
+                console.log("Min days advance changed to:", newValue);
+                setSettings(prev => ({ 
+                  ...prev, 
+                  scheduled_delivery: {
+                    ...prev.scheduled_delivery,
+                    min_days_advance: newValue
+                  }
+                }));
+              }}
             />
           </div>
         </div>
 
-        <Button onClick={handleSettingsUpdate} disabled={updateSettingsMutation.isPending}>
-          Save Settings
+        <Button 
+          onClick={handleSettingsUpdate} 
+          disabled={updateSettingsMutation.isPending}
+          className="w-full"
+        >
+          {updateSettingsMutation.isPending ? "Saving..." : "Save Settings"}
         </Button>
       </CardContent>
     </Card>
