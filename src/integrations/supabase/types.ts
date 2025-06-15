@@ -1165,9 +1165,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_delivery_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       process_auto_replenish_orders: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      upsert_delivery_settings: {
+        Args: { settings_data: Json }
+        Returns: Json
       }
     }
     Enums: {

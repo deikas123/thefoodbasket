@@ -39,101 +39,35 @@ const DeliverySettings = () => {
   const { data: deliverySettings, isLoading } = useQuery({
     queryKey: ["delivery-settings"],
     queryFn: async () => {
-      console.log("Fetching delivery settings...");
+      console.log("Fetching delivery settings using new function...");
       
-      try {
-        // Use a simpler query with basic authentication bypass
-        const { data, error } = await supabase
-          .rpc('get_delivery_settings')
-          .maybeSingle();
-        
-        if (error) {
-          console.error("RPC Error:", error);
-          // Fallback to direct query without RLS
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('website_sections')
-            .select('settings')
-            .eq('type', 'delivery_settings')
-            .eq('name', 'delivery_settings')
-            .limit(1)
-            .maybeSingle();
-          
-          if (fallbackError) {
-            console.error("Fallback query error:", fallbackError);
-            return null;
-          }
-          
-          console.log("Fallback data retrieved:", fallbackData);
-          return fallbackData?.settings || null;
-        }
-        
-        console.log("RPC data retrieved:", data);
-        return data || null;
-      } catch (error) {
-        console.error("Query error:", error);
+      const { data, error } = await supabase.rpc('get_delivery_settings');
+      
+      if (error) {
+        console.error("Error fetching delivery settings:", error);
         return null;
       }
+      
+      console.log("Successfully fetched delivery settings:", data);
+      return data;
     }
   });
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: DeliverySettings) => {
-      console.log("Saving delivery settings:", newSettings);
+      console.log("Saving delivery settings using new function:", newSettings);
       
-      try {
-        // Try using RPC function first
-        const { data: rpcData, error: rpcError } = await supabase
-          .rpc('upsert_delivery_settings', { settings_data: newSettings });
-        
-        if (rpcError) {
-          console.error("RPC upsert error:", rpcError);
-          
-          // Fallback to manual upsert
-          const { data: existingData, error: checkError } = await supabase
-            .from('website_sections')
-            .select('id')
-            .eq('type', 'delivery_settings')
-            .limit(1)
-            .maybeSingle();
-          
-          if (checkError) {
-            throw new Error(`Check failed: ${checkError.message}`);
-          }
-
-          if (existingData) {
-            // Update existing
-            const { data, error } = await supabase
-              .from('website_sections')
-              .update({ settings: newSettings })
-              .eq('id', existingData.id)
-              .select('id, settings');
-            
-            if (error) throw new Error(`Update failed: ${error.message}`);
-            return data;
-          } else {
-            // Insert new
-            const { data, error } = await supabase
-              .from('website_sections')
-              .insert({
-                name: 'delivery_settings',
-                type: 'delivery_settings',
-                title: 'Delivery Settings', 
-                settings: newSettings,
-                position: 1,
-                active: true
-              })
-              .select('id, settings');
-            
-            if (error) throw new Error(`Insert failed: ${error.message}`);
-            return data;
-          }
-        }
-        
-        return rpcData;
-      } catch (error) {
-        console.error("Mutation error:", error);
-        throw error;
+      const { data, error } = await supabase.rpc('upsert_delivery_settings', { 
+        settings_data: newSettings 
+      });
+      
+      if (error) {
+        console.error("Error saving delivery settings:", error);
+        throw new Error(`Failed to save settings: ${error.message}`);
       }
+      
+      console.log("Successfully saved delivery settings:", data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["delivery-settings"] });
