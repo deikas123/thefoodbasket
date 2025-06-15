@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
@@ -42,7 +41,7 @@ const DeliverySettings = () => {
       console.log("Fetching delivery settings...");
       const { data, error } = await supabase
         .from('website_sections')
-        .select('settings')
+        .select('*')
         .eq('type', 'delivery_settings')
         .maybeSingle();
       
@@ -60,29 +59,58 @@ const DeliverySettings = () => {
     mutationFn: async (newSettings: DeliverySettings) => {
       console.log("Saving delivery settings:", newSettings);
       
-      const { data, error } = await supabase
+      // First, try to find existing record
+      const { data: existingRecord, error: fetchError } = await supabase
         .from('website_sections')
-        .upsert({
-          name: 'delivery_settings',
-          type: 'delivery_settings',
-          title: 'Delivery Settings',
-          settings: newSettings,
-          position: 1,
-          active: true
-        }, { 
-          onConflict: 'type',
-          ignoreDuplicates: false
-        })
-        .select();
+        .select('id')
+        .eq('type', 'delivery_settings')
+        .maybeSingle();
       
-      console.log("Upsert result:", { data, error });
-      
-      if (error) {
-        console.error("Error saving delivery settings:", error);
-        throw error;
+      if (fetchError) {
+        console.error("Error checking existing record:", fetchError);
+        throw fetchError;
+      }
+
+      let result;
+      if (existingRecord) {
+        // Update existing record
+        const { data, error } = await supabase
+          .from('website_sections')
+          .update({
+            settings: newSettings,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRecord.id)
+          .select();
+        
+        if (error) {
+          console.error("Error updating delivery settings:", error);
+          throw error;
+        }
+        result = data;
+      } else {
+        // Insert new record
+        const { data, error } = await supabase
+          .from('website_sections')
+          .insert({
+            name: 'delivery_settings',
+            type: 'delivery_settings',
+            title: 'Delivery Settings',
+            settings: newSettings,
+            position: 1,
+            active: true
+          })
+          .select();
+        
+        if (error) {
+          console.error("Error inserting delivery settings:", error);
+          throw error;
+        }
+        result = data;
       }
       
-      return data;
+      console.log("Settings operation result:", result);
+      return result;
     },
     onSuccess: (data) => {
       console.log("Settings saved successfully:", data);
