@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
@@ -39,19 +40,24 @@ const DeliverySettings = () => {
     queryKey: ["delivery-settings"],
     queryFn: async () => {
       console.log("Fetching delivery settings...");
-      const { data, error } = await supabase
-        .from('website_sections')
-        .select('*')
-        .eq('type', 'delivery_settings')
-        .maybeSingle();
-      
-      if (error) {
-        console.error("Error fetching delivery settings:", error);
-        throw error;
+      try {
+        const { data, error } = await supabase
+          .from('website_sections')
+          .select('settings')
+          .eq('type', 'delivery_settings')
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error fetching delivery settings:", error);
+          throw error;
+        }
+        
+        console.log("Fetched delivery settings:", data);
+        return data?.settings || null;
+      } catch (error) {
+        console.error("Failed to fetch delivery settings:", error);
+        return null;
       }
-      
-      console.log("Fetched delivery settings:", data);
-      return data?.settings || null;
     }
   });
 
@@ -59,67 +65,72 @@ const DeliverySettings = () => {
     mutationFn: async (newSettings: DeliverySettings) => {
       console.log("Saving delivery settings:", newSettings);
       
-      // First, try to find existing record
-      const { data: existingRecord, error: fetchError } = await supabase
-        .from('website_sections')
-        .select('id')
-        .eq('type', 'delivery_settings')
-        .maybeSingle();
-      
-      if (fetchError) {
-        console.error("Error checking existing record:", fetchError);
-        throw fetchError;
-      }
+      try {
+        // First, try to find existing record
+        const { data: existingRecord, error: fetchError } = await supabase
+          .from('website_sections')
+          .select('id')
+          .eq('type', 'delivery_settings')
+          .maybeSingle();
+        
+        if (fetchError) {
+          console.error("Error checking existing record:", fetchError);
+          throw fetchError;
+        }
 
-      let result;
-      if (existingRecord) {
-        // Update existing record
-        const { data, error } = await supabase
-          .from('website_sections')
-          .update({
-            settings: newSettings,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingRecord.id)
-          .select();
-        
-        if (error) {
-          console.error("Error updating delivery settings:", error);
-          throw error;
+        let result;
+        if (existingRecord) {
+          // Update existing record
+          const { data, error } = await supabase
+            .from('website_sections')
+            .update({
+              settings: newSettings,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingRecord.id)
+            .select('*');
+          
+          if (error) {
+            console.error("Error updating delivery settings:", error);
+            throw error;
+          }
+          result = data;
+        } else {
+          // Insert new record
+          const { data, error } = await supabase
+            .from('website_sections')
+            .insert({
+              name: 'delivery_settings',
+              type: 'delivery_settings',
+              title: 'Delivery Settings',
+              settings: newSettings,
+              position: 1,
+              active: true
+            })
+            .select('*');
+          
+          if (error) {
+            console.error("Error inserting delivery settings:", error);
+            throw error;
+          }
+          result = data;
         }
-        result = data;
-      } else {
-        // Insert new record
-        const { data, error } = await supabase
-          .from('website_sections')
-          .insert({
-            name: 'delivery_settings',
-            type: 'delivery_settings',
-            title: 'Delivery Settings',
-            settings: newSettings,
-            position: 1,
-            active: true
-          })
-          .select();
         
-        if (error) {
-          console.error("Error inserting delivery settings:", error);
-          throw error;
-        }
-        result = data;
+        console.log("Settings operation result:", result);
+        return result;
+      } catch (error) {
+        console.error("Failed to save delivery settings:", error);
+        throw error;
       }
-      
-      console.log("Settings operation result:", result);
-      return result;
     },
     onSuccess: (data) => {
       console.log("Settings saved successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["delivery-settings"] });
       toast.success("Settings updated successfully");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Failed to save settings:", error);
-      toast.error(`Failed to save settings: ${error.message}`);
+      toast.error(`Failed to save settings: ${error.message || 'Unknown error'}`);
     }
   });
 
