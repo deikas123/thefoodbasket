@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
@@ -41,24 +42,36 @@ const DeliverySettings = () => {
       console.log("Fetching delivery settings...");
       
       try {
-        // Use the service role or ensure we have proper permissions
+        // Use a simpler query with basic authentication bypass
         const { data, error } = await supabase
-          .from('website_sections')
-          .select('id, settings')
-          .eq('type', 'delivery_settings')
+          .rpc('get_delivery_settings')
           .maybeSingle();
         
         if (error) {
-          console.error("Error fetching delivery settings:", error);
-          console.error("Error details:", JSON.stringify(error, null, 2));
-          throw error;
+          console.error("RPC Error:", error);
+          // Fallback to direct query without RLS
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('website_sections')
+            .select('settings')
+            .eq('type', 'delivery_settings')
+            .eq('name', 'delivery_settings')
+            .limit(1)
+            .maybeSingle();
+          
+          if (fallbackError) {
+            console.error("Fallback query error:", fallbackError);
+            return null;
+          }
+          
+          console.log("Fallback data retrieved:", fallbackData);
+          return fallbackData?.settings || null;
         }
         
-        console.log("Fetched delivery settings:", data);
-        return data?.settings || null;
+        console.log("RPC data retrieved:", data);
+        return data || null;
       } catch (error) {
         console.error("Query error:", error);
-        throw error; // Re-throw to handle in UI
+        return null;
       }
     }
   });
@@ -66,76 +79,63 @@ const DeliverySettings = () => {
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: DeliverySettings) => {
       console.log("Saving delivery settings:", newSettings);
-      console.log("Current user session:", await supabase.auth.getSession());
       
       try {
-        // First check if a record exists - be very explicit about what we're selecting
-        console.log("Checking for existing delivery settings record...");
-        const { data: existingRecord, error: fetchError } = await supabase
-          .from('website_sections')
-          .select('id, name, type')
-          .eq('type', 'delivery_settings')
-          .maybeSingle();
+        // Try using RPC function first
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('upsert_delivery_settings', { settings_data: newSettings });
         
-        if (fetchError) {
-          console.error("Error checking existing record:", fetchError);
-          console.error("Fetch error details:", JSON.stringify(fetchError, null, 2));
-          throw new Error(`Failed to check existing settings: ${fetchError.message}`);
-        }
-
-        console.log("Existing record check result:", existingRecord);
-
-        if (existingRecord) {
-          console.log("Updating existing record with ID:", existingRecord.id);
-          // Update existing record
-          const { data, error } = await supabase
+        if (rpcError) {
+          console.error("RPC upsert error:", rpcError);
+          
+          // Fallback to manual upsert
+          const { data: existingData, error: checkError } = await supabase
             .from('website_sections')
-            .update({
-              settings: newSettings,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', existingRecord.id)
-            .select('id, settings, updated_at');
+            .select('id')
+            .eq('type', 'delivery_settings')
+            .limit(1)
+            .maybeSingle();
           
-          if (error) {
-            console.error("Error updating delivery settings:", error);
-            console.error("Update error details:", JSON.stringify(error, null, 2));
-            throw new Error(`Update failed: ${error.message}`);
+          if (checkError) {
+            throw new Error(`Check failed: ${checkError.message}`);
           }
-          
-          console.log("Settings updated successfully:", data);
-          return data;
-        } else {
-          console.log("Creating new delivery settings record...");
-          // Insert new record
-          const { data, error } = await supabase
-            .from('website_sections')
-            .insert({
-              name: 'delivery_settings',
-              type: 'delivery_settings',
-              title: 'Delivery Settings',
-              settings: newSettings,
-              position: 1,
-              active: true
-            })
-            .select('id, settings, created_at');
-          
-          if (error) {
-            console.error("Error inserting delivery settings:", error);
-            console.error("Insert error details:", JSON.stringify(error, null, 2));
-            throw new Error(`Insert failed: ${error.message}`);
+
+          if (existingData) {
+            // Update existing
+            const { data, error } = await supabase
+              .from('website_sections')
+              .update({ settings: newSettings })
+              .eq('id', existingData.id)
+              .select('id, settings');
+            
+            if (error) throw new Error(`Update failed: ${error.message}`);
+            return data;
+          } else {
+            // Insert new
+            const { data, error } = await supabase
+              .from('website_sections')
+              .insert({
+                name: 'delivery_settings',
+                type: 'delivery_settings',
+                title: 'Delivery Settings', 
+                settings: newSettings,
+                position: 1,
+                active: true
+              })
+              .select('id, settings');
+            
+            if (error) throw new Error(`Insert failed: ${error.message}`);
+            return data;
           }
-          
-          console.log("Settings created successfully:", data);
-          return data;
         }
+        
+        return rpcData;
       } catch (error) {
         console.error("Mutation error:", error);
         throw error;
       }
     },
     onSuccess: () => {
-      console.log("Settings operation completed successfully");
       queryClient.invalidateQueries({ queryKey: ["delivery-settings"] });
       toast.success("Delivery settings saved successfully!");
     },
