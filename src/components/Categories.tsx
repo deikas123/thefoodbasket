@@ -50,7 +50,7 @@ const Categories = () => {
           {categories.map((category) => (
             <Link
               key={category.id}
-              to={`/categories/${category.id}`}
+              to={`/shop?category=${category.id}`}
               className="group relative overflow-hidden rounded-xl bg-gray-100 aspect-[4/3] transition-transform hover:scale-[1.02]"
             >
               {/* Category Image */}

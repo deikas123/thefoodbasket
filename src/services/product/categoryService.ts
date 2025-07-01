@@ -15,7 +15,7 @@ export const getCategories = async (): Promise<Category[]> => {
   try {
     const { data, error } = await supabase
       .from('categories')
-      .select('id, name, slug');
+      .select('id, name, slug, description, image');
     
     if (error) {
       console.error("Error fetching categories:", error);
@@ -37,6 +37,8 @@ export const getCategories = async (): Promise<Category[]> => {
         return {
           id: category.slug, // Use slug as ID for backwards compatibility
           name: category.name,
+          description: category.description,
+          image: category.image,
           productCount: count || 0
         };
       })

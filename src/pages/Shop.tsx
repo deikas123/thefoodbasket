@@ -60,7 +60,7 @@ const Shop = () => {
     queryFn: getCategories
   });
   
-  // Fetch products with filters - use category ID for filtering
+  // Fetch products with filters - use category slug for filtering
   const productsQuery = useQuery({
     queryKey: ["products", selectedCategory, searchTerm, priceRange, inStockOnly],
     queryFn: async () => {
