@@ -18,7 +18,25 @@ export const getProducts = async (
     
     // Apply filters if provided
     if (categoryId) {
-      query = query.eq('category_id', categoryId);
+      // Check if categoryId is actually a UUID (for direct category ID filtering)
+      // or if it's a slug and we need to convert it
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      
+      if (uuidRegex.test(categoryId)) {
+        // It's a UUID, use it directly
+        query = query.eq('category_id', categoryId);
+      } else {
+        // It might be a slug, first get the category ID
+        const { data: categoryData, error: categoryError } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', categoryId)
+          .single();
+        
+        if (!categoryError && categoryData) {
+          query = query.eq('category_id', categoryData.id);
+        }
+      }
     }
     
     if (searchTerm) {

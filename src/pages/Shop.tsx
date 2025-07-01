@@ -15,6 +15,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { FilterX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { 
   Select,
   SelectContent,
@@ -39,7 +40,7 @@ const Shop = () => {
   const initialCategory = searchParams.get("category") || "";
   const initialSearch = searchParams.get("search") || "";
   const initialMinPrice = Number(searchParams.get("minPrice")) || 0;
-  const initialMaxPrice = Number(searchParams.get("maxPrice")) || 50000; // Increased max price for KSH
+  const initialMaxPrice = Number(searchParams.get("maxPrice")) || 50000;
   const initialInStock = searchParams.get("inStock") === "true";
   const initialSort = searchParams.get("sort") || "name_asc";
   
@@ -47,6 +48,8 @@ const Shop = () => {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [priceRange, setPriceRange] = useState<[number, number]>([initialMinPrice, initialMaxPrice]);
+  const [manualPriceMin, setManualPriceMin] = useState(initialMinPrice.toString());
+  const [manualPriceMax, setManualPriceMax] = useState(initialMaxPrice.toString());
   const [inStockOnly, setInStockOnly] = useState(initialInStock);
   const [sortOption, setSortOption] = useState(initialSort);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -57,36 +60,25 @@ const Shop = () => {
     queryFn: getCategories
   });
   
-  // Fetch products with filters - use category ID instead of slug for filtering
+  // Fetch products with filters - use category ID for filtering
   const productsQuery = useQuery({
     queryKey: ["products", selectedCategory, searchTerm, priceRange, inStockOnly],
     queryFn: async () => {
-      // If a category is selected, we need to get the actual category UUID from the categories data
-      let categoryId = undefined;
-      if (selectedCategory && categoriesQuery.data) {
-        const category = categoriesQuery.data.find(cat => cat.id === selectedCategory);
-        if (category) {
-          // Get the actual database UUID for the category
-          const { data: categoryData } = await import("@/integrations/supabase/client").then(module => 
-            module.supabase
-              .from('categories')
-              .select('id')
-              .eq('slug', selectedCategory)
-              .single()
-          );
-          categoryId = categoryData?.id;
-        }
-      }
+      console.log("Fetching products with filters:", {
+        selectedCategory,
+        searchTerm,
+        priceRange,
+        inStockOnly
+      });
       
       return getProducts(
-        categoryId,
+        selectedCategory || undefined,
         searchTerm || undefined,
         priceRange[0],
         priceRange[1],
         inStockOnly
       );
-    },
-    enabled: !selectedCategory || !!categoriesQuery.data
+    }
   });
   
   // Update URL params when filters change
@@ -111,11 +103,35 @@ const Shop = () => {
     }
   }, [searchParams, searchTerm]);
   
+  // Handle manual price input changes
+  const handleManualPriceChange = (type: 'min' | 'max', value: string) => {
+    const numValue = parseInt(value) || 0;
+    if (type === 'min') {
+      setManualPriceMin(value);
+      if (numValue <= priceRange[1]) {
+        setPriceRange([numValue, priceRange[1]]);
+      }
+    } else {
+      setManualPriceMax(value);
+      if (numValue >= priceRange[0]) {
+        setPriceRange([priceRange[0], numValue]);
+      }
+    }
+  };
+  
+  // Update manual inputs when slider changes
+  useEffect(() => {
+    setManualPriceMin(priceRange[0].toString());
+    setManualPriceMax(priceRange[1].toString());
+  }, [priceRange]);
+  
   // Handle clearing all filters
   const clearFilters = () => {
     setSelectedCategory("");
     setSearchTerm("");
     setPriceRange([0, 50000]);
+    setManualPriceMin("0");
+    setManualPriceMax("50000");
     setInStockOnly(false);
     setSortOption("name_asc");
   };
@@ -180,17 +196,84 @@ const Shop = () => {
       
       <div>
         <h3 className="text-lg font-medium mb-4">Price Range</h3>
+        
+        {/* Manual Price Inputs */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div>
+            <Label htmlFor="min-price" className="text-xs">Min Price</Label>
+            <Input
+              id="min-price"
+              type="number"
+              value={manualPriceMin}
+              onChange={(e) => handleManualPriceChange('min', e.target.value)}
+              className="h-8 text-xs"
+              min="0"
+              max="50000"
+            />
+          </div>
+          <div>
+            <Label htmlFor="max-price" className="text-xs">Max Price</Label>
+            <Input
+              id="max-price"
+              type="number"
+              value={manualPriceMax}
+              onChange={(e) => handleManualPriceChange('max', e.target.value)}
+              className="h-8 text-xs"
+              min="0"
+              max="50000"
+            />
+          </div>
+        </div>
+        
+        {/* Price Slider */}
         <Slider
-          defaultValue={priceRange}
           value={priceRange}
-          max={50000} // Updated max price for KSH
-          step={100} // Larger step for KSH
+          max={50000}
+          step={50}
           onValueChange={(value) => setPriceRange(value as [number, number])}
-          className="mb-6"
+          className="mb-4"
         />
-        <div className="flex items-center justify-between">
+        
+        {/* Price Display */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>{formatCurrency(priceRange[0])}</span>
           <span>{formatCurrency(priceRange[1])}</span>
+        </div>
+        
+        {/* Quick Price Buttons */}
+        <div className="grid grid-cols-2 gap-1 mt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setPriceRange([0, 1000])}
+          >
+            Under {formatCurrency(1000)}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setPriceRange([1000, 5000])}
+          >
+            {formatCurrency(1000)} - {formatCurrency(5000)}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setPriceRange([5000, 15000])}
+          >
+            {formatCurrency(5000)} - {formatCurrency(15000)}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setPriceRange([15000, 50000])}
+          >
+            Over {formatCurrency(15000)}
+          </Button>
         </div>
       </div>
       
