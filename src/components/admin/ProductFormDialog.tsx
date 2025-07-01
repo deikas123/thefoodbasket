@@ -14,6 +14,7 @@ import ProductDiscountFeaturedFields from "./product/ProductDiscountFeaturedFiel
 import ProductTagsField from "./product/ProductTagsField";
 import { useProductFormSubmit } from "./product/useProductFormSubmit";
 import { productSchema, ProductFormValues } from "@/types/productForm";
+import { getCategories } from "@/services/product/categoryService";
 
 import {
   Dialog,
@@ -38,22 +39,10 @@ interface ProductFormDialogProps {
 }
 
 const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogProps) => {
-  // Fetch categories from database
-  const { data: categories } = useQuery({
+  // Fetch categories using the service function
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('id, name, slug')
-        .order('name');
-      
-      if (error) {
-        console.error("Error fetching categories:", error);
-        return [];
-      }
-      
-      return data;
-    }
+    queryFn: getCategories
   });
 
   // Fetch all available tags
@@ -131,6 +120,9 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
     }
   }, [product, form, productTags]);
 
+  console.log("Categories data:", categories);
+  console.log("Categories loading:", categoriesLoading);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -159,7 +151,11 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
               )}
             />
 
-            <ProductCategoryField form={form} categories={categories} />
+            <ProductCategoryField 
+              form={form} 
+              categories={categories} 
+              isLoading={categoriesLoading}
+            />
             <ProductDiscountFeaturedFields form={form} />
             <ProductTagsField form={form} availableTags={availableTags} />
 

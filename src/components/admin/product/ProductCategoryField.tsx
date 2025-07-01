@@ -3,19 +3,33 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { ProductFormValues } from "@/types/productForm";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Category {
   id: string;
   name: string;
-  slug: string;
+  productCount?: number;
 }
 
 interface ProductCategoryFieldProps {
   form: UseFormReturn<ProductFormValues>;
   categories?: Category[];
+  isLoading?: boolean;
 }
 
-const ProductCategoryField = ({ form, categories }: ProductCategoryFieldProps) => {
+const ProductCategoryField = ({ form, categories, isLoading }: ProductCategoryFieldProps) => {
+  console.log("ProductCategoryField - categories:", categories);
+  console.log("ProductCategoryField - isLoading:", isLoading);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Category</label>
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
   return (
     <FormField
       control={form.control}
@@ -33,13 +47,14 @@ const ProductCategoryField = ({ form, categories }: ProductCategoryFieldProps) =
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
             </FormControl>
-            <SelectContent>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.slug}>
-                  {category.name}
-                </SelectItem>
-              ))}
-              {(!categories || categories.length === 0) && (
+            <SelectContent className="bg-white z-50">
+              {categories && categories.length > 0 ? (
+                categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))
+              ) : (
                 <SelectItem value="" disabled>
                   No categories available
                 </SelectItem>
