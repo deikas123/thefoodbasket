@@ -1,5 +1,6 @@
 
 import { Link } from "react-router-dom";
+import { CreditCard } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -133,6 +134,56 @@ const Footer = () => {
                 </span>
               </li>
             </ul>
+          </div>
+        </div>
+        
+        {/* Payment Methods Section */}
+        <div className="border-t pt-8 mb-8">
+          <div className="flex flex-col items-center space-y-4">
+            <h3 className="text-lg font-semibold text-center">We Accept</h3>
+            <div className="flex flex-wrap justify-center items-center gap-6">
+              {/* Visa */}
+              <div className="flex items-center justify-center w-16 h-10 bg-white rounded border border-gray-200 shadow-sm">
+                <svg className="w-12 h-6" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18.5 11.5L14.5 20.5H11.5L9.5 13.5C9.4 13.1 9.2 12.8 8.9 12.6C8.1 12.2 7.2 11.9 6.3 11.7L6.4 11.5H11.1C11.7 11.5 12.2 11.9 12.3 12.5L13.7 18.5L16.7 11.5H18.5ZM20.5 20.5H18.8L20.5 11.5H22.2L20.5 20.5ZM29.5 13.5C29.5 12.9 29.9 12.5 30.5 12.5C31.5 12.4 32.5 12.6 33.4 13L34 11.8C33 11.4 31.9 11.2 30.8 11.2C29 11.2 27.7 12.1 27.7 13.4C27.7 14.4 28.6 14.9 29.3 15.2C30 15.5 30.3 15.7 30.3 16C30.3 16.4 29.8 16.6 29.3 16.6C28.3 16.6 27.3 16.3 26.4 15.8L25.8 17C26.8 17.5 27.9 17.8 29 17.8C31 17.8 32.3 16.9 32.3 15.5C32.3 13.7 29.5 13.6 29.5 13.5ZM41.5 11.5L40.1 15.5L38.9 11.5H37.1L39.5 20.5H41.2L44.5 11.5H41.5Z" fill="#1434CB"/>
+                </svg>
+              </div>
+              
+              {/* Mastercard */}
+              <div className="flex items-center justify-center w-16 h-10 bg-white rounded border border-gray-200 shadow-sm">
+                <svg className="w-10 h-6" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="15" cy="12" r="7" fill="#EB001B"/>
+                  <circle cx="25" cy="12" r="7" fill="#F79E1B"/>
+                  <path d="M20 5.5C21.5 6.8 22.5 8.8 22.5 11C22.5 13.2 21.5 15.2 20 16.5C18.5 15.2 17.5 13.2 17.5 11C17.5 8.8 18.5 6.8 20 5.5Z" fill="#FF5F00"/>
+                </svg>
+              </div>
+              
+              {/* PayPal */}
+              <div className="flex items-center justify-center w-16 h-10 bg-white rounded border border-gray-200 shadow-sm">
+                <svg className="w-10 h-6" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 5H15C18 5 20 7 20 10C20 13 18 15 15 15H12L11 19H8L8 5ZM11 12H14C15.5 12 16.5 11 16.5 9.5C16.5 8 15.5 7 14 7H11V12Z" fill="#003087"/>
+                  <path d="M18 8H25C28 8 30 10 30 13C30 16 28 18 25 18H22L21 22H18L18 8ZM21 15H24C25.5 15 26.5 14 26.5 12.5C26.5 11 25.5 10 24 10H21V15Z" fill="#009CDE"/>
+                </svg>
+              </div>
+              
+              {/* M-Pesa */}
+              <div className="flex items-center justify-center w-16 h-10 bg-white rounded border border-gray-200 shadow-sm">
+                <div className="text-green-600 font-bold text-xs">M-PESA</div>
+              </div>
+              
+              {/* Generic Credit Card */}
+              <div className="flex items-center justify-center w-16 h-10 bg-white rounded border border-gray-200 shadow-sm">
+                <CreditCard className="w-6 h-6 text-gray-600" />
+              </div>
+              
+              {/* Mobile Money */}
+              <div className="flex items-center justify-center w-16 h-10 bg-white rounded border border-gray-200 shadow-sm">
+                <div className="text-xs font-semibold text-gray-600">Mobile Money</div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Secure payments processed with industry-standard encryption
+            </p>
           </div>
         </div>
         
