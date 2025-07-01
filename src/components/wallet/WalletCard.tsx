@@ -3,36 +3,48 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
-import { getUserWallet, createWalletIfNotExist } from "@/services/walletService";
+import { getUserWallet, createWalletIfNotExist, addFundsToWallet } from "@/services/walletService";
 import { Wallet as WalletType } from "@/types/wallet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { addFundsToWallet } from "@/services/walletService";
+import { useAuth } from "@/context/AuthContext";
 
 const WalletCard = () => {
+  const { isAuthenticated } = useAuth();
   const [wallet, setWallet] = useState<WalletType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  useEffect(() => {
-    const fetchWallet = async () => {
-      setIsLoading(true);
-      try {
-        // Create wallet if it doesn't exist
-        const walletData = await createWalletIfNotExist();
-        setWallet(walletData);
-      } catch (error) {
-        console.error("Error fetching wallet:", error);
-      } finally {
-        setIsLoading(false);
+  const fetchWallet = async () => {
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Try to get existing wallet first
+      let walletData = await getUserWallet();
+      
+      // If no wallet exists, create one
+      if (!walletData) {
+        walletData = await createWalletIfNotExist();
       }
-    };
-    
+      
+      setWallet(walletData);
+    } catch (error) {
+      console.error("Error fetching wallet:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchWallet();
-  }, []);
+  }, [isAuthenticated]);
   
   const handleAddFunds = async () => {
     if (!amount || parseFloat(amount) <= 0) return;
@@ -42,8 +54,7 @@ const WalletCard = () => {
       const success = await addFundsToWallet(parseFloat(amount));
       if (success) {
         // Refresh wallet data
-        const walletData = await getUserWallet();
-        setWallet(walletData);
+        await fetchWallet();
         setAmount("");
         setIsDialogOpen(false);
       }
@@ -53,6 +64,24 @@ const WalletCard = () => {
       setIsProcessing(false);
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <Card>
+        <CardHeader className="bg-primary/5 pb-4">
+          <CardTitle className="flex items-center">
+            <Wallet className="mr-2" />
+            My Wallet
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <p className="text-muted-foreground text-center">
+            Please log in to access your wallet
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card>

@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { getUserWallet } from "@/services/walletService";
+import { Button } from "@/components/ui/button";
+import { getUserWallet, createWalletIfNotExist } from "@/services/walletService";
 import { Wallet } from "@/types/wallet";
 import { RefreshCw, Wallet as WalletIcon } from "lucide-react";
 import { formatCurrency } from "@/utils/currencyFormatter";
@@ -18,19 +19,25 @@ const WalletPaymentOption = ({ totalAmount, onWalletSelect }: WalletPaymentOptio
   const [useWallet, setUseWallet] = useState(false);
   const hasEnoughBalance = wallet ? wallet.balance >= totalAmount : false;
 
-  useEffect(() => {
-    const fetchWallet = async () => {
-      setIsLoading(true);
-      try {
-        const walletData = await getUserWallet();
-        setWallet(walletData);
-      } catch (error) {
-        console.error("Error fetching wallet:", error);
-      } finally {
-        setIsLoading(false);
+  const fetchWallet = async () => {
+    setIsLoading(true);
+    try {
+      let walletData = await getUserWallet();
+      
+      // If no wallet exists, create one
+      if (!walletData) {
+        walletData = await createWalletIfNotExist();
       }
-    };
-    
+      
+      setWallet(walletData);
+    } catch (error) {
+      console.error("Error fetching wallet:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchWallet();
   }, []);
   
@@ -38,6 +45,10 @@ const WalletPaymentOption = ({ totalAmount, onWalletSelect }: WalletPaymentOptio
     const selected = value === "wallet";
     setUseWallet(selected);
     onWalletSelect(selected);
+  };
+
+  const handleRefresh = () => {
+    fetchWallet();
   };
 
   return (
@@ -65,10 +76,15 @@ const WalletPaymentOption = ({ totalAmount, onWalletSelect }: WalletPaymentOptio
                   : `Insufficient balance: ${formatCurrency(wallet?.balance || 0)} (Need ${formatCurrency(totalAmount)})`
                 }
               </p>
-              <button className="text-primary flex items-center text-xs">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleRefresh}
+                className="text-primary flex items-center text-xs h-auto p-1"
+              >
                 <RefreshCw size={12} className="mr-1" />
                 Refresh
-              </button>
+              </Button>
             </div>
           )}
         </div>
