@@ -1,90 +1,90 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { 
-  LayoutGrid, 
-  ShoppingBag, 
-  Tag, 
-  Users, 
-  Truck, 
-  FileCheck, 
-  Settings,
+import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
   Package,
+  Users,
+  ShoppingCart,
+  Tag,
   Image,
-  Ticket,
-  BadgePercent,
-  Calendar,
+  Percent,
+  Tags,
+  Truck,
+  MapPin,
+  TicketPercent,
   Bell,
+  FileText,
+  CreditCard,
+  Award,
+  Settings,
   ChevronLeft,
   ChevronRight,
-  MapPin
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const AdminSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
 
-  const adminMenu = [
-    { name: "Dashboard", icon: LayoutGrid, path: "/admin" },
-    { name: "Products", icon: ShoppingBag, path: "/admin/products" },
-    { name: "Categories", icon: Tag, path: "/admin/categories" },
-    { name: "Tags", icon: Tag, path: "/admin/tags" },
-    { name: "Orders", icon: Package, path: "/admin/orders" },
-    { name: "Users", icon: Users, path: "/admin/users" },
-    { name: "Deliveries", icon: Truck, path: "/admin/deliveries" },
-    { name: "Delivery Zones", icon: MapPin, path: "/admin/delivery-zones" },
-    { name: "Banners", icon: Image, path: "/admin/banners" },
-    { name: "Coupons", icon: Ticket, path: "/admin/discount-codes" },
-    { name: "Daily Offers", icon: BadgePercent, path: "/admin/daily-offers" },
-    { name: "Pay Later Verification", icon: FileCheck, path: "/admin/pay-later-verification" },
-    { name: "Notifications", icon: Bell, path: "/admin/notifications" },
-    { name: "Content Management", icon: Image, path: "/admin/content-management" },
-    { name: "Settings", icon: Settings, path: "/admin/settings" },
+  const menuItems = [
+    { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
+    { icon: Users, label: "Users", path: "/admin/users" },
+    { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
+    { icon: Package, label: "Products", path: "/admin/products" },
+    { icon: Tag, label: "Categories", path: "/admin/categories" },
+    { icon: Image, label: "Banners", path: "/admin/banners" },
+    { icon: Percent, label: "Daily Offers", path: "/admin/daily-offers" },
+    { icon: Tags, label: "Tags", path: "/admin/tags" },
+    { icon: Truck, label: "Deliveries", path: "/admin/deliveries" },
+    { icon: MapPin, label: "Delivery Options", path: "/admin/delivery-options" },
+    { icon: MapPin, label: "Delivery Zones", path: "/admin/delivery-zones" },
+    { icon: TicketPercent, label: "Discount Codes", path: "/admin/discount-codes" },
+    { icon: Award, label: "Loyalty Points", path: "/admin/loyalty" },
+    { icon: Bell, label: "Notifications", path: "/admin/notifications" },
+    { icon: FileText, label: "Content", path: "/admin/content" },
+    { icon: CreditCard, label: "Pay Later", path: "/admin/pay-later" },
+    { icon: Settings, label: "Settings", path: "/admin/settings" },
   ];
 
   return (
-    <div
-      className={cn(
-        "flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-800">
-        <div className={cn("flex items-center", collapsed && "hidden")}>
-          <span className="text-xl font-bold">Admin Panel</span>
+    <div className={cn("bg-gray-900 text-white transition-all duration-300", collapsed ? "w-16" : "w-64")}>
+      <div className="p-4">
+        <div className="flex items-center justify-between">
+          {!collapsed && <h2 className="text-xl font-bold">Admin Panel</h2>}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1 rounded hover:bg-gray-800 transition-colors"
+          >
+            {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-        </Button>
       </div>
-      <ScrollArea className="flex-1">
-        <nav className="space-y-1 p-2">
-          {adminMenu.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted",
-                  collapsed && "justify-center"
-                )
-              }
-            >
-              <item.icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
-              {!collapsed && <span>{item.name}</span>}
-            </NavLink>
-          ))}
-        </nav>
-      </ScrollArea>
+
+      <nav className="mt-4">
+        <ul className="space-y-1">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  end={item.path === "/admin"}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors",
+                      isActive && "bg-gray-800 text-white border-r-2 border-blue-500",
+                      collapsed && "justify-center px-2"
+                    )
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  {!collapsed && <span className="ml-3">{item.label}</span>}
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
     </div>
   );
 };

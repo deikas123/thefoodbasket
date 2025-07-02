@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -20,6 +19,7 @@ const Notifications = lazy(() => import("@/pages/admin/Notifications"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 const PayLaterVerification = lazy(() => import("@/pages/admin/PayLaterVerification"));
 const LoyaltyManagement = lazy(() => import("@/pages/admin/LoyaltyManagement"));
+const Settings = lazy(() => import("@/pages/admin/Settings"));
 
 const LoadingFallback = () => (
   <div className="p-6 space-y-4">
@@ -50,6 +50,7 @@ const AdminRoutes = () => {
           <Route path="notifications" element={<Notifications />} />
           <Route path="content" element={<ContentManagement />} />
           <Route path="pay-later" element={<PayLaterVerification />} />
+          <Route path="settings" element={<Settings />} />
         </Routes>
       </Suspense>
     </AdminLayout>

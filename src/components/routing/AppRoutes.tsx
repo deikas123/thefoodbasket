@@ -24,6 +24,7 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const AdminRoutes = lazy(() => import("./AdminRoutes"));
 const DeliveryRoutes = lazy(() => import("./DeliveryRoutes"));
 const StaffRoutes = lazy(() => import("./StaffRoutes"));
+const LoyaltyPage = lazy(() => import("@/pages/Loyalty"));
 
 import Timer from "@/pages/Timer";
 
@@ -69,6 +70,7 @@ const AppRoutes = () => {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/wallet" element={<Wallet />} />
+        <Route path="/loyalty" element={<LoyaltyPage />} />
         <Route path="/pay-later" element={<PayLater />} />
         <Route path="/timer" element={<Timer />} />
         
