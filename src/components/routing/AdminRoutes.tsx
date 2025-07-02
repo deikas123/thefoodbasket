@@ -1,158 +1,58 @@
 
+import React, { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
-import LoadingFallback from "@/components/ui/LoadingFallback";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Lazy load admin page components
-const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
-const AdminLogin = lazy(() => import("@/pages/admin/AdminLogin"));
+const Dashboard = lazy(() => import("@/pages/admin/Dashboard"));
+const Users = lazy(() => import("@/pages/admin/Users"));
+const Orders = lazy(() => import("@/pages/admin/Orders"));
 const Products = lazy(() => import("@/pages/admin/Products"));
-const Tags = lazy(() => import("@/pages/admin/Tags"));
-const DiscountCodes = lazy(() => import("@/pages/admin/DiscountCodes"));
 const Categories = lazy(() => import("@/pages/admin/Categories"));
-const PayLaterVerification = lazy(() => import("@/pages/admin/PayLaterVerification"));
+const Banners = lazy(() => import("@/pages/admin/Banners"));
 const DailyOffers = lazy(() => import("@/pages/admin/DailyOffers"));
-const AdminNotifications = lazy(() => import("@/pages/admin/Notifications"));
-const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
+const Tags = lazy(() => import("@/pages/admin/Tags"));
+const Deliveries = lazy(() => import("@/pages/admin/Deliveries"));
 const DeliveryOptions = lazy(() => import("@/pages/admin/DeliveryOptions"));
 const DeliveryZones = lazy(() => import("@/pages/admin/DeliveryZones"));
-const Orders = lazy(() => import("@/pages/admin/Orders"));
-const Users = lazy(() => import("@/pages/admin/Users"));
-const Deliveries = lazy(() => import("@/pages/admin/Deliveries"));
-const Banners = lazy(() => import("@/pages/admin/Banners"));
+const DiscountCodes = lazy(() => import("@/pages/admin/DiscountCodes"));
+const Notifications = lazy(() => import("@/pages/admin/Notifications"));
+const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
+const PayLaterVerification = lazy(() => import("@/pages/admin/PayLaterVerification"));
+const LoyaltyManagement = lazy(() => import("@/pages/admin/LoyaltyManagement"));
+
+const LoadingFallback = () => (
+  <div className="p-6 space-y-4">
+    <Skeleton className="h-8 w-64" />
+    <Skeleton className="h-32 w-full" />
+    <Skeleton className="h-32 w-full" />
+  </div>
+);
 
 const AdminRoutes = () => {
   return (
-    <Routes>
-      {/* Admin Login (outside of admin layout) */}
-      <Route path="login" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLogin />
-        </Suspense>
-      } />
-      
-      {/* Admin Routes with AdminLayout */}
-      <Route path="" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <AdminDashboard />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="products" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <Products />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="categories" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <Categories />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="tags" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <Tags />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="orders" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <Orders />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="users" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <Users />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="delivery-options" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <DeliveryOptions />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="deliveries" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <Deliveries />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="banners" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <Banners />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="discount-codes" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <DiscountCodes />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="coupons" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <DiscountCodes />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="daily-offers" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <DailyOffers />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="pay-later-verification" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <PayLaterVerification />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="delivery-zones" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <DeliveryZones />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="settings" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <DeliveryOptions />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="notifications" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <AdminNotifications />
-          </AdminLayout>
-        </Suspense>
-      } />
-      <Route path="content-management" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminLayout>
-            <ContentManagement />
-          </AdminLayout>
-        </Suspense>
-      } />
-    </Routes>
+    <AdminLayout>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route index element={<Dashboard />} />
+          <Route path="users" element={<Users />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="products" element={<Products />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="banners" element={<Banners />} />
+          <Route path="daily-offers" element={<DailyOffers />} />
+          <Route path="tags" element={<Tags />} />
+          <Route path="deliveries" element={<Deliveries />} />
+          <Route path="delivery-options" element={<DeliveryOptions />} />
+          <Route path="delivery-zones" element={<DeliveryZones />} />
+          <Route path="discount-codes" element={<DiscountCodes />} />
+          <Route path="loyalty" element={<LoyaltyManagement />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="content" element={<ContentManagement />} />
+          <Route path="pay-later" element={<PayLaterVerification />} />
+        </Routes>
+      </Suspense>
+    </AdminLayout>
   );
 };
 
