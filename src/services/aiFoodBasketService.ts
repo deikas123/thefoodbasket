@@ -29,11 +29,22 @@ export const generateAIFoodBaskets = async (criteria: BasketGenerationCriteria =
       return [];
     }
 
-    // Filter products based on stock
-    const availableProducts = products.filter(product => product.stock > 0);
+    // Filter products that are actually in stock (stock > 0)
+    const inStockProducts = products.filter(product => 
+      product.stock > 0 && 
+      typeof product.stock === 'number' && 
+      product.stock >= 1
+    );
     
-    // Generate baskets using AI logic (simulated for now)
-    const baskets = await generateSmartBaskets(availableProducts, criteria);
+    console.log(`Filtered ${inStockProducts.length} in-stock products from ${products.length} total products`);
+    
+    if (inStockProducts.length === 0) {
+      console.warn("No products currently in stock for basket generation");
+      return [];
+    }
+    
+    // Generate baskets using AI logic with only in-stock products
+    const baskets = await generateSmartBaskets(inStockProducts, criteria);
     
     return baskets;
   } catch (error) {
@@ -51,7 +62,7 @@ const generateSmartBaskets = async (products: Product[], criteria: BasketGenerat
     if (breakfastProducts.length > 0) {
       baskets.push({
         name: "Healthy Breakfast Bundle",
-        description: "Start your day right with fresh fruits, whole grains, and protein",
+        description: "Start your day right with fresh fruits, whole grains, and protein - all items in stock!",
         recipe: generateBreakfastRecipe(breakfastProducts),
         products: breakfastProducts,
         totalPrice: calculateTotalPrice(breakfastProducts)
@@ -65,7 +76,7 @@ const generateSmartBaskets = async (products: Product[], criteria: BasketGenerat
     if (dinnerProducts.length > 0) {
       baskets.push({
         name: "Family Dinner Kit",
-        description: "Complete ingredients for a delicious home-cooked family meal",
+        description: "Complete ingredients for a delicious home-cooked family meal - ready to ship!",
         recipe: generateDinnerRecipe(dinnerProducts),
         products: dinnerProducts,
         totalPrice: calculateTotalPrice(dinnerProducts)
@@ -78,10 +89,22 @@ const generateSmartBaskets = async (products: Product[], criteria: BasketGenerat
   if (quickMealProducts.length > 0) {
     baskets.push({
       name: "Quick & Easy Meal",
-      description: "Perfect for busy weeknights - ready in under 30 minutes",
+      description: "Perfect for busy weeknights - ready in under 30 minutes with available stock",
       recipe: generateQuickMealRecipe(quickMealProducts),
       products: quickMealProducts,
       totalPrice: calculateTotalPrice(quickMealProducts)
+    });
+  }
+  
+  // Healthy snack basket
+  const snackProducts = selectProductsForMeal(products, 'snack', criteria.maxPrice);
+  if (snackProducts.length > 0) {
+    baskets.push({
+      name: "Healthy Snack Pack",
+      description: "Nutritious snacks for between meals - all freshly stocked",
+      recipe: generateSnackRecipe(snackProducts),
+      products: snackProducts,
+      totalPrice: calculateTotalPrice(snackProducts)
     });
   }
   
@@ -94,23 +117,27 @@ const selectProductsForMeal = (products: Product[], mealType: string, maxPrice?:
   
   // Define meal type preferences
   const mealPreferences = {
-    breakfast: ['fruit', 'cereal', 'milk', 'bread', 'egg', 'yogurt', 'honey'],
-    dinner: ['meat', 'chicken', 'beef', 'fish', 'vegetable', 'rice', 'pasta', 'sauce'],
-    quick: ['pasta', 'sauce', 'cheese', 'bread', 'salad']
+    breakfast: ['fruit', 'cereal', 'milk', 'bread', 'egg', 'yogurt', 'honey', 'oats', 'banana', 'orange'],
+    dinner: ['meat', 'chicken', 'beef', 'fish', 'vegetable', 'rice', 'pasta', 'sauce', 'onion', 'tomato'],
+    quick: ['pasta', 'sauce', 'cheese', 'bread', 'salad', 'noodles', 'soup'],
+    snack: ['fruit', 'nuts', 'crackers', 'cheese', 'yogurt', 'berries', 'apple', 'carrot']
   };
   
   const preferences = mealPreferences[mealType as keyof typeof mealPreferences] || [];
   
-  // Try to include products that match meal preferences
+  // Try to include products that match meal preferences and are in stock
   for (const preference of preferences) {
     const matchingProducts = products.filter(p => 
       p.name.toLowerCase().includes(preference) && 
-      !selected.some(s => s.product.id === p.id)
+      !selected.some(s => s.product.id === p.id) &&
+      p.stock > 0 // Ensure product is in stock
     );
     
     if (matchingProducts.length > 0) {
       const product = matchingProducts[Math.floor(Math.random() * matchingProducts.length)];
-      const quantity = Math.ceil(Math.random() * 2); // 1-2 quantity
+      // Ensure quantity doesn't exceed available stock
+      const maxQuantity = Math.min(product.stock, 3);
+      const quantity = Math.max(1, Math.ceil(Math.random() * maxQuantity));
       const itemTotal = product.price * quantity;
       
       if (!maxPrice || currentTotal + itemTotal <= maxPrice * 0.8) {
@@ -122,17 +149,23 @@ const selectProductsForMeal = (products: Product[], mealType: string, maxPrice?:
     }
   }
   
-  // Fill remaining space with random products if needed
+  // Fill remaining space with random in-stock products if needed
   while (selected.length < 3 && products.length > selected.length) {
-    const randomProduct = products[Math.floor(Math.random() * products.length)];
-    if (!selected.some(s => s.product.id === randomProduct.id)) {
-      const quantity = 1;
-      const itemTotal = randomProduct.price * quantity;
-      
-      if (!maxPrice || currentTotal + itemTotal <= maxPrice) {
-        selected.push({ product: randomProduct, quantity });
-        currentTotal += itemTotal;
-      }
+    const availableProducts = products.filter(p => 
+      !selected.some(s => s.product.id === p.id) && 
+      p.stock > 0
+    );
+    
+    if (availableProducts.length === 0) break;
+    
+    const randomProduct = availableProducts[Math.floor(Math.random() * availableProducts.length)];
+    const maxQuantity = Math.min(randomProduct.stock, 2);
+    const quantity = Math.max(1, Math.ceil(Math.random() * maxQuantity));
+    const itemTotal = randomProduct.price * quantity;
+    
+    if (!maxPrice || currentTotal + itemTotal <= maxPrice) {
+      selected.push({ product: randomProduct, quantity });
+      currentTotal += itemTotal;
     }
   }
   
@@ -140,21 +173,23 @@ const selectProductsForMeal = (products: Product[], mealType: string, maxPrice?:
 };
 
 const generateBreakfastRecipe = (products: { product: Product; quantity: number }[]): string => {
-  const productNames = products.map(p => p.product.name).join(', ');
-  return `Delicious Breakfast Recipe\n\nIngredients:\n${products.map(p => `- ${p.quantity}x ${p.product.name}`).join('\n')}\n\nInstructions:\n1. Prepare all fresh ingredients\n2. Combine as desired for a nutritious breakfast\n3. Enjoy your healthy start to the day!\n\nServing suggestion: Perfect for 2-4 people depending on portions.`;
+  return `Delicious Breakfast Recipe\n\nIngredients (All In Stock):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} available)`).join('\n')}\n\nInstructions:\n1. Prepare all fresh ingredients\n2. Combine as desired for a nutritious breakfast\n3. Enjoy your healthy start to the day!\n\nServing suggestion: Perfect for 2-4 people depending on portions.`;
 };
 
 const generateDinnerRecipe = (products: { product: Product; quantity: number }[]): string => {
-  const productNames = products.map(p => p.product.name).join(', ');
-  return `Family Dinner Recipe\n\nIngredients:\n${products.map(p => `- ${p.quantity}x ${p.product.name}`).join('\n')}\n\nInstructions:\n1. Prep all ingredients according to package directions\n2. Cook proteins first, then add vegetables\n3. Season to taste and serve hot\n4. Enjoy your family meal!\n\nCooking time: Approximately 45-60 minutes\nServes: 4-6 people`;
+  return `Family Dinner Recipe\n\nIngredients (Ready to Ship):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} in stock)`).join('\n')}\n\nInstructions:\n1. Prep all ingredients according to package directions\n2. Cook proteins first, then add vegetables\n3. Season to taste and serve hot\n4. Enjoy your family meal!\n\nCooking time: Approximately 45-60 minutes\nServes: 4-6 people`;
 };
 
 const generateQuickMealRecipe = (products: { product: Product; quantity: number }[]): string => {
-  return `Quick & Easy Recipe\n\nIngredients:\n${products.map(p => `- ${p.quantity}x ${p.product.name}`).join('\n')}\n\nInstructions:\n1. Heat and prepare according to package directions\n2. Combine ingredients in a simple, delicious way\n3. Ready in under 30 minutes!\n\nPerfect for busy weeknights when you need something fast and satisfying.`;
+  return `Quick & Easy Recipe\n\nIngredients (Available Now):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (Stock: ${p.product.stock})`).join('\n')}\n\nInstructions:\n1. Heat and prepare according to package directions\n2. Combine ingredients in a simple, delicious way\n3. Ready in under 30 minutes!\n\nPerfect for busy weeknights when you need something fast and satisfying.`;
+};
+
+const generateSnackRecipe = (products: { product: Product; quantity: number }[]): string => {
+  return `Healthy Snack Mix\n\nIngredients (Fresh Stock):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} available)`).join('\n')}\n\nInstructions:\n1. Wash and prepare fresh items\n2. Portion into convenient snack sizes\n3. Store properly for freshness\n4. Enjoy throughout the day!\n\nPerfect for healthy snacking between meals.`;
 };
 
 const calculateTotalPrice = (products: { product: Product; quantity: number }[]): number => {
-  return products.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  return Math.round(products.reduce((total, item) => total + (item.product.price * item.quantity), 0) * 100) / 100;
 };
 
 export const saveGeneratedBasket = async (basket: GeneratedBasket): Promise<string | null> => {

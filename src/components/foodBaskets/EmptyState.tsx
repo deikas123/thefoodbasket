@@ -1,55 +1,88 @@
 
 import { Button } from "@/components/ui/button";
-import { ChefHat, Sparkles, Wand2 } from "lucide-react";
+import { Sparkles, ShoppingCart, ArrowRight } from "lucide-react";
 
 interface EmptyStateProps {
   activeTab: string;
-  onGenerateAIBaskets?: () => void;
-  onSwitchTab?: (tab: string) => void;
-  isGenerating?: boolean;
+  onGenerateAIBaskets: () => void;
+  onSwitchTab: (tab: string) => void;
+  isGenerating: boolean;
 }
 
-const EmptyState = ({ 
-  activeTab, 
-  onGenerateAIBaskets, 
-  onSwitchTab, 
-  isGenerating 
-}: EmptyStateProps) => {
-  if (activeTab === "personalized") {
-    return (
-      <div className="text-center py-12 px-4">
-        <ChefHat className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-        <h3 className="text-lg sm:text-xl font-medium mb-2">No personalized baskets yet</h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm sm:text-base">
-          To receive personalized basket suggestions, please make some purchases or update your dietary preferences in your profile.
-        </p>
-        <Button onClick={() => onSwitchTab?.("all")}>Browse All Baskets</Button>
-      </div>
-    );
-  }
+const EmptyState = ({ activeTab, onGenerateAIBaskets, onSwitchTab, isGenerating }: EmptyStateProps) => {
+  const getEmptyStateContent = () => {
+    switch (activeTab) {
+      case "all":
+        return {
+          icon: <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />,
+          title: "No Food Baskets Available",
+          description: "There are currently no pre-made food baskets available. Try generating AI baskets or check back later.",
+          action: (
+            <Button onClick={() => onSwitchTab("ai-generated")} className="mt-4">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Try AI Generated Baskets
+            </Button>
+          )
+        };
+      
+      case "personalized":
+        return {
+          icon: <Sparkles className="h-16 w-16 text-gray-400 mx-auto mb-4" />,
+          title: "No Personalized Baskets Yet",
+          description: "We're working on creating personalized baskets based on your preferences. Try our AI-generated baskets in the meantime.",
+          action: (
+            <Button onClick={() => onSwitchTab("ai-generated")} className="mt-4">
+              <ArrowRight className="mr-2 h-4 w-4" />
+              Try AI Generated
+            </Button>
+          )
+        };
+      
+      case "ai-generated":
+        return {
+          icon: <Sparkles className="h-16 w-16 text-gray-400 mx-auto mb-4" />,
+          title: "No AI baskets generated yet",
+          description: "Click the 'Generate AI Baskets' button to create smart food baskets based on available products and intelligent meal planning.",
+          action: (
+            <Button 
+              onClick={onGenerateAIBaskets} 
+              disabled={isGenerating}
+              className="mt-4 bg-green-600 hover:bg-green-700"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              {isGenerating ? "Generating..." : "Generate Smart Baskets"}
+            </Button>
+          )
+        };
+      
+      default:
+        return {
+          icon: <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />,
+          title: "No Items Found",
+          description: "No items available in this category at the moment.",
+          action: null
+        };
+    }
+  };
 
-  if (activeTab === "ai-generated") {
-    return (
-      <div className="text-center py-12 px-4">
-        <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-        <h3 className="text-lg sm:text-xl font-medium mb-2">No AI baskets generated yet</h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm sm:text-base">
-          Click the "Generate AI Baskets" button to create smart food baskets based on available products and intelligent meal planning.
-        </p>
-        <Button onClick={onGenerateAIBaskets} disabled={isGenerating}>
-          <Wand2 className="mr-2 h-4 w-4" />
-          Generate Smart Baskets
-        </Button>
-      </div>
-    );
-  }
+  const content = getEmptyStateContent();
 
   return (
     <div className="text-center py-12">
-      <h3 className="text-lg sm:text-xl font-medium mb-2">No baskets found</h3>
-      <p className="text-muted-foreground mb-6 text-sm sm:text-base">
-        We couldn't find any food baskets. Please check back later.
+      {content.icon}
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">{content.title}</h3>
+      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+        {content.description}
       </p>
+      {activeTab === "ai-generated" && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-md mx-auto mb-4">
+          <p className="text-sm text-green-800">
+            <strong>Smart Generation:</strong> Our AI only uses products currently in stock, 
+            ensuring you can order everything in your basket right away!
+          </p>
+        </div>
+      )}
+      {content.action}
     </div>
   );
 };
