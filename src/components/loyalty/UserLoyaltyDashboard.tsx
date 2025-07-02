@@ -7,13 +7,34 @@ import { useAuth } from "@/context/AuthContext";
 import { useLoyaltySettings } from "@/hooks/useLoyaltySettings";
 import LoyaltyPointsRedemption from "@/components/LoyaltyPointsRedemption";
 import { formatCurrency } from "@/utils/currencyFormatter";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const UserLoyaltyDashboard = () => {
   const { user } = useAuth();
   const { data: settings } = useLoyaltySettings();
   
-  // Mock data - in real app, this would come from user profile
-  const userPoints = user?.loyalty_points || 0;
+  // Fetch user profile to get loyalty points
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('loyalty_points')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const userPoints = profile?.loyalty_points || 0;
   const pointsToNextLevel = 500;
   const currentLevel = Math.floor(userPoints / 500);
   const levelNames = ["Bronze", "Silver", "Gold", "Platinum"];

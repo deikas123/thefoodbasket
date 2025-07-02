@@ -81,10 +81,10 @@ const NotificationsList = () => {
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{notification.body}</p>
                     <div className="text-xs text-gray-500">
-                      Created: {formatDate(notification.created_at)}
-                      {notification.sent_at && (
+                      Created: {formatDate(notification.createdAt)}
+                      {notification.sentAt && (
                         <span className="ml-4">
-                          Sent: {formatDate(notification.sent_at)}
+                          Sent: {formatDate(notification.sentAt)}
                         </span>
                       )}
                     </div>
