@@ -103,10 +103,9 @@ export const deleteNotification = async (id: string): Promise<boolean> => {
 // Send a push notification (admin)
 export const sendPushNotification = async (notification: Notification): Promise<boolean> => {
   try {
-    console.log("Sending notification:", notification.title);
+    console.log("Sending push notification:", notification.title);
     
-    // In a real implementation, this would call a backend service to send push notifications
-    // For now, we'll just update the notification status
+    // Update the notification status to sent
     const { error } = await supabase
       .from('notifications')
       .update({ 
@@ -117,13 +116,88 @@ export const sendPushNotification = async (notification: Notification): Promise<
       
     if (error) throw error;
     
-    // Here you would typically call your push notification service
-    // e.g., Firebase Cloud Messaging, OneSignal, etc.
+    // Here you would typically integrate with a push notification service like:
+    // - Firebase Cloud Messaging (FCM)
+    // - OneSignal
+    // - Pusher
+    // - Apple Push Notification Service (APNs)
     
-    toast.success("Notification sent successfully");
+    // For now, we'll simulate the push notification and create customer notifications
+    await createCustomerNotifications(notification);
+    
+    toast.success("Push notification sent successfully!");
     return true;
   } catch (error: any) {
-    console.error("Error sending notification:", error.message);
+    console.error("Error sending push notification:", error.message);
+    toast.error("Failed to send push notification");
+    throw error;
+  }
+};
+
+// Create customer notifications based on target criteria
+const createCustomerNotifications = async (notification: Notification) => {
+  try {
+    // Get target users based on criteria
+    let targetUserIds: string[] = [];
+    
+    if (notification.targetUserIds && notification.targetUserIds.length > 0) {
+      targetUserIds = notification.targetUserIds;
+    } else if (notification.targetUserRole) {
+      // Get users with specific role
+      const { data: userRoles, error } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', notification.targetUserRole);
+        
+      if (error) throw error;
+      targetUserIds = userRoles?.map(ur => ur.user_id) || [];
+    } else {
+      // Get all users
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id');
+        
+      if (error) throw error;
+      targetUserIds = profiles?.map(p => p.id) || [];
+    }
+    
+    // Create customer notifications for each target user
+    const customerNotifications = targetUserIds.map(userId => ({
+      user_id: userId,
+      order_id: '00000000-0000-0000-0000-000000000000', // Default UUID for system notifications
+      title: notification.title,
+      message: notification.body,
+      type: 'system_notification',
+      read: false
+    }));
+    
+    if (customerNotifications.length > 0) {
+      const { error } = await supabase
+        .from('customer_notifications')
+        .insert(customerNotifications);
+        
+      if (error) throw error;
+    }
+    
+    console.log(`Created ${customerNotifications.length} customer notifications`);
+  } catch (error: any) {
+    console.error("Error creating customer notifications:", error.message);
+  }
+};
+
+// Send notification to specific user
+export const sendNotificationToUser = async (userId: string, notification: Omit<Notification, 'id' | 'createdAt'>) => {
+  try {
+    // Create a targeted notification
+    const targetedNotification = await createNotification({
+      ...notification,
+      targetUserIds: [userId],
+      status: 'sent'
+    });
+    
+    return targetedNotification;
+  } catch (error: any) {
+    console.error("Error sending notification to user:", error.message);
     throw error;
   }
 };

@@ -16,6 +16,10 @@ interface DeliverySettings {
     percentage_of_subtotal?: number;
     min_days_advance?: number;
   };
+  free_delivery_threshold?: number;
+  express_delivery_available?: boolean;
+  max_delivery_distance?: number;
+  default_delivery_time?: number;
 }
 
 const defaultSettings: DeliverySettings = {
@@ -24,7 +28,11 @@ const defaultSettings: DeliverySettings = {
   scheduled_delivery: {
     pricing_type: 'free',
     min_days_advance: 1
-  }
+  },
+  free_delivery_threshold: 3000,
+  express_delivery_available: true,
+  max_delivery_distance: 50,
+  default_delivery_time: 24
 };
 
 export const useDeliverySettings = () => {
@@ -34,7 +42,7 @@ export const useDeliverySettings = () => {
   const { data: deliverySettings, isLoading } = useQuery({
     queryKey: ["delivery-settings"],
     queryFn: async () => {
-      console.log("Fetching delivery settings using new function...");
+      console.log("Fetching delivery settings...");
       
       const { data, error } = await supabase.rpc('get_delivery_settings');
       
@@ -50,7 +58,7 @@ export const useDeliverySettings = () => {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: DeliverySettings) => {
-      console.log("Saving delivery settings using new function:", newSettings);
+      console.log("Saving delivery settings:", newSettings);
       
       const { data, error } = await supabase.rpc('upsert_delivery_settings', { 
         settings_data: newSettings 
@@ -77,7 +85,7 @@ export const useDeliverySettings = () => {
   React.useEffect(() => {
     if (deliverySettings) {
       console.log("Setting state with fetched settings:", deliverySettings);
-      setSettings(deliverySettings);
+      setSettings({ ...defaultSettings, ...deliverySettings });
     }
   }, [deliverySettings]);
 

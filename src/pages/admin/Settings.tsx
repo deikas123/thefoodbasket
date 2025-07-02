@@ -1,7 +1,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Settings as SettingsIcon, Database, Users, Shield } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings as SettingsIcon } from "lucide-react";
+import DeliverySettings from "@/components/admin/delivery/DeliverySettings";
 
 const Settings = () => {
   return (
@@ -13,75 +14,74 @@ const Settings = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              General Settings
-            </CardTitle>
-            <CardDescription>
-              Basic application configuration
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Configure
-            </Button>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="delivery" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="delivery">Delivery Settings</TabsTrigger>
+          <TabsTrigger value="general">General Settings</TabsTrigger>
+          <TabsTrigger value="notifications">Notification Settings</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              User Management
-            </CardTitle>
-            <CardDescription>
-              User roles and permissions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Manage Users
-            </Button>
-          </CardContent>
-        </Card>
+        <TabsContent value="delivery">
+          <DeliverySettings />
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Security Settings
-            </CardTitle>
-            <CardDescription>
-              Authentication and security
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Security Config
-            </Button>
-          </CardContent>
-        </Card>
+        <TabsContent value="general">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SettingsIcon className="h-5 w-5" />
+                  Application Settings
+                </CardTitle>
+                <CardDescription>
+                  Basic application configuration
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  General application settings will be available here.
+                </p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SettingsIcon className="h-5 w-5" />
-              System Preferences
-            </CardTitle>
-            <CardDescription>
-              Application preferences and defaults
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Set Preferences
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Settings</CardTitle>
+                <CardDescription>
+                  Authentication and security configuration
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Security settings will be available here.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader>
+              <CardTitle>Push Notification Settings</CardTitle>
+              <CardDescription>
+                Configure push notification services and settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Push notification configuration will be available here. This would typically include:
+              </p>
+              <ul className="list-disc list-inside mt-2 text-sm text-muted-foreground space-y-1">
+                <li>Firebase Cloud Messaging configuration</li>
+                <li>Apple Push Notification Service setup</li>
+                <li>OneSignal integration</li>
+                <li>Notification scheduling settings</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -3,6 +3,8 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
 interface DeliverySettings {
   minimum_checkout_amount: number;
@@ -16,6 +18,10 @@ interface DeliverySettings {
     percentage_of_subtotal?: number;
     min_days_advance?: number;
   };
+  free_delivery_threshold?: number;
+  express_delivery_available?: boolean;
+  max_delivery_distance?: number;
+  default_delivery_time?: number;
 }
 
 interface DeliverySettingsFormProps {
@@ -57,43 +63,120 @@ const DeliverySettingsForm: React.FC<DeliverySettingsFormProps> = ({
     });
   };
 
+  const handleGeneralSettingChange = (field: keyof DeliverySettings, value: any) => {
+    console.log(`${field} changed to:`, value);
+    onSettingsChange({
+      ...settings,
+      [field]: value
+    });
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="grid gap-2">
-        <Label htmlFor="min-checkout">Minimum Checkout Amount (KSH)</Label>
-        <Input
-          id="min-checkout"
-          type="number"
-          step="0.01"
-          value={settings.minimum_checkout_amount}
-          onChange={(e) => handleMinimumCheckoutChange(parseFloat(e.target.value) || 0)}
-        />
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="warehouse-lat">Warehouse Latitude</Label>
-          <Input
-            id="warehouse-lat"
-            type="number"
-            step="0.000001"
-            value={settings.warehouse_location.lat}
-            onChange={(e) => handleWarehouseLocationChange('lat', parseFloat(e.target.value) || 0)}
-          />
+    <div className="space-y-8">
+      {/* Basic Settings */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Basic Delivery Settings</h3>
+        
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="min-checkout">Minimum Checkout Amount (KSH)</Label>
+            <Input
+              id="min-checkout"
+              type="number"
+              step="0.01"
+              value={settings.minimum_checkout_amount}
+              onChange={(e) => handleMinimumCheckoutChange(parseFloat(e.target.value) || 0)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Minimum order value required for checkout
+            </p>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="free-delivery">Free Delivery Threshold (KSH)</Label>
+            <Input
+              id="free-delivery"
+              type="number"
+              step="0.01"
+              value={settings.free_delivery_threshold || 0}
+              onChange={(e) => handleGeneralSettingChange('free_delivery_threshold', parseFloat(e.target.value) || 0)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Order value above which delivery is free
+            </p>
+          </div>
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="warehouse-lng">Warehouse Longitude</Label>
-          <Input
-            id="warehouse-lng"
-            type="number"
-            step="0.000001"
-            value={settings.warehouse_location.lng}
-            onChange={(e) => handleWarehouseLocationChange('lng', parseFloat(e.target.value) || 0)}
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="max-distance">Maximum Delivery Distance (KM)</Label>
+            <Input
+              id="max-distance"
+              type="number"
+              step="0.1"
+              value={settings.max_delivery_distance || 0}
+              onChange={(e) => handleGeneralSettingChange('max_delivery_distance', parseFloat(e.target.value) || 0)}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="default-time">Default Delivery Time (Hours)</Label>
+            <Input
+              id="default-time"
+              type="number"
+              step="0.5"
+              value={settings.default_delivery_time || 24}
+              onChange={(e) => handleGeneralSettingChange('default_delivery_time', parseFloat(e.target.value) || 24)}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="express-delivery"
+            checked={settings.express_delivery_available || false}
+            onCheckedChange={(checked) => handleGeneralSettingChange('express_delivery_available', checked)}
           />
+          <Label htmlFor="express-delivery">Enable Express Delivery Option</Label>
         </div>
       </div>
 
-      <div className="space-y-4 border-t pt-4">
+      <Separator />
+
+      {/* Warehouse Location */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Warehouse Location</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="warehouse-lat">Warehouse Latitude</Label>
+            <Input
+              id="warehouse-lat"
+              type="number"
+              step="0.000001"
+              value={settings.warehouse_location.lat}
+              onChange={(e) => handleWarehouseLocationChange('lat', parseFloat(e.target.value) || 0)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="warehouse-lng">Warehouse Longitude</Label>
+            <Input
+              id="warehouse-lng"
+              type="number"
+              step="0.000001"
+              value={settings.warehouse_location.lng}
+              onChange={(e) => handleWarehouseLocationChange('lng', parseFloat(e.target.value) || 0)}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Used for calculating delivery distances and routes
+        </p>
+      </div>
+
+      <Separator />
+
+      {/* Scheduled Delivery Settings */}
+      <div className="space-y-4">
         <h3 className="text-lg font-semibold">Scheduled Delivery Pricing</h3>
         
         <div className="grid gap-2">

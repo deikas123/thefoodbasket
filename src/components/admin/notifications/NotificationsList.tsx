@@ -1,17 +1,52 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getNotifications } from "@/services/notificationService";
+import { getNotifications, sendPushNotification, deleteNotification } from "@/services/notificationService";
 import { formatDate } from "@/utils/userUtils";
-import { Bell, Send, Clock, CheckCircle } from "lucide-react";
+import { Bell, Send, Clock, CheckCircle, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 const NotificationsList = () => {
+  const queryClient = useQueryClient();
+  
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['admin-notifications'],
     queryFn: getNotifications,
   });
+
+  const sendNotificationMutation = useMutation({
+    mutationFn: sendPushNotification,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] });
+      toast.success("Notification sent successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to send notification: ${error.message}`);
+    }
+  });
+
+  const deleteNotificationMutation = useMutation({
+    mutationFn: deleteNotification,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] });
+      toast.success("Notification deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete notification: ${error.message}`);
+    }
+  });
+
+  const handleSendNotification = (notification: any) => {
+    sendNotificationMutation.mutate(notification);
+  };
+
+  const handleDeleteNotification = (notificationId: string) => {
+    if (confirm("Are you sure you want to delete this notification?")) {
+      deleteNotificationMutation.mutate(notificationId);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -91,13 +126,23 @@ const NotificationsList = () => {
                   </div>
                   <div className="flex gap-2">
                     {notification.status === 'draft' && (
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleSendNotification(notification)}
+                        disabled={sendNotificationMutation.isPending}
+                      >
                         <Send className="h-4 w-4 mr-1" />
-                        Send
+                        {sendNotificationMutation.isPending ? 'Sending...' : 'Send'}
                       </Button>
                     )}
-                    <Button size="sm" variant="ghost">
-                      Edit
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => handleDeleteNotification(notification.id)}
+                      disabled={deleteNotificationMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

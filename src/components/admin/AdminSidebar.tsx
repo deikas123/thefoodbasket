@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -19,13 +18,9 @@ import {
   CreditCard,
   Award,
   Settings,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 const AdminSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
-
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
     { icon: Users, label: "Users", path: "/admin/users" },
@@ -47,17 +42,9 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <div className={cn("bg-gray-900 text-white transition-all duration-300", collapsed ? "w-16" : "w-64")}>
+    <div className="bg-gray-900 text-white w-64">
       <div className="p-4">
-        <div className="flex items-center justify-between">
-          {!collapsed && <h2 className="text-xl font-bold">Admin Panel</h2>}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-1 rounded hover:bg-gray-800 transition-colors"
-          >
-            {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-          </button>
-        </div>
+        <h2 className="text-xl font-bold">Admin Panel</h2>
       </div>
 
       <nav className="mt-4">
@@ -72,13 +59,12 @@ const AdminSidebar = () => {
                   className={({ isActive }) =>
                     cn(
                       "flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors",
-                      isActive && "bg-gray-800 text-white border-r-2 border-blue-500",
-                      collapsed && "justify-center px-2"
+                      isActive && "bg-gray-800 text-white border-r-2 border-blue-500"
                     )
                   }
                 >
                   <Icon className="h-5 w-5" />
-                  {!collapsed && <span className="ml-3">{item.label}</span>}
+                  <span className="ml-3">{item.label}</span>
                 </NavLink>
               </li>
             );
