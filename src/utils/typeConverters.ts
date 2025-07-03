@@ -1,4 +1,5 @@
 
+
 import { OrderType, ProductType } from '@/types/supabase';
 import { Order } from '@/types/order';
 import { Product } from '@/types';
@@ -50,15 +51,16 @@ export const convertToProduct = (productType: ProductType): Product => {
     price: productType.price,
     image: productType.image,
     description: productType.description,
-    category: productType.category_id,
+    category: productType.category,
     stock: productType.stock,
     rating: productType.rating,
-    reviews: productType.num_reviews,
+    numReviews: productType.numReviews,
     featured: productType.featured,
-    discountPercentage: productType.discount_percentage || undefined
+    discountPercentage: productType.discountPercentage || undefined
   };
 };
 
 export const convertToProducts = (productTypes: ProductType[]): Product[] => {
   return productTypes.map(convertToProduct);
 };
+
