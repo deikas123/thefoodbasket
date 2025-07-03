@@ -19,7 +19,7 @@ const ProductDetailsContent = ({ product, category }: ProductDetailsContentProps
       <ProductImageGallery
         image={product.image}
         name={product.name}
-        discountPercentage={product.discountPercentage}
+        discountPercentage={product.discount_percentage}
         featured={product.featured}
       />
       

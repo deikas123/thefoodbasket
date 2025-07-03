@@ -11,7 +11,7 @@ interface ProductPricingProps {
 const ProductPricing = ({ product, getDiscountedPrice }: ProductPricingProps) => {
   return (
     <div>
-      {product.discountPercentage ? (
+      {product.discount_percentage ? (
         <div className="flex items-center space-x-2">
           <span className="text-2xl font-bold text-primary">
             {formatCurrency(getDiscountedPrice())}
@@ -20,7 +20,7 @@ const ProductPricing = ({ product, getDiscountedPrice }: ProductPricingProps) =>
             {formatCurrency(product.price)}
           </span>
           <Badge variant="destructive">
-            {product.discountPercentage}% OFF
+            {product.discount_percentage}% OFF
           </Badge>
         </div>
       ) : (

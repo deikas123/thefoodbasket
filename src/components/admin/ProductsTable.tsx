@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +58,7 @@ const AdminProductsTable = () => {
   
   const filteredProducts = allProducts?.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+    (product.category_id && product.category_id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
   const handleNewProduct = () => {
@@ -129,7 +130,7 @@ const AdminProductsTable = () => {
                         {product.name}
                       </div>
                     </TableCell>
-                    <TableCell>{product.category}</TableCell>
+                    <TableCell>{product.category_id}</TableCell>
                     <TableCell>{formatCurrency(product.price)}</TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>

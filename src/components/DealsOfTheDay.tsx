@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ const DealsOfTheDay = () => {
     try {
       const allProducts = await getProducts();
       // Filter products with discount percentage
-      const discountedProducts = allProducts.filter(p => p.discountPercentage);
+      const discountedProducts = allProducts.filter(p => p.discount_percentage);
       setProducts(discountedProducts.slice(0, 4)); // Take up to 4 products
     } catch (error) {
       console.error("Error fetching deals:", error);

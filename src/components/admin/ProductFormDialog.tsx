@@ -99,10 +99,10 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         description: product.description,
         price: product.price,
         image: product.image,
-        category: product.category,
+        category: product.category_id,
         stock: product.stock,
         featured: product.featured,
-        discountPercentage: product.discountPercentage || 0,
+        discountPercentage: product.discount_percentage || 0,
         tags: productTags || [],
       });
     } else {

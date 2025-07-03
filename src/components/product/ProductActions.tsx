@@ -25,8 +25,8 @@ const ProductActions = ({
   onToggleWishlist,
 }: ProductActionsProps) => {
   const getDiscountedPrice = () => {
-    if (!product.discountPercentage) return product.price;
-    const discount = (product.price * product.discountPercentage) / 100;
+    if (!product.discount_percentage) return product.price;
+    const discount = (product.price * product.discount_percentage) / 100;
     return product.price - discount;
   };
 

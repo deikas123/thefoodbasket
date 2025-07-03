@@ -28,7 +28,7 @@ const ProductCardInfo = ({ product }: ProductCardInfoProps) => {
           />
         ))}
         <span className="text-xs text-gray-500 ml-1">
-          ({product.numReviews || product.num_reviews || 0})
+          ({product.num_reviews || 0})
         </span>
       </div>
       

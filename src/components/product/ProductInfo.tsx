@@ -29,8 +29,8 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   const isProductInWishlist = isInWishlist(product.id);
   
   const getDiscountedPrice = () => {
-    if (!product.discountPercentage) return product.price;
-    const discount = (product.price * product.discountPercentage) / 100;
+    if (!product.discount_percentage) return product.price;
+    const discount = (product.price * product.discount_percentage) / 100;
     return product.price - discount;
   };
 
@@ -42,12 +42,12 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       price: getDiscountedPrice(),
       image: product.image.split(',')[0].trim(),
       description: product.description,
-      category: product.category,
+      category: product.category_id,
       featured: product.featured,
       rating: product.rating,
       numReviews: product.num_reviews || 0,
       stock: product.stock,
-      discountPercentage: product.discountPercentage
+      discountPercentage: product.discount_percentage
     };
     
     addItem(cartProduct, quantity);
@@ -73,12 +73,12 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       price: product.price,
       image: product.image.split(',')[0].trim(),
       description: product.description,
-      category: product.category,
+      category: product.category_id,
       featured: product.featured,
       rating: product.rating,
       numReviews: product.num_reviews || 0,
       stock: product.stock,
-      discountPercentage: product.discountPercentage
+      discountPercentage: product.discount_percentage
     };
     
     if (isProductInWishlist) {

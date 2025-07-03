@@ -10,7 +10,7 @@ interface ProductCardPricingProps {
 const ProductCardPricing = ({ product, getDiscountedPrice }: ProductCardPricingProps) => {
   return (
     <div className="mb-3">
-      {product.discountPercentage && product.discountPercentage > 0 ? (
+      {product.discount_percentage && product.discount_percentage > 0 ? (
         <div className="flex items-center gap-1.5">
           <span className="font-bold">
             {formatCurrency(getDiscountedPrice())}
