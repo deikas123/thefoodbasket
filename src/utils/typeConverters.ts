@@ -50,12 +50,12 @@ export const convertToProduct = (productType: ProductType): Product => {
     price: productType.price,
     image: productType.image,
     description: productType.description,
-    category: productType.category,
+    category: productType.category_id, // Map from category_id to category
     stock: productType.stock,
     rating: productType.rating,
-    numReviews: productType.numReviews,
+    numReviews: productType.num_reviews || 0, // Map from num_reviews to numReviews
     featured: productType.featured,
-    discountPercentage: productType.discountPercentage || undefined
+    discountPercentage: productType.discount_percentage || undefined // Map from discount_percentage to discountPercentage
   };
 };
 

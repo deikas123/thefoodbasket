@@ -15,20 +15,19 @@ export interface ProfileType extends Tables<'profiles'> {
 
 export interface AddressType extends Tables<'addresses'> {}
 
-// Define ProductType with all necessary fields
+// Define ProductType with all necessary fields matching the database schema
 export interface ProductType {
   id: string;
   name: string;
   description: string;
   price: number;
   image: string;
-  category: string;
+  category_id: string; // This matches the database column
   stock: number;
   featured: boolean;
   rating: number;
-  num_reviews?: number;
-  numReviews: number; // Added to match with Product interface
-  discountPercentage?: number;
+  num_reviews?: number; // This matches the database column
+  discount_percentage?: number; // This matches the database column
   created_at: string;
   updated_at: string;
 }
