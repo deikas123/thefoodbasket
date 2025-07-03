@@ -1,9 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { CartContextType, Product, CartItem, Order } from "../types";
 import { toast } from "@/components/ui/use-toast";
 import { createOrder, CreateOrderInput } from "@/services/orderService";
 import { convertToOrder } from "@/utils/typeConverters";
+import { supabase } from "@/services/supabaseClient";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -92,52 +92,71 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     paymentMethod: Order["paymentMethod"],
     notes?: string
   ): Promise<Order> => {
-    if (items.length === 0) {
-      throw new Error("Cannot checkout with an empty cart");
+    try {
+      const estimatedDelivery = new Date();
+      estimatedDelivery.setDate(estimatedDelivery.getDate() + 2);
+
+      const loyaltyPointsEarned = Math.floor(total);
+      
+      const order: Order = {
+        id: Date.now().toString(),
+        userId,
+        items: items.map(item => ({
+          product: item.product,
+          quantity: item.quantity,
+          price: item.product.price
+        })),
+        subtotal: total,
+        deliveryFee: 5.00,
+        total: total + 5.00,
+        status: "pending",
+        deliveryAddress,
+        deliveryMethod,
+        paymentMethod,
+        estimatedDelivery: estimatedDelivery.toISOString(),
+        loyaltyPointsEarned,
+        createdAt: new Date().toISOString(),
+        notes
+      };
+
+      // Award loyalty points
+      try {
+        const { awardLoyaltyPoints } = await import('@/services/loyaltyPointsService');
+        await awardLoyaltyPoints(userId, order.total);
+        console.log(`Awarded ${loyaltyPointsEarned} loyalty points for order ${order.id}`);
+      } catch (error) {
+        console.error('Error awarding loyalty points:', error);
+      }
+
+      // Save order to Supabase
+      const { error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: userId,
+          items: order.items,
+          subtotal: order.subtotal,
+          delivery_fee: order.deliveryFee,
+          total: order.total,
+          status: order.status,
+          delivery_address: deliveryAddress,
+          delivery_method: deliveryMethod,
+          payment_method: paymentMethod,
+          estimated_delivery: order.estimatedDelivery,
+          loyalty_points_earned: loyaltyPointsEarned,
+          notes: notes || null
+        });
+
+      if (error) {
+        console.error('Error saving order:', error);
+        throw new Error('Failed to save order');
+      }
+
+      clearCart();
+      return order;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      throw error;
     }
-
-    const orderItems = items.map(item => ({
-      productId: item.product.id,
-      name: item.product.name,
-      price: item.product.price,
-      quantity: item.quantity,
-      image: item.product.image
-    }));
-
-    const subtotal = total;
-    const deliveryFee = deliveryMethod.price;
-    const orderTotal = subtotal + deliveryFee;
-
-    // Convert from Order types to OrderType/CreateOrderInput types
-    const orderData: CreateOrderInput = {
-      user_id: userId,
-      items: orderItems,
-      delivery_address: {
-        street: deliveryAddress.street,
-        city: deliveryAddress.city,
-        state: deliveryAddress.state,
-        zipCode: deliveryAddress.zipCode
-      },
-      delivery_method: {
-        id: deliveryMethod.id,
-        name: deliveryMethod.name,
-        price: deliveryMethod.price,
-        estimatedDays: parseInt(deliveryMethod.estimatedDelivery) || 3
-      },
-      payment_method: {
-        id: paymentMethod.id,
-        name: paymentMethod.name
-      },
-      subtotal,
-      delivery_fee: deliveryFee,
-      total: orderTotal,
-      notes,
-      estimated_delivery: deliveryMethod.estimatedDelivery
-    };
-
-    const orderResult = await createOrder(orderData);
-    clearCart();
-    return convertToOrder(orderResult);
   };
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);

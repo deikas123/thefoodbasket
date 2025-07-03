@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { getAllProducts } from "@/services/productService";
 import { Product } from "@/types";
@@ -84,6 +83,18 @@ const generateSmartBaskets = async (products: Product[], criteria: BasketGenerat
     }
   }
   
+  // Fresh fruit basket with reasonable pricing
+  const fruitProducts = selectProductsForMeal(products, 'fruit', criteria.maxPrice);
+  if (fruitProducts.length > 0) {
+    baskets.push({
+      name: "Assorted Fruits",
+      description: "Fresh seasonal fruits perfect for healthy snacking - all items in stock!",
+      recipe: generateFruitRecipe(fruitProducts),
+      products: fruitProducts,
+      totalPrice: calculateTotalPrice(fruitProducts)
+    });
+  }
+  
   // Quick meal basket
   const quickMealProducts = selectProductsForMeal(products, 'quick', criteria.maxPrice);
   if (quickMealProducts.length > 0) {
@@ -115,42 +126,44 @@ const selectProductsForMeal = (products: Product[], mealType: string, maxPrice?:
   const selected: { product: Product; quantity: number }[] = [];
   let currentTotal = 0;
   
-  // Define meal type preferences
+  // Define meal type preferences with reasonable quantities
   const mealPreferences = {
     breakfast: ['fruit', 'cereal', 'milk', 'bread', 'egg', 'yogurt', 'honey', 'oats', 'banana', 'orange'],
     dinner: ['meat', 'chicken', 'beef', 'fish', 'vegetable', 'rice', 'pasta', 'sauce', 'onion', 'tomato'],
     quick: ['pasta', 'sauce', 'cheese', 'bread', 'salad', 'noodles', 'soup'],
-    snack: ['fruit', 'nuts', 'crackers', 'cheese', 'yogurt', 'berries', 'apple', 'carrot']
+    snack: ['nuts', 'crackers', 'cheese', 'yogurt', 'berries', 'apple', 'carrot'],
+    fruit: ['apple', 'orange', 'banana', 'grape', 'berry', 'fruit', 'mango', 'pear', 'tangerine']
   };
   
   const preferences = mealPreferences[mealType as keyof typeof mealPreferences] || [];
+  const targetPrice = maxPrice || (mealType === 'fruit' ? 25 : 50);
   
   // Try to include products that match meal preferences and are in stock
   for (const preference of preferences) {
     const matchingProducts = products.filter(p => 
       p.name.toLowerCase().includes(preference) && 
       !selected.some(s => s.product.id === p.id) &&
-      p.stock > 0 // Ensure product is in stock
+      p.stock > 0
     );
     
     if (matchingProducts.length > 0) {
       const product = matchingProducts[Math.floor(Math.random() * matchingProducts.length)];
-      // Ensure quantity doesn't exceed available stock
-      const maxQuantity = Math.min(product.stock, 3);
-      const quantity = Math.max(1, Math.ceil(Math.random() * maxQuantity));
+      // Use reasonable quantities, especially for fruits
+      const maxQuantity = Math.min(product.stock, mealType === 'fruit' ? 2 : 3);
+      const quantity = Math.max(1, Math.min(maxQuantity, mealType === 'fruit' ? 2 : Math.ceil(Math.random() * maxQuantity)));
       const itemTotal = product.price * quantity;
       
-      if (!maxPrice || currentTotal + itemTotal <= maxPrice * 0.8) {
+      if (currentTotal + itemTotal <= targetPrice) {
         selected.push({ product, quantity });
         currentTotal += itemTotal;
         
-        if (selected.length >= 5) break; // Limit basket size
+        if (selected.length >= (mealType === 'fruit' ? 4 : 5)) break;
       }
     }
   }
   
-  // Fill remaining space with random in-stock products if needed
-  while (selected.length < 3 && products.length > selected.length) {
+  // Fill remaining space with random in-stock products if needed and under budget
+  while (selected.length < 3 && products.length > selected.length && currentTotal < targetPrice * 0.8) {
     const availableProducts = products.filter(p => 
       !selected.some(s => s.product.id === p.id) && 
       p.stock > 0
@@ -163,9 +176,11 @@ const selectProductsForMeal = (products: Product[], mealType: string, maxPrice?:
     const quantity = Math.max(1, Math.ceil(Math.random() * maxQuantity));
     const itemTotal = randomProduct.price * quantity;
     
-    if (!maxPrice || currentTotal + itemTotal <= maxPrice) {
+    if (currentTotal + itemTotal <= targetPrice) {
       selected.push({ product: randomProduct, quantity });
       currentTotal += itemTotal;
+    } else {
+      break;
     }
   }
   
@@ -188,8 +203,14 @@ const generateSnackRecipe = (products: { product: Product; quantity: number }[])
   return `Healthy Snack Mix\n\nIngredients (Fresh Stock):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} available)`).join('\n')}\n\nInstructions:\n1. Wash and prepare fresh items\n2. Portion into convenient snack sizes\n3. Store properly for freshness\n4. Enjoy throughout the day!\n\nPerfect for healthy snacking between meals.`;
 };
 
+const generateFruitRecipe = (products: { product: Product; quantity: number }[]): string => {
+  return `Fresh Fruit Selection\n\nIngredients (All Fresh & In Stock):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} available)`).join('\n')}\n\nServing Suggestions:\n1. Wash all fruits thoroughly\n2. Store in refrigerator for freshness\n3. Perfect for healthy snacking, breakfast additions, or smoothies\n4. Great source of vitamins and natural energy\n\nEnjoy fresh and healthy!`;
+};
+
 const calculateTotalPrice = (products: { product: Product; quantity: number }[]): number => {
-  return Math.round(products.reduce((total, item) => total + (item.product.price * item.quantity), 0) * 100) / 100;
+  const total = products.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  console.log('Basket total calculation:', products.map(p => `${p.product.name}: ${p.product.price} x ${p.quantity} = ${p.product.price * p.quantity}`), 'Total:', total);
+  return Math.round(total * 100) / 100;
 };
 
 export const saveGeneratedBasket = async (basket: GeneratedBasket): Promise<string | null> => {

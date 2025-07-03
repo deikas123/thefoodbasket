@@ -15,10 +15,11 @@ const UserLoyaltyDashboard = () => {
   const { data: settings } = useLoyaltySettings();
   
   // Fetch user profile to get loyalty points
-  const { data: profile } = useQuery({
+  const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+      console.log('Fetching loyalty points for user:', user.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('loyalty_points')
@@ -29,7 +30,29 @@ const UserLoyaltyDashboard = () => {
         console.error('Error fetching profile:', error);
         return null;
       }
+      console.log('User loyalty points:', data?.loyalty_points);
       return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch recent loyalty activity
+  const { data: recentActivity } = useQuery({
+    queryKey: ['loyalty-activity', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('loyalty_redemptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) {
+        console.error('Error fetching loyalty activity:', error);
+        return [];
+      }
+      return data || [];
     },
     enabled: !!user?.id,
   });
@@ -41,6 +64,7 @@ const UserLoyaltyDashboard = () => {
 
   const handleRedemptionSuccess = () => {
     // Refresh user data
+    refetchProfile();
     console.log("Points redeemed successfully");
   };
 
@@ -60,7 +84,7 @@ const UserLoyaltyDashboard = () => {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userPoints}</div>
+            <div className="text-2xl font-bold text-primary">{userPoints}</div>
             <p className="text-xs text-muted-foreground">
               Worth {formatCurrency(userPoints * (settings?.ksh_per_point || 1))}
             </p>
@@ -75,7 +99,7 @@ const UserLoyaltyDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{levelNames[currentLevel] || "Bronze"}</div>
             <p className="text-xs text-muted-foreground">
-              {pointsToNextLevel - (userPoints % 500)} points to next level
+              {Math.max(0, pointsToNextLevel - (userPoints % 500))} points to next level
             </p>
           </CardContent>
         </Card>
@@ -122,11 +146,11 @@ const UserLoyaltyDashboard = () => {
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-primary h-2 rounded-full transition-all duration-300" 
-                    style={{ width: `${((userPoints % 500) / 500) * 100}%` }}
+                    style={{ width: `${Math.min(100, ((userPoints % 500) / 500) * 100)}%` }}
                   ></div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {pointsToNextLevel - (userPoints % 500)} points needed for {levelNames[currentLevel + 1] || "Max Level"}
+                  {Math.max(0, pointsToNextLevel - (userPoints % 500))} points needed for {levelNames[currentLevel + 1] || "Max Level"}
                 </p>
               </div>
             </CardContent>
@@ -174,27 +198,31 @@ const UserLoyaltyDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">Order #12345</p>
-                    <p className="text-sm text-muted-foreground">June 15, 2024</p>
+                {recentActivity && recentActivity.length > 0 ? (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex justify-between items-center py-2 border-b">
+                      <div>
+                        <p className="font-medium">
+                          {activity.status === 'completed' ? 'Points Redemption' : 'Pending Redemption'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(activity.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge 
+                        variant="outline" 
+                        className={activity.points_redeemed > 0 ? "text-red-600" : "text-green-600"}
+                      >
+                        -{activity.points_redeemed} pts
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <p>No recent activity</p>
+                    <p className="text-sm">Start earning points by making purchases!</p>
                   </div>
-                  <Badge variant="outline" className="text-green-600">+45 pts</Badge>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">Product Review</p>
-                    <p className="text-sm text-muted-foreground">June 10, 2024</p>
-                  </div>
-                  <Badge variant="outline" className="text-green-600">+20 pts</Badge>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">Points Redemption</p>
-                    <p className="text-sm text-muted-foreground">June 5, 2024</p>
-                  </div>
-                  <Badge variant="outline" className="text-red-600">-100 pts</Badge>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
