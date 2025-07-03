@@ -27,7 +27,7 @@ export interface Order {
     zipCode: string;
     notes?: string;
   };
-  customer?: {
+  customer: {
     name: string;
     phone: string;
     email?: string;
