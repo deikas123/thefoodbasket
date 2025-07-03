@@ -1,493 +1,228 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { getUserAutoReplenishItems, toggleAutoReplenishStatus, removeFromAutoReplenish, processAutoReplenishOrders } from "@/services/autoReplenishService";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Calendar, Clock, Package, Settings, Trash2, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { getProductById } from "@/services/productService";
-import { AutoReplenishItem } from "@/types/autoReplenish";
-import { Product } from "@/types";
+import { formatCurrency } from "@/utils/currencyFormatter";
+import { convertProductTypeToProduct } from "@/utils/productHelpers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { toast } from "@/hooks/use-toast";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  RefreshCw,
-  Trash2,
-  CalendarClock,
-  Clock,
-  ShoppingCart,
-  PlusCircle,
-  Play
-} from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { format, isAfter } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const AutoReplenishPage = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const [autoReplenishItems, setAutoReplenishItems] = useState<AutoReplenishItem[]>([]);
-  const [products, setProducts] = useState<{[key: string]: Product}>({});
+interface AutoReplenishItem {
+  id: string;
+  product_id: string;
+  quantity: number;
+  frequency_days: number;
+  next_order_date: string;
+  active: boolean;
+  custom_days: string[] | null;
+  custom_time: string | null;
+}
+
+const AutoReplenish = () => {
+  const { user } = useAuth();
+  const [items, setItems] = useState<AutoReplenishItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [processing, setProcessing] = useState<{[key: string]: boolean}>({});
-  const [isProcessingOrders, setIsProcessingOrders] = useState(false);
+
+  const { data: itemsWithProducts, isLoading: isLoadingItems } = useQuery({
+    queryKey: ["auto-replenish-items", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data: items, error } = await supabase
+        .from("auto_replenish_items")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("active", true);
+
+      if (error) throw error;
+
+      const itemsWithProducts = await Promise.all(
+        items.map(async (item) => {
+          const product = await getProductById(item.product_id);
+          return {
+            ...item,
+            product: product ? convertProductTypeToProduct(product) : null,
+          };
+        })
+      );
+
+      return itemsWithProducts;
+    },
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
-    // Redirect if not authenticated
-    if (!isAuthenticated) {
-      navigate("/login", { state: { from: "/auto-replenish" } });
+    if (!user) {
+      setIsLoading(false);
       return;
     }
-    
+
     const fetchItems = async () => {
       setIsLoading(true);
       try {
-        // Get auto replenish items
-        const items = await getUserAutoReplenishItems();
-        setAutoReplenishItems(items);
-        
-        // Fetch product details for each item
-        const productMap: {[key: string]: Product} = {};
-        for (const item of items) {
-          const product = await getProductById(item.productId);
-          if (product) {
-            productMap[item.productId] = product;
-          }
+        const { data, error } = await supabase
+          .from("auto_replenish_items")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("active", true);
+
+        if (error) {
+          throw error;
         }
-        setProducts(productMap);
-      } catch (error) {
-        console.error("Error fetching auto replenish items:", error);
+
+        setItems(data || []);
+      } catch (error: any) {
+        toast.error(error.message);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchItems();
-  }, [isAuthenticated, navigate]);
+  }, [user]);
 
-  const handleProcessOrders = async () => {
-    setIsProcessingOrders(true);
+  const handleToggleActive = async (id: string, active: boolean) => {
     try {
-      await processAutoReplenishOrders();
-      toast({
-        title: "Orders Processed",
-        description: "Auto-replenish orders have been processed successfully",
-      });
-    } catch (error) {
-      console.error("Error processing orders:", error);
-      toast({
-        title: "Error",
-        description: "Failed to process auto-replenish orders",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessingOrders(false);
-    }
-  };
-  
-  const handleToggleStatus = async (item: AutoReplenishItem) => {
-    setProcessing(prev => ({ ...prev, [item.id]: true }));
-    try {
-      const newStatus = !item.active;
-      const success = await toggleAutoReplenishStatus(item.id, newStatus);
-      
-      if (success) {
-        // Update local state
-        setAutoReplenishItems(prev => 
-          prev.map(i => i.id === item.id ? { ...i, active: newStatus } : i)
-        );
-        
-        toast({
-          title: newStatus ? "Auto-Replenish Activated" : "Auto-Replenish Paused",
-          description: newStatus 
-            ? "The item will be automatically ordered according to schedule" 
-            : "The item will not be automatically ordered until reactivated",
-        });
+      const { error } = await supabase
+        .from("auto_replenish_items")
+        .update({ active: !active })
+        .eq("id", id);
+
+      if (error) {
+        throw error;
       }
-    } catch (error) {
-      console.error("Error toggling status:", error);
-    } finally {
-      setProcessing(prev => ({ ...prev, [item.id]: false }));
-    }
-  };
-  
-  const handleRemoveItem = async (item: AutoReplenishItem) => {
-    setProcessing(prev => ({ ...prev, [item.id]: true }));
-    try {
-      const success = await removeFromAutoReplenish(item.id);
-      
-      if (success) {
-        // Update local state
-        setAutoReplenishItems(prev => prev.filter(i => i.id !== item.id));
-        
-        toast({
-          title: "Item Removed",
-          description: "The item has been removed from auto-replenish",
-        });
-      }
-    } catch (error) {
-      console.error("Error removing item:", error);
-    } finally {
-      setProcessing(prev => ({ ...prev, [item.id]: false }));
+
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === id ? { ...item, active: !active } : item
+        )
+      );
+      toast.success(`Auto-replenish item ${active ? "deactivated" : "activated"}`);
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
-  const formatSchedule = (item: AutoReplenishItem) => {
-    if (item.custom_days && item.custom_days.length > 0) {
-      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const days = item.custom_days.map(d => dayNames[parseInt(d)]).join(', ');
-      return `${days} at ${item.custom_time || '09:00'}`;
+  const handleDeleteItem = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this item?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("auto_replenish_items")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        throw error;
+      }
+
+      setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+      toast.success("Auto-replenish item deleted");
+    } catch (error: any) {
+      toast.error(error.message);
     }
-    return `Every ${item.frequencyDays} days at ${item.custom_time || '09:00'}`;
   };
-  
-  // Group items by status (upcoming and inactive)
-  const upcomingItems = autoReplenishItems.filter(item => 
-    item.active && isAfter(new Date(item.nextOrderDate), new Date())
-  );
-  
-  const inactiveItems = autoReplenishItems.filter(item => !item.active);
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow main-content px-4 pb-16">
-        <div className="container mx-auto max-w-4xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate("/profile")}
-              className="self-start"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Profile
-            </Button>
-            
-            <Button
-              onClick={handleProcessOrders}
-              disabled={isProcessingOrders}
-              className="self-end"
-            >
-              <Play className="mr-2 h-4 w-4" />
-              {isProcessingOrders ? "Processing..." : "Process Orders Now"}
-            </Button>
-          </div>
-          
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <main className="flex-grow container mx-auto px-4 py-8 pt-32">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold flex items-center">
-                <RefreshCw className="mr-2 h-6 w-6" />
-                Auto-Replenish
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Manage your recurring product orders with custom scheduling
+              <h1 className="text-3xl font-bold">Auto Replenish</h1>
+              <p className="text-muted-foreground mt-2">
+                Automatically reorder your essentials
               </p>
             </div>
-            
-            <Button onClick={() => navigate("/shop")} className="gap-2">
-              <PlusCircle size={16} />
-              Add Products
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Item
             </Button>
           </div>
-          
-          {isLoading ? (
-            <div className="animate-pulse space-y-6">
-              <div className="h-60 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            </div>
-          ) : autoReplenishItems.length > 0 ? (
-            <div className="space-y-8">
-              {/* Upcoming Orders */}
-              <Card>
-                <CardHeader className="bg-primary/5">
-                  <CardTitle className="flex items-center">
-                    <Calendar className="mr-2 h-5 w-5" />
-                    Upcoming Auto-Replenish Orders
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {upcomingItems.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Product</TableHead>
-                            <TableHead>Quantity</TableHead>
-                            <TableHead>Schedule</TableHead>
-                            <TableHead>Next Order</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {upcomingItems.map((item) => {
-                            const product = products[item.productId];
-                            
-                            return (
-                              <TableRow key={item.id}>
-                                <TableCell>
-                                  <div className="flex items-center">
-                                    <div className="w-10 h-10 rounded bg-muted/30 mr-3 overflow-hidden">
-                                      {product?.image && (
-                                        <img 
-                                          src={product.image} 
-                                          alt={product?.name || "Product"}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      )}
-                                    </div>
-                                    <div>
-                                      <p className="font-medium">{product?.name || "Product"}</p>
-                                      <p className="text-xs text-muted-foreground">{product?.category}</p>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>{item.quantity}</TableCell>
-                                <TableCell>
-                                  <span className="text-sm">{formatSchedule(item)}</span>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center">
-                                    <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
-                                    {format(new Date(item.nextOrderDate), "MMM d, yyyy")}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge className="bg-green-500">Active</Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex justify-end space-x-2">
-                                    <Switch
-                                      checked={item.active}
-                                      onCheckedChange={() => handleToggleStatus(item)}
-                                      disabled={!!processing[item.id]}
-                                      title={item.active ? "Pause" : "Activate"}
-                                    />
-                                    
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="icon"
-                                          className="text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20"
-                                          disabled={!!processing[item.id]}
-                                        >
-                                          <Trash2 size={16} />
-                                          <span className="sr-only">Remove</span>
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Remove from Auto-Replenish?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            This will remove the product from your auto-replenish schedule. 
-                                            You can always add it again later.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction
-                                            onClick={() => handleRemoveItem(item)}
-                                            className="bg-red-500 hover:bg-red-600"
-                                          >
-                                            Remove
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <p className="text-muted-foreground">No active auto-replenish items</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Inactive Items */}
-              {inactiveItems.length > 0 && (
-                <Card>
-                  <CardHeader className="bg-muted/30">
-                    <CardTitle className="flex items-center">
-                      <CalendarClock className="mr-2 h-5 w-5" />
-                      Paused Auto-Replenish Items
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Product</TableHead>
-                            <TableHead>Quantity</TableHead>
-                            <TableHead>Schedule</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {inactiveItems.map((item) => {
-                            const product = products[item.productId];
-                            
-                            return (
-                              <TableRow key={item.id}>
-                                <TableCell>
-                                  <div className="flex items-center">
-                                    <div className="w-10 h-10 rounded bg-muted/30 mr-3 overflow-hidden">
-                                      {product?.image && (
-                                        <img 
-                                          src={product.image} 
-                                          alt={product?.name || "Product"}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      )}
-                                    </div>
-                                    <div>
-                                      <p className="font-medium">{product?.name || "Product"}</p>
-                                      <p className="text-xs text-muted-foreground">{product?.category}</p>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>{item.quantity}</TableCell>
-                                <TableCell>
-                                  <span className="text-sm">{formatSchedule(item)}</span>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className="border-gray-400 text-gray-500">
-                                    Paused
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex justify-end space-x-2">
-                                    <Switch
-                                      checked={item.active}
-                                      onCheckedChange={() => handleToggleStatus(item)}
-                                      disabled={!!processing[item.id]}
-                                      title={item.active ? "Pause" : "Activate"}
-                                    />
-                                    
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="icon"
-                                          className="text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20"
-                                          disabled={!!processing[item.id]}
-                                        >
-                                          <Trash2 size={16} />
-                                          <span className="sr-only">Remove</span>
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Remove from Auto-Replenish?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            This will remove the product from your auto-replenish schedule. 
-                                            You can always add it again later.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction
-                                            onClick={() => handleRemoveItem(item)}
-                                            className="bg-red-500 hover:bg-red-600"
-                                          >
-                                            Remove
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+
+          {isLoadingItems ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-4">
+                      <Skeleton className="h-16 w-16 rounded-md" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-[250px]" />
+                        <Skeleton className="h-4 w-[200px]" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              )}
-              
-              {/* How It Works */}
-              <div className="bg-muted/30 p-6 rounded-lg">
-                <h3 className="font-medium text-lg mb-4">How Auto-Replenish Works</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                      <ShoppingCart className="h-4 w-4 text-blue-600" />
+              ))}
+            </div>
+          ) : itemsWithProducts && itemsWithProducts.length > 0 ? (
+            <div className="space-y-4">
+              {itemsWithProducts.map((item) => (
+                <Card key={item.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {item.product && (
+                          <>
+                            <img
+                              src={item.product.image}
+                              alt={item.product.name}
+                              className="h-16 w-16 object-cover rounded-md"
+                            />
+                            <div>
+                              <h3 className="font-semibold">{item.product.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Quantity: {item.quantity} • {formatCurrency(item.product.price * item.quantity)}
+                              </p>
+                              <div className="flex items-center space-x-2 mt-2">
+                                <Badge variant="secondary">
+                                  <Clock className="mr-1 h-3 w-3" />
+                                  Every {item.frequency_days} days
+                                </Badge>
+                                <Badge variant="outline">
+                                  <Calendar className="mr-1 h-3 w-3" />
+                                  Next: {new Date(item.next_order_date).toLocaleDateString()}
+                                </Badge>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <h4 className="font-medium">Select Products</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Choose products and set custom schedules - every X days or specific days of the week.
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                      <Calendar className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <h4 className="font-medium">Set Custom Schedule</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Choose specific days of the week and time for delivery, or set a regular interval.
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                      <RefreshCw className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <h4 className="font-medium">Automatic Orders</h4>
-                    <p className="text-sm text-muted-foreground">
-                      We'll automatically place your orders according to your custom schedule.
-                    </p>
-                  </div>
-                </div>
-              </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           ) : (
             <Card>
-              <CardContent className="pt-6 pb-6 flex flex-col items-center justify-center text-center">
-                <RefreshCw className="h-12 w-12 text-muted-foreground mb-3" />
-                <h3 className="text-xl font-medium mb-2">No Auto-Replenish Items</h3>
-                <p className="text-muted-foreground max-w-md mb-6">
-                  You haven't set up any auto-replenish items yet. Add products to your auto-replenish schedule with custom days and times.
+              <CardContent className="p-12 text-center">
+                <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Auto Replenish Items</h3>
+                <p className="text-muted-foreground mb-4">
+                  Start by adding products you want to automatically reorder.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button onClick={() => navigate("/shop")}>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Browse Products
-                  </Button>
-                </div>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Your First Item
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -498,4 +233,4 @@ const AutoReplenishPage = () => {
   );
 };
 
-export default AutoReplenishPage;
+export default AutoReplenish;

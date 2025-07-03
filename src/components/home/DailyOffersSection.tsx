@@ -1,186 +1,200 @@
 
-import { useState, useEffect, memo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import ProductCard from '@/components/ProductCard';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ProductType } from '@/types/supabase';
-import { getDailyOffersWithProducts } from '@/services/product/offerService';
-import { toast } from '@/components/ui/use-toast';
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Clock, Star, ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/utils/currencyFormatter";
+import { ProductType } from "@/types/supabase";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface TimeLeft {
-  hours: string;
-  minutes: string;
-  seconds: string;
+interface DailyOffer {
+  id: string;
+  product_id: string;
+  discount_percentage: number;
+  start_date: string;
+  end_date: string;
+  active: boolean;
+  product?: ProductType;
 }
 
-const DailyOffersSection = memo(() => {
-  const [productsWithDiscount, setProductsWithDiscount] = useState<ProductType[]>([]);
-  
-  // Set end time to midnight
-  const calculateEndTime = () => {
-    const now = new Date();
-    const endTime = new Date(now);
-    endTime.setHours(23, 59, 59, 999);
-    return endTime;
-  };
-  
-  // Calculate time left until end of day
-  const calculateTimeLeft = () => {
-    const difference = calculateEndTime().getTime() - new Date().getTime();
-    
-    if (difference <= 0) {
-      // It's a new day, reset the deals
-      fetchDeals();
-      return { hours: "00", minutes: "00", seconds: "00" };
-    }
-    
-    const hours = Math.floor(difference / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-    
-    return {
-      hours: hours.toString().padStart(2, "0"),
-      minutes: minutes.toString().padStart(2, "0"),
-      seconds: seconds.toString().padStart(2, "0"),
-    };
-  };
-  
-  // Initial state for the countdown
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft);
-  
-  // Fetch deals from the product service
-  const { data: dailyOffers = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['daily-offers-active'],
-    queryFn: getDailyOffersWithProducts,
-    staleTime: 1000 * 60 * 15, // 15 minutes
-    gcTime: 1000 * 60 * 30,    // 30 minutes
-    retry: 2,
-    meta: {
-      onError: (error) => {
-        console.error('Failed to fetch daily offers:', error);
+const DailyOffersSection = () => {
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+
+  const { data: offers, isLoading } = useQuery({
+    queryKey: ["daily-offers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_offers")
+        .select(`
+          *,
+          products (*)
+        `)
+        .eq("active", true)
+        .gte("end_date", new Date().toISOString())
+        .lte("start_date", new Date().toISOString())
+        .limit(4);
+
+      if (error) {
+        console.error("Error fetching daily offers:", error);
+        return [];
       }
-    }
+
+      // Map the data to include the product information
+      return data.map(offer => ({
+        ...offer,
+        product: offer.products ? {
+          id: offer.products.id,
+          name: offer.products.name,
+          description: offer.products.description,
+          price: offer.products.price,
+          image: offer.products.image,
+          category_id: offer.products.category_id,
+          stock: offer.products.stock,
+          featured: offer.products.featured,
+          rating: offer.products.rating,
+          num_reviews: offer.products.num_reviews,
+          discount_percentage: offer.discount_percentage, // Use the offer's discount
+          created_at: offer.products.created_at,
+          updated_at: offer.products.updated_at
+        } as ProductType : undefined
+      })) as DailyOffer[];
+    },
   });
-  
-  // Helper function to fetch deals
-  const fetchDeals = () => {
-    refetch();
-  };
-  
+
+  // Calculate time remaining until end of day
   useEffect(() => {
-    // Convert the offers to products with the discount applied
-    if (dailyOffers.length > 0) {
-      const mapped = dailyOffers
-        .filter(offer => offer.product) // filter out offers without products
-        .map(offer => {
-          if (!offer.product) return null;
-          // Apply discount to product
-          return {
-            ...offer.product,
-            discountPercentage: offer.discount_percentage
-          };
-        })
-        .filter(Boolean) as ProductType[];
-      
-      setProductsWithDiscount(mapped.slice(0, 4)); // Take up to 4 products
-    } else {
-      setProductsWithDiscount([]);
-    }
-  }, [dailyOffers]);
-  
-  useEffect(() => {
-    // Update countdown timer every second
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      const now = new Date();
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      const difference = endOfDay.getTime() - now.getTime();
+      
+      if (difference > 0) {
+        const hours = Math.floor(difference / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        
+        setTimeLeft({ hours, minutes, seconds });
+      }
     }, 1000);
-    
+
     return () => clearInterval(timer);
   }, []);
-  
-  if (error) {
-    return (
-      <section className="py-6">
-        <div className="container text-center">
-          <h2 className="text-xl font-semibold mb-2">Unable to load daily offers</h2>
-          <Button onClick={() => refetch()} size="sm">Retry</Button>
-        </div>
-      </section>
-    );
-  }
-  
+
   if (isLoading) {
     return (
-      <section className="py-12">
-        <div className="container">
-          <div className="flex justify-between items-center mb-8">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-10 w-32" />
+      <section className="py-12 px-4 bg-gradient-to-r from-orange-50 to-red-50">
+        <div className="container mx-auto">
+          <div className="text-center mb-8">
+            <Skeleton className="h-8 w-48 mx-auto mb-2" />
+            <Skeleton className="h-4 w-32 mx-auto" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex flex-col space-y-3">
-                <Skeleton className="h-[200px] w-full rounded-xl" />
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-10 w-full" />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-80 w-full" />
             ))}
           </div>
         </div>
       </section>
     );
   }
-  
-  if (productsWithDiscount.length === 0) {
-    return null; // Don't show the section if there are no offers
+
+  if (!offers || offers.length === 0) {
+    return null;
   }
-  
+
   return (
-    <section className="py-12 bg-gray-50 dark:bg-gray-800/30">
-      <div className="container">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Daily Special Offers</h2>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center">
-              <div className="flex items-center">
-                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
-                  {timeLeft.hours}
-                </div>
-                <span className="mx-1 text-primary font-medium">:</span>
-                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
-                  {timeLeft.minutes}
-                </div>
-                <span className="mx-1 text-primary font-medium">:</span>
-                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
-                  {timeLeft.seconds}
-                </div>
-              </div>
-            </div>
-            
-            <Link to="/shop?deals=true">
-              <Button variant="outline" size="sm" className="gap-2">
-                View All <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+    <section className="py-12 px-4 bg-gradient-to-r from-orange-50 to-red-50">
+      <div className="container mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-2">Daily Offers</h2>
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <Clock className="h-4 w-4 text-orange-600" />
+            <span>Ends in: {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</span>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {productsWithDiscount.map((product) => (
-            <ProductCard 
-              key={`offer-${product.id}`} 
-              product={product}
-              className="bg-white dark:bg-gray-800"
-            />
-          ))}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {offers.map((offer) => {
+            if (!offer.product) return null;
+            
+            const discountedPrice = offer.product.price * (1 - offer.discount_percentage / 100);
+            
+            return (
+              <Card key={offer.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="relative">
+                  <img
+                    src={offer.product.image}
+                    alt={offer.product.name}
+                    className="w-full h-48 object-cover"
+                  />
+                  <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600">
+                    {offer.discount_percentage}% OFF
+                  </Badge>
+                </div>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-lg mb-2 line-clamp-1">
+                    {offer.product.name}
+                  </h3>
+                  
+                  <div className="flex items-center mb-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < Math.round(offer.product.rating)
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-500 ml-1">
+                      ({offer.product.num_reviews || 0})
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xl font-bold text-primary">
+                      {formatCurrency(discountedPrice)}
+                    </span>
+                    <span className="text-sm text-gray-500 line-through">
+                      {formatCurrency(offer.product.price)}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Link to={`/product/${offer.product.id}`} className="flex-1">
+                      <Button variant="outline" className="w-full text-xs">
+                        View Details
+                      </Button>
+                    </Link>
+                    <Button size="sm" className="px-3">
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        <div className="text-center mt-8">
+          <Link to="/shop?deals=true">
+            <Button size="lg" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
+              View All Daily Offers
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
   );
-});
+};
 
-DailyOffersSection.displayName = "DailyOffersSection";
 export default DailyOffersSection;
