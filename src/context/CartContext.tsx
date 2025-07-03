@@ -1,9 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { CartContextType, Product, CartItem, Order } from "../types";
 import { toast } from "@/components/ui/use-toast";
 import { createOrder, CreateOrderInput } from "@/services/orderService";
 import { convertToOrder } from "@/utils/typeConverters";
-import { supabase } from "@/services/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -102,9 +103,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: Date.now().toString(),
         userId,
         items: items.map(item => ({
-          product: item.product,
+          productId: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
           quantity: item.quantity,
-          price: item.product.price
+          image: item.product.image
         })),
         subtotal: total,
         deliveryFee: 5.00,
