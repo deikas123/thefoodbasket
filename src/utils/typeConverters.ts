@@ -21,7 +21,7 @@ export const convertToOrder = (orderType: OrderType): Order => {
       name: (orderType.delivery_method as any)?.name || '',
       price: (orderType.delivery_method as any)?.price || 0,
       estimatedDelivery: (orderType.delivery_method as any)?.estimatedDelivery || 
-                        `${(orderType.delivery_method as any)?.estimatedDays || 1} days`
+                        `${(orderType.delivery_method as any)?.estimated_delivery_days || 1} days`
     },
     paymentMethod: orderType.payment_method as Order['paymentMethod'],
     subtotal: orderType.subtotal,
@@ -51,16 +51,15 @@ export const convertToProduct = (productType: ProductType): Product => {
     price: productType.price,
     image: productType.image,
     description: productType.description,
-    category: productType.category,
+    category: productType.category_id,
     stock: productType.stock,
     rating: productType.rating,
-    numReviews: productType.numReviews,
+    numReviews: productType.num_reviews,
     featured: productType.featured,
-    discountPercentage: productType.discountPercentage || undefined
+    discountPercentage: productType.discount_percentage || undefined
   };
 };
 
 export const convertToProducts = (productTypes: ProductType[]): Product[] => {
   return productTypes.map(convertToProduct);
 };
-
