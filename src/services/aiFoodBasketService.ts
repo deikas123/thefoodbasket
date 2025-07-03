@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { convertProductTypeToProduct } from "@/utils/productHelpers";
 
@@ -105,6 +106,128 @@ export const generateAIFoodBasket = async (preferences: string[]): Promise<AIFoo
   
   // Return a random basket based on preferences
   return mockBaskets[Math.floor(Math.random() * mockBaskets.length)];
+};
+
+// Function to generate multiple AI food baskets
+export const generateAIFoodBaskets = async (options: { maxPrice?: number } = {}): Promise<any[]> => {
+  try {
+    // Get available products from database
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .gt('stock', 0)
+      .limit(20);
+
+    if (error) {
+      console.error('Error fetching products for AI baskets:', error);
+      return [];
+    }
+
+    if (!products || products.length === 0) {
+      return [];
+    }
+
+    // Generate 3-4 AI baskets based on available products
+    const baskets = [];
+    const basketTemplates = [
+      {
+        name: "Fresh & Healthy Bundle",
+        description: "A selection of fresh fruits and vegetables for healthy eating",
+        recipe: "Mix and match these fresh ingredients for salads, smoothies, and healthy snacks throughout the week.",
+        tags: ['Healthy', 'Fresh', 'Organic']
+      },
+      {
+        name: "Quick Meal Essentials",
+        description: "Everything you need for quick and easy weeknight dinners",
+        recipe: "These pantry staples and fresh ingredients can be combined for fast, delicious meals in under 30 minutes.",
+        tags: ['Quick', 'Easy', 'Weeknight']
+      },
+      {
+        name: "Breakfast Champions",
+        description: "Start your day right with these breakfast essentials",
+        recipe: "Perfect for creating nutritious breakfast options from cereals to fresh fruit parfaits.",
+        tags: ['Breakfast', 'Morning', 'Energy']
+      }
+    ];
+
+    for (let i = 0; i < Math.min(3, basketTemplates.length); i++) {
+      const template = basketTemplates[i];
+      const selectedProducts = products
+        .sort(() => 0.5 - Math.random())
+        .slice(0, Math.floor(Math.random() * 4) + 3); // 3-6 products per basket
+
+      const basketProducts = selectedProducts.map(product => ({
+        product: convertProductTypeToProduct(product),
+        quantity: Math.floor(Math.random() * 3) + 1 // 1-3 quantity
+      }));
+
+      const totalPrice = basketProducts.reduce((sum, item) => 
+        sum + (item.product.price * item.quantity), 0
+      );
+
+      if (!options.maxPrice || totalPrice <= options.maxPrice) {
+        baskets.push({
+          id: `ai-${Date.now()}-${i}`,
+          ...template,
+          products: basketProducts,
+          totalPrice: Math.round(totalPrice * 100) / 100,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }
+
+    return baskets;
+  } catch (error) {
+    console.error('Error generating AI food baskets:', error);
+    return [];
+  }
+};
+
+// Function to save a generated basket to the database
+export const saveGeneratedBasket = async (basket: any): Promise<string | null> => {
+  try {
+    // Insert the basket
+    const { data: savedBasket, error: basketError } = await supabase
+      .from('food_baskets')
+      .insert({
+        name: basket.name,
+        description: basket.description,
+        recipe: basket.recipe || 'Recipe instructions will be provided.',
+        total_price: basket.totalPrice,
+        image: null
+      })
+      .select()
+      .single();
+
+    if (basketError) {
+      console.error('Error saving basket:', basketError);
+      return null;
+    }
+
+    // Insert basket items if products exist
+    if (basket.products && basket.products.length > 0) {
+      const basketItems = basket.products.map((item: any) => ({
+        basket_id: savedBasket.id,
+        product_id: item.product.id,
+        quantity: item.quantity
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('food_basket_items')
+        .insert(basketItems);
+
+      if (itemsError) {
+        console.error('Error saving basket items:', itemsError);
+        // Don't return null here as the basket was saved successfully
+      }
+    }
+
+    return savedBasket.id;
+  } catch (error) {
+    console.error('Error in saveGeneratedBasket:', error);
+    return null;
+  }
 };
 
 // Get all available food baskets
