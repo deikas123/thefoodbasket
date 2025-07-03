@@ -98,6 +98,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       estimatedDelivery.setDate(estimatedDelivery.getDate() + 2);
 
       const loyaltyPointsEarned = Math.floor(total);
+      const currentTime = new Date().toISOString();
       
       const order: Order = {
         id: Date.now().toString(),
@@ -118,7 +119,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         paymentMethod,
         estimatedDelivery: estimatedDelivery.toISOString(),
         loyaltyPointsEarned,
-        createdAt: new Date().toISOString(),
+        createdAt: currentTime,
+        updatedAt: currentTime,
         notes
       };
 
