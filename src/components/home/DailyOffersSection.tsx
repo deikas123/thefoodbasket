@@ -24,44 +24,58 @@ interface DailyOffer {
 const DailyOffersSection = () => {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
-  const { data: offers, isLoading } = useQuery({
+  const { data: offers, isLoading, error } = useQuery({
     queryKey: ["daily-offers"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("daily_offers")
-        .select(`
-          *,
-          products (*)
-        `)
-        .eq("active", true)
-        .gte("end_date", new Date().toISOString())
-        .lte("start_date", new Date().toISOString())
-        .limit(4);
+      try {
+        const { data, error } = await supabase
+          .from("daily_offers")
+          .select(`
+            *,
+            products (*)
+          `)
+          .eq("active", true)
+          .gte("end_date", new Date().toISOString())
+          .lte("start_date", new Date().toISOString())
+          .limit(4);
 
-      if (error) {
-        console.error("Error fetching daily offers:", error);
+        if (error) {
+          console.error("Error fetching daily offers:", error);
+          return [];
+        }
+
+        if (!data) {
+          return [];
+        }
+
+        // Map the data to include the product information
+        return data.map((offer): DailyOffer => ({
+          id: offer.id,
+          product_id: offer.product_id || '',
+          discount_percentage: offer.discount_percentage,
+          start_date: offer.start_date,
+          end_date: offer.end_date,
+          active: offer.active,
+          product: offer.products ? {
+            id: offer.products.id,
+            name: offer.products.name,
+            description: offer.products.description,
+            price: offer.products.price,
+            image: offer.products.image,
+            category_id: offer.products.category_id,
+            stock: offer.products.stock,
+            featured: offer.products.featured,
+            rating: offer.products.rating,
+            num_reviews: offer.products.num_reviews,
+            discount_percentage: offer.discount_percentage, // Use the offer's discount
+            created_at: offer.products.created_at,
+            updated_at: offer.products.updated_at
+          } as ProductType : undefined
+        }));
+      } catch (error) {
+        console.error("Error in daily offers query:", error);
         return [];
       }
-
-      // Map the data to include the product information
-      return data.map(offer => ({
-        ...offer,
-        product: offer.products ? {
-          id: offer.products.id,
-          name: offer.products.name,
-          description: offer.products.description,
-          price: offer.products.price,
-          image: offer.products.image,
-          category_id: offer.products.category_id,
-          stock: offer.products.stock,
-          featured: offer.products.featured,
-          rating: offer.products.rating,
-          num_reviews: offer.products.num_reviews,
-          discount_percentage: offer.discount_percentage, // Use the offer's discount
-          created_at: offer.products.created_at,
-          updated_at: offer.products.updated_at
-        } as ProductType : undefined
-      })) as DailyOffer[];
     },
   });
 
@@ -85,6 +99,11 @@ const DailyOffersSection = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  if (error) {
+    console.error("Daily offers error:", error);
+    return null;
+  }
 
   if (isLoading) {
     return (
