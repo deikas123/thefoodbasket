@@ -100,17 +100,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const loyaltyPointsEarned = Math.floor(total);
       const currentTime = new Date().toISOString();
       
-      // Get user profile for customer information
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, phone')
-        .eq('id', userId)
-        .single();
-
-      const customerName = profile ? 
-        `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Customer' : 
-        'Customer';
-      
       const order: Order = {
         id: Date.now().toString(),
         userId,
@@ -126,11 +115,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         total: total + 5.00,
         status: "pending",
         deliveryAddress,
-        customer: {
-          name: customerName,
-          phone: profile?.phone || 'No phone available',
-          email: `${userId}@customer.local` // Placeholder email
-        },
         deliveryMethod,
         paymentMethod,
         estimatedDelivery: estimatedDelivery.toISOString(),
@@ -149,7 +133,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error awarding loyalty points:', error);
       }
 
-      // Save order to Supabase with customer information
+      // Save order to Supabase
       const { error } = await supabase
         .from('orders')
         .insert({

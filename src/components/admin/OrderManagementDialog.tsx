@@ -121,32 +121,16 @@ const OrderManagementDialog: React.FC<OrderManagementDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Enhanced Customer Information */}
-          <div className="grid grid-cols-1 gap-4">
+          {/* Customer Information */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="text-sm font-medium flex items-center mb-2">
                 <User className="h-4 w-4 mr-2" />
-                Customer Information
+                Customer
               </h3>
-              <div className="bg-muted p-4 rounded-md space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Name:</span>
-                  <span className="text-sm font-medium">{order.customer?.name || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Phone:</span>
-                  <span className="text-sm font-medium">{order.customer?.phone || 'No phone available'}</span>
-                </div>
-                {order.customer?.email && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Email:</span>
-                    <span className="text-sm font-medium">{order.customer.email}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">User ID:</span>
-                  <span className="text-sm font-mono text-xs">{order.userId}</span>
-                </div>
+              <div className="bg-muted p-3 rounded-md text-sm">
+                <p className="font-medium">{order.customer?.name || 'N/A'}</p>
+                <p className="text-muted-foreground">{order.customer?.phone || 'No phone'}</p>
               </div>
             </div>
             
@@ -160,30 +144,26 @@ const OrderManagementDialog: React.FC<OrderManagementDialogProps> = ({
                 <p>Items: <span className="font-medium">{order.items.length}</span></p>
                 <p className="flex items-center">
                   <Clock className="h-3 w-3 mr-1" />
-                  Estimated: {new Date(order.estimatedDelivery).toLocaleDateString()}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Created: {new Date(order.createdAt).toLocaleString()}
+                  {order.estimatedDelivery}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Enhanced Delivery Address */}
+          {/* Delivery Address */}
           <div>
             <h3 className="text-sm font-medium flex items-center mb-2">
               <MapPin className="h-4 w-4 mr-2" />
               Delivery Address
             </h3>
-            <div className="bg-muted p-4 rounded-md space-y-1">
-              <p className="font-medium">{order.deliveryAddress.street}</p>
-              <p>{order.deliveryAddress.city}, {order.deliveryAddress.state}</p>
-              <p className="text-muted-foreground">{order.deliveryAddress.zipCode}</p>
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p>{order.deliveryAddress.street}</p>
+              <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.zipCode}</p>
               {order.deliveryAddress.notes && (
-                <div className="mt-3 pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">Delivery Notes:</p>
-                  <p className="text-sm">{order.deliveryAddress.notes}</p>
-                </div>
+                <p className="mt-2 text-muted-foreground border-t pt-2">
+                  <span className="font-medium">Notes: </span>
+                  {order.deliveryAddress.notes}
+                </p>
               )}
             </div>
           </div>
@@ -192,7 +172,7 @@ const OrderManagementDialog: React.FC<OrderManagementDialogProps> = ({
           <div>
             <h3 className="text-sm font-medium flex items-center mb-2">
               <Package className="h-4 w-4 mr-2" />
-              Order Items ({order.items.length})
+              Order Items
             </h3>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {order.items.map((item) => (
