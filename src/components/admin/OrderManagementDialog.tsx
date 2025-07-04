@@ -12,7 +12,7 @@ import { updateOrderStatus } from "@/services/orderService";
 import { addTrackingEvent } from "@/services/orderTrackingService";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { MapPin, Package, User, Calendar, Clock } from "lucide-react";
+import { MapPin, Package, User, Calendar, Clock, Phone, Mail } from "lucide-react";
 
 interface OrderManagementDialogProps {
   isOpen: boolean;
@@ -107,7 +107,7 @@ const OrderManagementDialog: React.FC<OrderManagementDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Manage Order {order.id}</span>
@@ -121,49 +121,108 @@ const OrderManagementDialog: React.FC<OrderManagementDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Customer Information */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Enhanced Customer Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 className="text-sm font-medium flex items-center mb-2">
                 <User className="h-4 w-4 mr-2" />
-                Customer
+                Customer Details
               </h3>
-              <div className="bg-muted p-3 rounded-md text-sm">
-                <p className="font-medium">{order.customer?.name || 'N/A'}</p>
-                <p className="text-muted-foreground">{order.customer?.phone || 'No phone'}</p>
+              <div className="bg-muted p-4 rounded-md text-sm space-y-2">
+                <div>
+                  <span className="font-medium">Name:</span>
+                  <p className="text-foreground">{order.customer?.name || 'Not provided'}</p>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="h-3 w-3 mr-2" />
+                  <span className="font-medium mr-2">Phone:</span>
+                  <p className="text-foreground">{order.customer?.phone || 'Not provided'}</p>
+                </div>
+                {order.customer?.email && (
+                  <div className="flex items-center">
+                    <Mail className="h-3 w-3 mr-2" />
+                    <span className="font-medium mr-2">Email:</span>
+                    <p className="text-foreground">{order.customer.email}</p>
+                  </div>
+                )}
+                <div>
+                  <span className="font-medium">User ID:</span>
+                  <p className="text-xs text-muted-foreground font-mono">{order.userId}</p>
+                </div>
               </div>
             </div>
             
             <div>
               <h3 className="text-sm font-medium flex items-center mb-2">
                 <Calendar className="h-4 w-4 mr-2" />
-                Order Details
+                Order Summary
               </h3>
-              <div className="bg-muted p-3 rounded-md text-sm">
-                <p>Total: <span className="font-medium">{formatCurrency(order.total)}</span></p>
-                <p>Items: <span className="font-medium">{order.items.length}</span></p>
-                <p className="flex items-center">
+              <div className="bg-muted p-4 rounded-md text-sm space-y-2">
+                <div>
+                  <span className="font-medium">Total:</span>
+                  <span className="ml-2 text-lg font-bold">{formatCurrency(order.total)}</span>
+                </div>
+                <div>
+                  <span className="font-medium">Items:</span>
+                  <span className="ml-2">{order.items.length}</span>
+                </div>
+                <div>
+                  <span className="font-medium">Subtotal:</span>
+                  <span className="ml-2">{formatCurrency(order.subtotal)}</span>
+                </div>
+                <div>
+                  <span className="font-medium">Delivery Fee:</span>
+                  <span className="ml-2">{formatCurrency(order.deliveryFee)}</span>
+                </div>
+                <div className="flex items-center pt-2 border-t">
                   <Clock className="h-3 w-3 mr-1" />
-                  {order.estimatedDelivery}
-                </p>
+                  <span className="text-xs">Est. Delivery: {order.estimatedDelivery}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Delivery Address */}
+          {/* Enhanced Delivery Address with Location Details */}
           <div>
             <h3 className="text-sm font-medium flex items-center mb-2">
               <MapPin className="h-4 w-4 mr-2" />
-              Delivery Address
+              Complete Delivery Location
             </h3>
-            <div className="bg-muted p-3 rounded-md text-sm">
-              <p>{order.deliveryAddress.street}</p>
-              <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.zipCode}</p>
+            <div className="bg-muted p-4 rounded-md text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Street Address</h4>
+                  <p className="text-foreground">{order.deliveryAddress.street}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">City & Region</h4>
+                  <p className="text-foreground">{order.deliveryAddress.city}, {order.deliveryAddress.state}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Postal Code</h4>
+                  <p className="text-foreground">{order.deliveryAddress.zipCode}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Delivery Method</h4>
+                  <p className="text-foreground">{order.deliveryMethod.name}</p>
+                  <p className="text-xs text-muted-foreground">Fee: {formatCurrency(order.deliveryMethod.price)}</p>
+                </div>
+              </div>
               {order.deliveryAddress.notes && (
-                <p className="mt-2 text-muted-foreground border-t pt-2">
-                  <span className="font-medium">Notes: </span>
-                  {order.deliveryAddress.notes}
-                </p>
+                <div className="mt-4 pt-4 border-t">
+                  <h4 className="font-medium mb-2">Special Instructions</h4>
+                  <p className="text-foreground bg-background p-2 rounded border">
+                    {order.deliveryAddress.notes}
+                  </p>
+                </div>
+              )}
+              {order.notes && (
+                <div className="mt-4 pt-4 border-t">
+                  <h4 className="font-medium mb-2">Order Notes</h4>
+                  <p className="text-foreground bg-background p-2 rounded border">
+                    {order.notes}
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -172,27 +231,46 @@ const OrderManagementDialog: React.FC<OrderManagementDialogProps> = ({
           <div>
             <h3 className="text-sm font-medium flex items-center mb-2">
               <Package className="h-4 w-4 mr-2" />
-              Order Items
+              Order Items ({order.items.length})
             </h3>
             <div className="space-y-2 max-h-40 overflow-y-auto">
-              {order.items.map((item) => (
-                <div key={item.productId} className="flex justify-between items-center p-2 bg-muted/50 rounded-md">
+              {order.items.map((item, index) => (
+                <div key={`${item.productId}-${index}`} className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
                   <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 rounded bg-background overflow-hidden">
+                    <div className="h-10 w-10 rounded bg-background overflow-hidden border">
                       <img 
                         src={item.image} 
                         alt={item.name}
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    <span className="text-sm">{item.name}</span>
+                    <div>
+                      <span className="text-sm font-medium">{item.name}</span>
+                      <p className="text-xs text-muted-foreground">ID: {item.productId}</p>
+                    </div>
                   </div>
-                  <div className="text-sm">
-                    <span className="text-muted-foreground mr-2">x{item.quantity}</span>
-                    <span>{formatCurrency(item.price * item.quantity)}</span>
+                  <div className="text-sm text-right">
+                    <div className="font-medium">{formatCurrency(item.price * item.quantity)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatCurrency(item.price)} × {item.quantity}
+                    </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Payment Information */}
+          <div>
+            <h3 className="text-sm font-medium mb-2">Payment Information</h3>
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p><span className="font-medium">Method:</span> {order.paymentMethod.name}</p>
+              {order.loyaltyPointsUsed && (
+                <p><span className="font-medium">Loyalty Points Used:</span> {order.loyaltyPointsUsed}</p>
+              )}
+              {order.promoCode && (
+                <p><span className="font-medium">Promo Code:</span> {order.promoCode}</p>
+              )}
             </div>
           </div>
 

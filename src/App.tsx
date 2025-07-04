@@ -7,6 +7,7 @@ import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { useState, useEffect, lazy, Suspense } from "react";
 import Preloader from "@/components/Preloader";
+import ScrollToTop from "@/components/ScrollToTop";
 import AppRoutes from "@/components/routing/AppRoutes";
 import { FloatingChatButtons } from "@/components/chat/FloatingChatButtons";
 import { queryClient, prefetchCriticalData } from "@/lib/queryClient";
@@ -37,6 +38,7 @@ function App() {
             <WishlistProvider>
               {isLoading && <Preloader />}
               
+              <ScrollToTop />
               <AppRoutes />
               
               <FloatingChatButtons />
