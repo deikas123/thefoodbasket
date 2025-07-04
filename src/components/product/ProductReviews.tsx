@@ -1,6 +1,6 @@
 
-import { useState, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ interface ProductReviewsProps {
 
 const ProductReviews = ({ productId }: ProductReviewsProps) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [userReview, setUserReview] = useState<ProductReview | null>(null);
   
   // Fetch all reviews for this product
@@ -31,6 +32,7 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
   const {
     data: currentUserReview,
     isLoading: isLoadingUserReview,
+    refetch: refetchUserReview
   } = useQuery({
     queryKey: ["user-review", productId, user?.id],
     queryFn: () => getUserReviewForProduct(productId, user!.id),
@@ -38,26 +40,39 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
   });
   
   // Update local state when the user's review query completes
-  useEffect(() => {
-    if (!isLoadingUserReview) {
-      setUserReview(currentUserReview || null);
+  useState(() => {
+    if (!isLoadingUserReview && currentUserReview !== undefined) {
+      setUserReview(currentUserReview);
     }
-  }, [currentUserReview, isLoadingUserReview]);
+  });
   
-  const handleReviewSuccess = useCallback(() => {
-    refetchReviews();
-    if (user) {
-      // Refetch the current user's review
-      getUserReviewForProduct(productId, user.id).then(review => {
-        setUserReview(review);
-      });
+  const handleReviewSuccess = useCallback(async () => {
+    console.log("Review submitted successfully, invalidating queries");
+    
+    // Invalidate and refetch all related queries
+    await queryClient.invalidateQueries({ queryKey: ["product-reviews", productId] });
+    await queryClient.invalidateQueries({ queryKey: ["user-review", productId, user?.id] });
+    
+    // Also refetch to get immediate updates
+    await refetchReviews();
+    if (user?.id) {
+      await refetchUserReview();
     }
-  }, [productId, refetchReviews, user]);
+  }, [productId, queryClient, refetchReviews, refetchUserReview, user?.id]);
   
   const reviewCount = reviews.length;
   const averageRating = reviews.length > 0 
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
     : 0;
+  
+  console.log("ProductReviews render:", { 
+    productId, 
+    reviewCount, 
+    averageRating, 
+    userReview: currentUserReview,
+    isLoadingReviews,
+    isLoadingUserReview 
+  });
   
   return (
     <section className="mt-12">
@@ -108,7 +123,7 @@ const ProductReviews = ({ productId }: ProductReviewsProps) => {
         <TabsContent value="write" className="mt-4">
           <ReviewForm 
             productId={productId} 
-            existingReview={userReview}
+            existingReview={currentUserReview}
             onSuccess={handleReviewSuccess}
           />
         </TabsContent>

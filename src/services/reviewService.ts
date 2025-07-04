@@ -18,7 +18,8 @@ export interface ProductReview {
 
 export const getProductReviews = async (productId: string): Promise<ProductReview[]> => {
   try {
-    // Fixed the query to avoid foreign key relationship error
+    console.log("Fetching reviews for product:", productId);
+    
     const { data: reviewData, error: reviewError } = await supabase
       .from('product_reviews')
       .select('*')
@@ -30,17 +31,24 @@ export const getProductReviews = async (productId: string): Promise<ProductRevie
       return [];
     }
 
-    // Separately fetch users for each review
+    if (!reviewData || reviewData.length === 0) {
+      console.log("No reviews found for product:", productId);
+      return [];
+    }
+
+    console.log("Found reviews:", reviewData.length);
+
+    // Fetch user data for each review
     const reviews = await Promise.all(
-      (reviewData || []).map(async (review) => {
+      reviewData.map(async (review) => {
         const { data: userData, error: userError } = await supabase
-          .from('users')
+          .from('profiles')
           .select('first_name, last_name')
           .eq('id', review.user_id)
           .single();
 
         if (userError && userError.code !== 'PGRST116') {
-          console.error("Error fetching user data:", userError);
+          console.error("Error fetching user data for review:", review.id, userError);
         }
 
         return {
@@ -50,6 +58,7 @@ export const getProductReviews = async (productId: string): Promise<ProductRevie
       })
     );
 
+    console.log("Reviews with user data:", reviews);
     return reviews;
   } catch (error) {
     console.error("Error fetching product reviews:", error);
@@ -59,6 +68,8 @@ export const getProductReviews = async (productId: string): Promise<ProductRevie
 
 export const getUserReviewForProduct = async (productId: string, userId: string): Promise<ProductReview | null> => {
   try {
+    console.log("Fetching user review for product:", productId, "user:", userId);
+    
     const { data, error } = await supabase
       .from('product_reviews')
       .select('*')
@@ -73,6 +84,7 @@ export const getUserReviewForProduct = async (productId: string, userId: string)
       return null;
     }
 
+    console.log("Found user review:", data);
     return data;
   } catch (error) {
     console.error("Error fetching user review:", error);
@@ -87,20 +99,23 @@ export const submitProductReview = async (
   comment: string | null
 ): Promise<ProductReview | null> => {
   try {
+    console.log("Submitting review:", { productId, userId, rating, comment });
+    
     // Check if user has already reviewed this product
     const existingReview = await getUserReviewForProduct(productId, userId);
 
-    // If exists, update the review, otherwise create a new one
     const operation = existingReview ? 
       supabase
         .from('product_reviews')
         .update({ rating, comment, updated_at: new Date().toISOString() })
         .eq('id', existingReview.id)
-        .select() :
+        .select()
+        .single() :
       supabase
         .from('product_reviews')
         .insert([{ product_id: productId, user_id: userId, rating, comment }])
-        .select();
+        .select()
+        .single();
 
     const { data, error } = await operation;
 
@@ -114,12 +129,14 @@ export const submitProductReview = async (
       return null;
     }
 
+    console.log("Review submitted successfully:", data);
+    
     toast({
       title: "Success",
       description: existingReview ? "Your review has been updated." : "Your review has been submitted.",
     });
 
-    return data?.[0] || null;
+    return data;
   } catch (error) {
     console.error("Error submitting product review:", error);
     toast({
@@ -133,6 +150,8 @@ export const submitProductReview = async (
 
 export const deleteProductReview = async (reviewId: string): Promise<boolean> => {
   try {
+    console.log("Deleting review:", reviewId);
+    
     const { error } = await supabase
       .from('product_reviews')
       .delete()
@@ -148,6 +167,8 @@ export const deleteProductReview = async (reviewId: string): Promise<boolean> =>
       return false;
     }
 
+    console.log("Review deleted successfully");
+    
     toast({
       title: "Success",
       description: "Your review has been deleted.",

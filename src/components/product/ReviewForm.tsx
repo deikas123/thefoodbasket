@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Star, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,21 @@ const ReviewForm = ({ productId, existingReview, onSuccess }: ReviewFormProps) =
     }
   });
 
+  // Update form when existing review changes
+  useEffect(() => {
+    if (existingReview) {
+      setRating(existingReview.rating);
+      form.reset({
+        comment: existingReview.comment || ''
+      });
+    } else {
+      setRating(0);
+      form.reset({
+        comment: ''
+      });
+    }
+  }, [existingReview, form]);
+
   const handleRatingClick = (newRating: number) => {
     setRating(newRating);
   };
@@ -64,13 +79,19 @@ const ReviewForm = ({ productId, existingReview, onSuccess }: ReviewFormProps) =
     setIsSubmitting(true);
 
     try {
-      await submitProductReview(
+      console.log("Submitting review form:", { productId, userId: user.id, rating, comment: values.comment });
+      
+      const result = await submitProductReview(
         productId,
         user.id,
         rating,
         values.comment || null
       );
-      onSuccess();
+      
+      if (result) {
+        console.log("Review submitted, calling onSuccess");
+        onSuccess();
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -82,10 +103,13 @@ const ReviewForm = ({ productId, existingReview, onSuccess }: ReviewFormProps) =
     setIsDeleting(true);
     
     try {
+      console.log("Deleting review:", existingReview.id);
+      
       const success = await deleteProductReview(existingReview.id);
       if (success) {
         form.reset({ comment: '' });
         setRating(0);
+        console.log("Review deleted, calling onSuccess");
         onSuccess();
       }
     } finally {
