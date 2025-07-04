@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -20,9 +20,11 @@ const LazyImage = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | undefined>(undefined);
   const [isInView, setIsInView] = useState(false);
+  const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Use Intersection Observer to detect when the image is in view
+    if (!imgRef.current) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -30,44 +32,49 @@ const LazyImage = ({
           observer.disconnect();
         }
       },
-      { threshold }
+      { 
+        threshold,
+        rootMargin: '50px' // Start loading 50px before the image comes into view
+      }
     );
 
-    const currentElement = document.getElementById(`lazy-img-${props.id || Math.random().toString(36)}`);
-    if (currentElement) {
-      observer.observe(currentElement);
-    }
+    observer.observe(imgRef.current);
 
-    return () => {
-      observer.disconnect();
-    };
-  }, [threshold, props.id]);
+    return () => observer.disconnect();
+  }, [threshold]);
 
   useEffect(() => {
-    // Reset state when src changes
-    setIsLoaded(false);
-    
-    if (!isInView) return;
+    if (!isInView || !src) return;
 
-    // Create image object to preload
+    // Create a new image to preload
     const img = new Image();
-    img.src = src || '';
-    img.onload = () => {
+    
+    const handleLoad = () => {
       setImageSrc(src);
       setIsLoaded(true);
     };
+
+    const handleError = () => {
+      console.warn('Failed to load image:', src);
+      setIsLoaded(false);
+    };
+
+    img.addEventListener('load', handleLoad);
+    img.addEventListener('error', handleError);
+    img.src = src;
     
     return () => {
-      img.onload = null;
+      img.removeEventListener('load', handleLoad);
+      img.removeEventListener('error', handleError);
     };
   }, [src, isInView]);
 
   return (
     <div 
-      id={`lazy-img-${props.id || Math.random().toString(36)}`}
+      ref={imgRef}
       className={cn("overflow-hidden relative", aspectRatio)}
     >
-      {(!isLoaded || !isInView) && (
+      {!isLoaded && (
         <div className={cn("absolute inset-0 animate-pulse", placeholderColor)} />
       )}
       {src && isInView && (
@@ -75,6 +82,7 @@ const LazyImage = ({
           src={imageSrc}
           alt={alt || ''}
           loading="lazy"
+          decoding="async"
           className={cn(
             "object-cover w-full h-full transition-opacity duration-300",
             isLoaded ? "opacity-100" : "opacity-0",

@@ -1,17 +1,21 @@
-
 import React, { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Critical pages loaded immediately
 const Home = lazy(() => import("@/pages/Index"));
+
+// Less critical pages with delayed loading
 const Shop = lazy(() => import("@/pages/Shop"));
 const About = lazy(() => import("@/pages/About"));
 const ProductDetails = lazy(() => import("@/pages/ProductDetails"));
 const Category = lazy(() => import("@/pages/Category"));
-const FoodBaskets = lazy(() => import("@/pages/FoodBaskets"));
-const AutoReplenish = lazy(() => import("@/pages/AutoReplenish"));
+
+// Auth pages
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
+
+// User pages
 const Profile = lazy(() => import("@/pages/Profile"));
 const Checkout = lazy(() => import("@/pages/Checkout"));
 const Orders = lazy(() => import("@/pages/Orders"));
@@ -19,40 +23,47 @@ const OrderDetails = lazy(() => import("@/pages/OrderDetails"));
 const Notifications = lazy(() => import("@/pages/Notifications"));
 const Wishlist = lazy(() => import("@/pages/Wishlist"));
 const Wallet = lazy(() => import("@/pages/Wallet"));
+const LoyaltyPage = lazy(() => import("@/pages/Loyalty"));
+
+// Feature pages
+const FoodBaskets = lazy(() => import("@/pages/FoodBaskets"));
+const AutoReplenish = lazy(() => import("@/pages/AutoReplenish"));
 const PayLater = lazy(() => import("@/pages/PayLater"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
+
+// Admin and staff routes
 const AdminRoutes = lazy(() => import("./AdminRoutes"));
 const DeliveryRoutes = lazy(() => import("./DeliveryRoutes"));
 const StaffRoutes = lazy(() => import("./StaffRoutes"));
-const LoyaltyPage = lazy(() => import("@/pages/Loyalty"));
 
+// Other pages
+const NotFound = lazy(() => import("@/pages/NotFound"));
 import Timer from "@/pages/Timer";
 
-const LoadingFallback = () => (
+// Optimized loading fallback
+const FastLoadingFallback = () => (
   <div className="flex flex-col min-h-screen">
-    <div className="h-20 bg-background border-b" />
+    <div className="h-20 bg-background border-b animate-pulse" />
     <main className="flex-grow pt-8 pb-16 px-4">
       <div className="container mx-auto max-w-7xl">
-        <Skeleton className="h-8 w-48 mb-6" />
+        <div className="h-6 bg-muted rounded w-48 mb-6 animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Skeleton className="aspect-square rounded-lg" />
-          <div className="space-y-6">
-            <Skeleton className="h-10 w-3/4" />
-            <Skeleton className="h-6 w-1/4" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+          <div className="aspect-square bg-muted rounded-lg animate-pulse" />
+          <div className="space-y-4">
+            <div className="h-8 bg-muted rounded w-3/4 animate-pulse" />
+            <div className="h-4 bg-muted rounded w-1/4 animate-pulse" />
+            <div className="h-20 bg-muted rounded animate-pulse" />
+            <div className="h-10 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </div>
     </main>
-    <div className="h-20 bg-background border-t" />
+    <div className="h-20 bg-background border-t animate-pulse" />
   </div>
 );
 
 const AppRoutes = () => {
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <Suspense fallback={<FastLoadingFallback />}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />

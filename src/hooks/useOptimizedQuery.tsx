@@ -13,12 +13,14 @@ export function useOptimizedQuery<TData, TError = Error>(
   return useQuery({
     queryKey,
     queryFn,
-    // Default optimization settings
+    // Optimized defaults for better performance
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10,   // 10 minutes
     refetchOnWindowFocus: false,
-    retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Exponential backoff
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000), // Faster retries
     // Override with custom options
     ...options,
   });
@@ -33,8 +35,23 @@ export function useProductQuery<TData>(
   options?: UseQueryOptions<TData, Error, TData, string[]>
 ): UseQueryResult<TData, Error> {
   return useOptimizedQuery(queryKey, queryFn, {
-    staleTime: 1000 * 60 * 10, // 10 minutes
-    refetchOnMount: true,
+    staleTime: 1000 * 60 * 10, // 10 minutes for products
+    gcTime: 1000 * 60 * 15,    // 15 minutes garbage collection
+    ...options,
+  });
+}
+
+/**
+ * Hook for frequently changing data with shorter cache times
+ */
+export function useFastQuery<TData>(
+  queryKey: string[],
+  queryFn: () => Promise<TData>,
+  options?: UseQueryOptions<TData, Error, TData, string[]>
+): UseQueryResult<TData, Error> {
+  return useOptimizedQuery(queryKey, queryFn, {
+    staleTime: 1000 * 30, // 30 seconds for fast-changing data
+    gcTime: 1000 * 60 * 2, // 2 minutes garbage collection
     ...options,
   });
 }
