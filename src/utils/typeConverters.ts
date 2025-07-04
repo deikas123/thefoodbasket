@@ -1,7 +1,6 @@
 
-import { OrderType, ProductType } from '@/types/supabase';
+import { OrderType } from '@/types/supabase';
 import { Order } from '@/types/order';
-import { Product } from '@/types';
 
 export const convertToOrder = (orderType: OrderType): Order => {
   return {
@@ -15,13 +14,7 @@ export const convertToOrder = (orderType: OrderType): Order => {
       phone: 'No phone available', // Default phone
       email: undefined
     },
-    deliveryMethod: {
-      id: (orderType.delivery_method as any)?.id || '',
-      name: (orderType.delivery_method as any)?.name || '',
-      price: (orderType.delivery_method as any)?.price || 0,
-      estimatedDelivery: (orderType.delivery_method as any)?.estimatedDelivery || 
-                        `${(orderType.delivery_method as any)?.estimated_delivery_days || 1} days`
-    },
+    deliveryMethod: orderType.delivery_method as Order['deliveryMethod'],
     paymentMethod: orderType.payment_method as Order['paymentMethod'],
     subtotal: orderType.subtotal,
     deliveryFee: orderType.delivery_fee,
@@ -41,24 +34,4 @@ export const convertToOrder = (orderType: OrderType): Order => {
 
 export const convertToOrders = (orderTypes: OrderType[]): Order[] => {
   return orderTypes.map(convertToOrder);
-};
-
-export const convertToProduct = (productType: ProductType): Product => {
-  return {
-    id: productType.id,
-    name: productType.name,
-    price: productType.price,
-    image: productType.image,
-    description: productType.description,
-    category: productType.category_id, // Map from category_id to category
-    stock: productType.stock,
-    rating: productType.rating,
-    numReviews: productType.num_reviews || 0, // Map from num_reviews to numReviews
-    featured: productType.featured,
-    discountPercentage: productType.discount_percentage || undefined // Map from discount_percentage to discountPercentage
-  };
-};
-
-export const convertToProducts = (productTypes: ProductType[]): Product[] => {
-  return productTypes.map(convertToProduct);
 };

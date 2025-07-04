@@ -1,283 +1,257 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { convertProductTypeToProduct } from "@/utils/productHelpers";
+import { getAllProducts } from "@/services/productService";
+import { Product } from "@/types";
+import { FoodBasket, FoodBasketItem } from "@/types/foodBasket";
 
-interface Ingredient {
-  id: string;
-  name: string;
-  quantity: string;
-  unit: string;
+interface BasketGenerationCriteria {
+  maxPrice?: number;
+  cuisineType?: string;
+  dietaryRestrictions?: string[];
+  servings?: number;
+  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
 }
 
-interface AIFoodBasket {
+interface GeneratedBasket {
   name: string;
   description: string;
   recipe: string;
-  ingredients: Ingredient[];
-  estimatedCost: number;
-  servings: number;
-  prepTime: number;
-  cookTime: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-  tags: string[];
+  products: { product: Product; quantity: number }[];
+  totalPrice: number;
 }
 
-// Mock data for testing purposes
-const mockIngredients = [
-  { id: "1", name: "Tomato", quantity: "2", unit: "pieces" },
-  { id: "2", name: "Cucumber", quantity: "1", unit: "piece" },
-  { id: "3", name: "Onion", quantity: "0.5", unit: "piece" },
-  { id: "4", name: "Olive Oil", quantity: "2", unit: "tablespoons" },
-  { id: "5", name: "Lemon", quantity: "0.5", unit: "piece" },
-];
-
-// Mock function to simulate AI-generated ingredients
-export const generateAIIngredients = async (preferences: string[]): Promise<Ingredient[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return mockIngredients;
-};
-
-export const getFoodBasketProducts = async (ingredientNames: string[]): Promise<any[]> => {
+export const generateAIFoodBaskets = async (criteria: BasketGenerationCriteria = {}): Promise<GeneratedBasket[]> => {
   try {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('*')
-      .in('name', ingredientNames.map(name => name.toLowerCase()));
-
-    if (error) {
-      console.error('Error fetching food basket products:', error);
-      return [];
-    }
-
-    // Convert ProductType to Product using the helper function
-    return products.map(product => convertProductTypeToProduct(product));
-  } catch (error) {
-    console.error('Error in getFoodBasketProducts:', error);
-    return [];
-  }
-};
-
-// Mock function to simulate AI-generated food baskets
-export const generateAIFoodBasket = async (preferences: string[]): Promise<AIFoodBasket> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  const mockBaskets: AIFoodBasket[] = [
-    {
-      name: "Mediterranean Quinoa Bowl",
-      description: "A healthy and colorful bowl packed with Mediterranean flavors",
-      recipe: "Cook quinoa according to package instructions. While quinoa cooks, dice tomatoes, cucumber, and red onion. Crumble feta cheese. Mix olive oil, lemon juice, salt, and pepper for dressing. Combine all ingredients in a bowl and toss with dressing. Garnish with fresh herbs.",
-      ingredients: [
-        { id: "1", name: "Quinoa", quantity: "1", unit: "cup" },
-        { id: "2", name: "Cherry Tomatoes", quantity: "1", unit: "cup" },
-        { id: "3", name: "Cucumber", quantity: "1", unit: "large" },
-        { id: "4", name: "Feta Cheese", quantity: "4", unit: "oz" },
-        { id: "5", name: "Olive Oil", quantity: "3", unit: "tbsp" },
-        { id: "6", name: "Lemon", quantity: "1", unit: "whole" }
-      ],
-      estimatedCost: 15.99,
-      servings: 4,
-      prepTime: 15,
-      cookTime: 20,
-      difficulty: 'easy',
-      tags: ['Mediterranean', 'Healthy', 'Vegetarian', 'Quick']
-    },
-    {
-      name: "Spicy Thai Basil Stir Fry",
-      description: "A vibrant and spicy stir fry with fresh Thai basil and vegetables",
-      recipe: "Heat oil in a wok over high heat. Add garlic and chilies, stir for 30 seconds. Add protein and cook until done. Add vegetables and stir-fry for 2-3 minutes. Add sauce mixture and Thai basil, toss quickly. Serve over rice.",
-      ingredients: [
-        { id: "7", name: "Thai Basil", quantity: "1", unit: "bunch" },
-        { id: "8", name: "Chicken Breast", quantity: "1", unit: "lb" },
-        { id: "9", name: "Bell Peppers", quantity: "2", unit: "whole" },
-        { id: "10", name: "Soy Sauce", quantity: "3", unit: "tbsp" },
-        { id: "11", name: "Fish Sauce", quantity: "2", unit: "tbsp" },
-        { id: "12", name: "Jasmine Rice", quantity: "2", unit: "cups" }
-      ],
-      estimatedCost: 18.50,
-      servings: 4,
-      prepTime: 20,
-      cookTime: 15,
-      difficulty: 'medium',
-      tags: ['Thai', 'Spicy', 'Stir Fry', 'Asian']
-    }
-  ];
-  
-  // Return a random basket based on preferences
-  return mockBaskets[Math.floor(Math.random() * mockBaskets.length)];
-};
-
-// Function to generate multiple AI food baskets
-export const generateAIFoodBaskets = async (options: { maxPrice?: number } = {}): Promise<any[]> => {
-  try {
-    // Get available products from database
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('*')
-      .gt('stock', 0)
-      .limit(20);
-
-    if (error) {
-      console.error('Error fetching products for AI baskets:', error);
-      return [];
-    }
-
+    // Get all available products
+    const products = await getAllProducts();
     if (!products || products.length === 0) {
+      console.warn("No products available for basket generation");
       return [];
     }
 
-    // Generate 3-4 AI baskets based on available products
-    const baskets = [];
-    const basketTemplates = [
-      {
-        name: "Fresh & Healthy Bundle",
-        description: "A selection of fresh fruits and vegetables for healthy eating",
-        recipe: "Mix and match these fresh ingredients for salads, smoothies, and healthy snacks throughout the week.",
-        tags: ['Healthy', 'Fresh', 'Organic']
-      },
-      {
-        name: "Quick Meal Essentials",
-        description: "Everything you need for quick and easy weeknight dinners",
-        recipe: "These pantry staples and fresh ingredients can be combined for fast, delicious meals in under 30 minutes.",
-        tags: ['Quick', 'Easy', 'Weeknight']
-      },
-      {
-        name: "Breakfast Champions",
-        description: "Start your day right with these breakfast essentials",
-        recipe: "Perfect for creating nutritious breakfast options from cereals to fresh fruit parfaits.",
-        tags: ['Breakfast', 'Morning', 'Energy']
-      }
-    ];
-
-    for (let i = 0; i < Math.min(3, basketTemplates.length); i++) {
-      const template = basketTemplates[i];
-      const selectedProducts = products
-        .sort(() => 0.5 - Math.random())
-        .slice(0, Math.floor(Math.random() * 4) + 3); // 3-6 products per basket
-
-      const basketProducts = selectedProducts.map(product => ({
-        product: convertProductTypeToProduct(product),
-        quantity: Math.floor(Math.random() * 3) + 1 // 1-3 quantity
-      }));
-
-      const totalPrice = basketProducts.reduce((sum, item) => 
-        sum + (item.product.price * item.quantity), 0
-      );
-
-      if (!options.maxPrice || totalPrice <= options.maxPrice) {
-        baskets.push({
-          id: `ai-${Date.now()}-${i}`,
-          ...template,
-          products: basketProducts,
-          totalPrice: Math.round(totalPrice * 100) / 100,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      }
+    // Filter products that are actually in stock (stock > 0)
+    const inStockProducts = products.filter(product => 
+      product.stock > 0 && 
+      typeof product.stock === 'number' && 
+      product.stock >= 1
+    );
+    
+    console.log(`Filtered ${inStockProducts.length} in-stock products from ${products.length} total products`);
+    
+    if (inStockProducts.length === 0) {
+      console.warn("No products currently in stock for basket generation");
+      return [];
     }
-
+    
+    // Generate baskets using AI logic with only in-stock products
+    const baskets = await generateSmartBaskets(inStockProducts, criteria);
+    
     return baskets;
   } catch (error) {
-    console.error('Error generating AI food baskets:', error);
+    console.error("Error generating AI food baskets:", error);
     return [];
   }
 };
 
-// Function to save a generated basket to the database
-export const saveGeneratedBasket = async (basket: any): Promise<string | null> => {
+const generateSmartBaskets = async (products: Product[], criteria: BasketGenerationCriteria): Promise<GeneratedBasket[]> => {
+  const baskets: GeneratedBasket[] = [];
+  
+  // Breakfast basket
+  if (!criteria.mealType || criteria.mealType === 'breakfast') {
+    const breakfastProducts = selectProductsForMeal(products, 'breakfast', criteria.maxPrice);
+    if (breakfastProducts.length > 0) {
+      baskets.push({
+        name: "Healthy Breakfast Bundle",
+        description: "Start your day right with fresh fruits, whole grains, and protein - all items in stock!",
+        recipe: generateBreakfastRecipe(breakfastProducts),
+        products: breakfastProducts,
+        totalPrice: calculateTotalPrice(breakfastProducts)
+      });
+    }
+  }
+  
+  // Dinner basket
+  if (!criteria.mealType || criteria.mealType === 'dinner') {
+    const dinnerProducts = selectProductsForMeal(products, 'dinner', criteria.maxPrice);
+    if (dinnerProducts.length > 0) {
+      baskets.push({
+        name: "Family Dinner Kit",
+        description: "Complete ingredients for a delicious home-cooked family meal - ready to ship!",
+        recipe: generateDinnerRecipe(dinnerProducts),
+        products: dinnerProducts,
+        totalPrice: calculateTotalPrice(dinnerProducts)
+      });
+    }
+  }
+  
+  // Fresh fruit basket with reasonable pricing
+  const fruitProducts = selectProductsForMeal(products, 'fruit', criteria.maxPrice);
+  if (fruitProducts.length > 0) {
+    baskets.push({
+      name: "Assorted Fruits",
+      description: "Fresh seasonal fruits perfect for healthy snacking - all items in stock!",
+      recipe: generateFruitRecipe(fruitProducts),
+      products: fruitProducts,
+      totalPrice: calculateTotalPrice(fruitProducts)
+    });
+  }
+  
+  // Quick meal basket
+  const quickMealProducts = selectProductsForMeal(products, 'quick', criteria.maxPrice);
+  if (quickMealProducts.length > 0) {
+    baskets.push({
+      name: "Quick & Easy Meal",
+      description: "Perfect for busy weeknights - ready in under 30 minutes with available stock",
+      recipe: generateQuickMealRecipe(quickMealProducts),
+      products: quickMealProducts,
+      totalPrice: calculateTotalPrice(quickMealProducts)
+    });
+  }
+  
+  // Healthy snack basket
+  const snackProducts = selectProductsForMeal(products, 'snack', criteria.maxPrice);
+  if (snackProducts.length > 0) {
+    baskets.push({
+      name: "Healthy Snack Pack",
+      description: "Nutritious snacks for between meals - all freshly stocked",
+      recipe: generateSnackRecipe(snackProducts),
+      products: snackProducts,
+      totalPrice: calculateTotalPrice(snackProducts)
+    });
+  }
+  
+  return baskets.filter(basket => !criteria.maxPrice || basket.totalPrice <= criteria.maxPrice);
+};
+
+const selectProductsForMeal = (products: Product[], mealType: string, maxPrice?: number): { product: Product; quantity: number }[] => {
+  const selected: { product: Product; quantity: number }[] = [];
+  let currentTotal = 0;
+  
+  // Define meal type preferences with reasonable quantities
+  const mealPreferences = {
+    breakfast: ['fruit', 'cereal', 'milk', 'bread', 'egg', 'yogurt', 'honey', 'oats', 'banana', 'orange'],
+    dinner: ['meat', 'chicken', 'beef', 'fish', 'vegetable', 'rice', 'pasta', 'sauce', 'onion', 'tomato'],
+    quick: ['pasta', 'sauce', 'cheese', 'bread', 'salad', 'noodles', 'soup'],
+    snack: ['nuts', 'crackers', 'cheese', 'yogurt', 'berries', 'apple', 'carrot'],
+    fruit: ['apple', 'orange', 'banana', 'grape', 'berry', 'fruit', 'mango', 'pear', 'tangerine']
+  };
+  
+  const preferences = mealPreferences[mealType as keyof typeof mealPreferences] || [];
+  const targetPrice = maxPrice || (mealType === 'fruit' ? 25 : 50);
+  
+  // Try to include products that match meal preferences and are in stock
+  for (const preference of preferences) {
+    const matchingProducts = products.filter(p => 
+      p.name.toLowerCase().includes(preference) && 
+      !selected.some(s => s.product.id === p.id) &&
+      p.stock > 0
+    );
+    
+    if (matchingProducts.length > 0) {
+      const product = matchingProducts[Math.floor(Math.random() * matchingProducts.length)];
+      // Use reasonable quantities, especially for fruits
+      const maxQuantity = Math.min(product.stock, mealType === 'fruit' ? 2 : 3);
+      const quantity = Math.max(1, Math.min(maxQuantity, mealType === 'fruit' ? 2 : Math.ceil(Math.random() * maxQuantity)));
+      const itemTotal = product.price * quantity;
+      
+      if (currentTotal + itemTotal <= targetPrice) {
+        selected.push({ product, quantity });
+        currentTotal += itemTotal;
+        
+        if (selected.length >= (mealType === 'fruit' ? 4 : 5)) break;
+      }
+    }
+  }
+  
+  // Fill remaining space with random in-stock products if needed and under budget
+  while (selected.length < 3 && products.length > selected.length && currentTotal < targetPrice * 0.8) {
+    const availableProducts = products.filter(p => 
+      !selected.some(s => s.product.id === p.id) && 
+      p.stock > 0
+    );
+    
+    if (availableProducts.length === 0) break;
+    
+    const randomProduct = availableProducts[Math.floor(Math.random() * availableProducts.length)];
+    const maxQuantity = Math.min(randomProduct.stock, 2);
+    const quantity = Math.max(1, Math.ceil(Math.random() * maxQuantity));
+    const itemTotal = randomProduct.price * quantity;
+    
+    if (currentTotal + itemTotal <= targetPrice) {
+      selected.push({ product: randomProduct, quantity });
+      currentTotal += itemTotal;
+    } else {
+      break;
+    }
+  }
+  
+  return selected;
+};
+
+const generateBreakfastRecipe = (products: { product: Product; quantity: number }[]): string => {
+  return `Delicious Breakfast Recipe\n\nIngredients (All In Stock):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} available)`).join('\n')}\n\nInstructions:\n1. Prepare all fresh ingredients\n2. Combine as desired for a nutritious breakfast\n3. Enjoy your healthy start to the day!\n\nServing suggestion: Perfect for 2-4 people depending on portions.`;
+};
+
+const generateDinnerRecipe = (products: { product: Product; quantity: number }[]): string => {
+  return `Family Dinner Recipe\n\nIngredients (Ready to Ship):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} in stock)`).join('\n')}\n\nInstructions:\n1. Prep all ingredients according to package directions\n2. Cook proteins first, then add vegetables\n3. Season to taste and serve hot\n4. Enjoy your family meal!\n\nCooking time: Approximately 45-60 minutes\nServes: 4-6 people`;
+};
+
+const generateQuickMealRecipe = (products: { product: Product; quantity: number }[]): string => {
+  return `Quick & Easy Recipe\n\nIngredients (Available Now):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (Stock: ${p.product.stock})`).join('\n')}\n\nInstructions:\n1. Heat and prepare according to package directions\n2. Combine ingredients in a simple, delicious way\n3. Ready in under 30 minutes!\n\nPerfect for busy weeknights when you need something fast and satisfying.`;
+};
+
+const generateSnackRecipe = (products: { product: Product; quantity: number }[]): string => {
+  return `Healthy Snack Mix\n\nIngredients (Fresh Stock):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} available)`).join('\n')}\n\nInstructions:\n1. Wash and prepare fresh items\n2. Portion into convenient snack sizes\n3. Store properly for freshness\n4. Enjoy throughout the day!\n\nPerfect for healthy snacking between meals.`;
+};
+
+const generateFruitRecipe = (products: { product: Product; quantity: number }[]): string => {
+  return `Fresh Fruit Selection\n\nIngredients (All Fresh & In Stock):\n${products.map(p => `- ${p.quantity}x ${p.product.name} (${p.product.stock} available)`).join('\n')}\n\nServing Suggestions:\n1. Wash all fruits thoroughly\n2. Store in refrigerator for freshness\n3. Perfect for healthy snacking, breakfast additions, or smoothies\n4. Great source of vitamins and natural energy\n\nEnjoy fresh and healthy!`;
+};
+
+const calculateTotalPrice = (products: { product: Product; quantity: number }[]): number => {
+  const total = products.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  console.log('Basket total calculation:', products.map(p => `${p.product.name}: ${p.product.price} x ${p.quantity} = ${p.product.price * p.quantity}`), 'Total:', total);
+  return Math.round(total * 100) / 100;
+};
+
+export const saveGeneratedBasket = async (basket: GeneratedBasket): Promise<string | null> => {
   try {
-    // Insert the basket
-    const { data: savedBasket, error: basketError } = await supabase
+    // Create the food basket
+    const { data: basketData, error: basketError } = await supabase
       .from('food_baskets')
       .insert({
         name: basket.name,
         description: basket.description,
-        recipe: basket.recipe || 'Recipe instructions will be provided.',
+        recipe: basket.recipe,
         total_price: basket.totalPrice,
-        image: null
+        image: basket.products[0]?.product.image || null
       })
       .select()
       .single();
 
     if (basketError) {
-      console.error('Error saving basket:', basketError);
+      console.error("Error creating basket:", basketError);
       return null;
     }
 
-    // Insert basket items if products exist
-    if (basket.products && basket.products.length > 0) {
-      const basketItems = basket.products.map((item: any) => ({
-        basket_id: savedBasket.id,
-        product_id: item.product.id,
-        quantity: item.quantity
-      }));
+    // Create basket items
+    const basketItems = basket.products.map(item => ({
+      basket_id: basketData.id,
+      product_id: item.product.id,
+      quantity: item.quantity
+    }));
 
-      const { error: itemsError } = await supabase
-        .from('food_basket_items')
-        .insert(basketItems);
+    const { error: itemsError } = await supabase
+      .from('food_basket_items')
+      .insert(basketItems);
 
-      if (itemsError) {
-        console.error('Error saving basket items:', itemsError);
-        // Don't return null here as the basket was saved successfully
-      }
-    }
-
-    return savedBasket.id;
-  } catch (error) {
-    console.error('Error in saveGeneratedBasket:', error);
-    return null;
-  }
-};
-
-// Get all available food baskets
-export const getAllFoodBaskets = async () => {
-  try {
-    const { data: baskets, error } = await supabase
-      .from('food_baskets')
-      .select(`
-        *,
-        food_basket_items (
-          quantity,
-          product_id
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching food baskets:', error);
-      return [];
-    }
-
-    return baskets || [];
-  } catch (error) {
-    console.error('Error in getAllFoodBaskets:', error);
-    return [];
-  }
-};
-
-export const getFoodBasketById = async (id: string) => {
-  try {
-    const { data: basket, error } = await supabase
-      .from('food_baskets')
-      .select(`
-        *,
-        food_basket_items (
-          quantity,
-          product_id
-        )
-      `)
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error('Error fetching food basket:', error);
+    if (itemsError) {
+      console.error("Error creating basket items:", itemsError);
       return null;
     }
 
-    return basket;
+    return basketData.id;
   } catch (error) {
-    console.error('Error in getFoodBasketById:', error);
+    console.error("Error saving generated basket:", error);
     return null;
   }
 };

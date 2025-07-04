@@ -48,19 +48,20 @@ export const getProducts = async (
       return [];
     }
     
-    // Map the data to our ProductType interface
+    // Map the data to our ProductType, ensure we handle potential null values
     return data.map(item => ({
       id: item.id,
       name: item.name,
       description: item.description,
       price: item.price,
       image: item.image,
-      category_id: item.category_id,
+      category: item.categories?.slug || '',
       stock: item.stock,
       featured: item.featured,
       rating: item.rating,
       num_reviews: item.num_reviews,
-      discount_percentage: item.discount_percentage,
+      numReviews: item.num_reviews,
+      discountPercentage: item.discount_percentage,
       created_at: item.created_at,
       updated_at: item.updated_at
     }));
@@ -95,12 +96,13 @@ export const getFeaturedProducts = async (): Promise<ProductType[]> => {
       description: item.description,
       price: item.price,
       image: item.image,
-      category_id: item.category_id,
+      category: item.categories?.slug || '',
       stock: item.stock,
       featured: item.featured,
       rating: item.rating,
       num_reviews: item.num_reviews,
-      discount_percentage: item.discount_percentage,
+      numReviews: item.num_reviews,
+      discountPercentage: item.discount_percentage,
       created_at: item.created_at,
       updated_at: item.updated_at
     }));
@@ -140,12 +142,13 @@ export const getProductsByCategory = async (category: string): Promise<ProductTy
       description: item.description,
       price: item.price,
       image: item.image,
-      category_id: item.category_id,
+      category: item.categories?.slug || '',
       stock: item.stock,
       featured: item.featured,
       rating: item.rating,
       num_reviews: item.num_reviews,
-      discount_percentage: item.discount_percentage,
+      numReviews: item.num_reviews,
+      discountPercentage: item.discount_percentage,
       created_at: item.created_at,
       updated_at: item.updated_at
     }));
@@ -174,12 +177,13 @@ export const getProductById = async (id: string): Promise<ProductType | null> =>
       description: data.description,
       price: data.price,
       image: data.image,
-      category_id: data.category_id,
+      category: data.categories?.slug || '',
       stock: data.stock,
       featured: data.featured,
       rating: data.rating,
       num_reviews: data.num_reviews,
-      discount_percentage: data.discount_percentage,
+      numReviews: data.num_reviews,
+      discountPercentage: data.discount_percentage,
       created_at: data.created_at,
       updated_at: data.updated_at
     };
@@ -191,6 +195,17 @@ export const getProductById = async (id: string): Promise<ProductType | null> =>
 
 export const createProduct = async (product: Omit<ProductType, 'id' | 'created_at' | 'updated_at'>): Promise<ProductType> => {
   try {
+    // Get category_id from the slug
+    const { data: categoryData, error: categoryError } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', product.category)
+      .single();
+    
+    if (categoryError || !categoryData) {
+      throw new Error(`Category with slug ${product.category} not found`);
+    }
+    
     const { data, error } = await supabase
       .from('products')
       .insert({
@@ -198,12 +213,12 @@ export const createProduct = async (product: Omit<ProductType, 'id' | 'created_a
         description: product.description,
         price: product.price,
         image: product.image,
-        category_id: product.category_id,
+        category_id: categoryData.id,
         stock: product.stock,
         featured: product.featured,
         rating: product.rating,
-        num_reviews: product.num_reviews,
-        discount_percentage: product.discount_percentage
+        num_reviews: product.numReviews,
+        discount_percentage: product.discountPercentage
       })
       .select('*, categories(name, slug)')
       .single();
@@ -218,12 +233,13 @@ export const createProduct = async (product: Omit<ProductType, 'id' | 'created_a
       description: data.description,
       price: data.price,
       image: data.image,
-      category_id: data.category_id,
+      category: data.categories?.slug || '',
       stock: data.stock,
       featured: data.featured,
       rating: data.rating,
       num_reviews: data.num_reviews,
-      discount_percentage: data.discount_percentage,
+      numReviews: data.num_reviews,
+      discountPercentage: data.discount_percentage,
       created_at: data.created_at,
       updated_at: data.updated_at
     };
@@ -235,6 +251,23 @@ export const createProduct = async (product: Omit<ProductType, 'id' | 'created_a
 
 export const updateProduct = async (id: string, product: Partial<ProductType>): Promise<ProductType> => {
   try {
+    let categoryId = undefined;
+    
+    // If category is being updated, get the category_id
+    if (product.category) {
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', product.category)
+        .single();
+      
+      if (categoryError || !categoryData) {
+        throw new Error(`Category with slug ${product.category} not found`);
+      }
+      
+      categoryId = categoryData.id;
+    }
+    
     const { data, error } = await supabase
       .from('products')
       .update({
@@ -242,12 +275,12 @@ export const updateProduct = async (id: string, product: Partial<ProductType>): 
         description: product.description,
         price: product.price,
         image: product.image,
-        category_id: product.category_id,
+        category_id: categoryId,
         stock: product.stock,
         featured: product.featured,
         rating: product.rating,
-        num_reviews: product.num_reviews,
-        discount_percentage: product.discount_percentage
+        num_reviews: product.numReviews,
+        discount_percentage: product.discountPercentage
       })
       .eq('id', id)
       .select('*, categories(name, slug)')
@@ -263,12 +296,13 @@ export const updateProduct = async (id: string, product: Partial<ProductType>): 
       description: data.description,
       price: data.price,
       image: data.image,
-      category_id: data.category_id,
+      category: data.categories?.slug || '',
       stock: data.stock,
       featured: data.featured,
       rating: data.rating,
       num_reviews: data.num_reviews,
-      discount_percentage: data.discount_percentage,
+      numReviews: data.num_reviews,
+      discountPercentage: data.discount_percentage,
       created_at: data.created_at,
       updated_at: data.updated_at
     };

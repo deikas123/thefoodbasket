@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -44,8 +43,8 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
   const mainImage = getImageUrl(product.image);
   
   const getDiscountedPrice = () => {
-    if (!product.discount_percentage) return product.price;
-    const discount = (product.price * product.discount_percentage) / 100;
+    if (!product.discountPercentage) return product.price;
+    const discount = (product.price * product.discountPercentage) / 100;
     return product.price - discount;
   };
 
@@ -65,12 +64,12 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
       price: getDiscountedPrice(),
       image: mainImage,
       description: product.description || "",
-      category: product.category_id || "",
+      category: product.category || "",
       stock: product.stock || 0,
       featured: product.featured || false,
       rating: product.rating || 0,
-      numReviews: product.num_reviews || 0,
-      discountPercentage: product.discount_percentage || 0
+      numReviews: product.numReviews || product.num_reviews || 0,
+      discountPercentage: product.discountPercentage || 0
     };
     
     addItem(cartProduct, 1);
@@ -104,12 +103,12 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
       price: product.price,
       image: mainImage,
       description: product.description || "",
-      category: product.category_id || "",
+      category: product.category || "",
       stock: product.stock || 0,
       featured: product.featured || false,
       rating: product.rating || 0,
-      numReviews: product.num_reviews || 0,
-      discountPercentage: product.discount_percentage || 0
+      numReviews: product.numReviews || product.num_reviews || 0,
+      discountPercentage: product.discountPercentage || 0
     };
     
     addToWishlist(wishlistProduct);

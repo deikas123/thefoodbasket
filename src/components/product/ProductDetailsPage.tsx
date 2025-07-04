@@ -24,9 +24,9 @@ const ProductDetailsPage = () => {
   });
   
   const categoryQuery = useQuery({
-    queryKey: ["category", productQuery.data?.category_id],
-    queryFn: () => getCategoryById(productQuery.data?.category_id || ""),
-    enabled: !!productQuery.data?.category_id
+    queryKey: ["category", productQuery.data?.category],
+    queryFn: () => getCategoryById(productQuery.data?.category || ""),
+    enabled: !!productQuery.data?.category
   });
   
   const product = productQuery.data;

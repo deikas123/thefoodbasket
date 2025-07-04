@@ -1,4 +1,5 @@
 
+import { BrowserRouter as Router } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -14,13 +15,6 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       refetchOnWindowFocus: false,
-      retry: (failureCount, error) => {
-        // Don't retry on certain errors
-        if (error?.message?.includes('Failed to fetch')) {
-          return failureCount < 2;
-        }
-        return failureCount < 3;
-      },
     },
   },
 });
@@ -29,15 +23,17 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <ScrollToTop />
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <AppRoutes />
-              <Toaster />
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
+        <Router>
+          <ScrollToTop />
+          <AuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <AppRoutes />
+                <Toaster />
+              </WishlistProvider>
+            </CartProvider>
+          </AuthProvider>
+        </Router>
       </ThemeProvider>
     </QueryClientProvider>
   );

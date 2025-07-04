@@ -15,19 +15,9 @@ const FrequentlyPurchasedTogether = ({ productId }: FrequentlyPurchasedTogetherP
     queryKey: ["frequently-purchased", productId],
     queryFn: async () => {
       const products = await getFrequentlyPurchasedTogether(productId);
-      // Map to ProductType format
+      // Add the missing required fields for ProductType
       return products.map(product => ({
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        image: product.image,
-        category_id: product.category || '',
-        stock: product.stock,
-        featured: product.featured,
-        rating: product.rating,
-        num_reviews: product.numReviews || 0,
-        discount_percentage: product.discountPercentage,
+        ...product,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       } as ProductType));
