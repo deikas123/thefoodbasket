@@ -19,12 +19,16 @@ import {
   Award,
   RefreshCw,
   Settings,
+  MessageSquare,
+  UserPlus,
 } from "lucide-react";
 
 const AdminSidebar = () => {
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
     { icon: Users, label: "Users", path: "/admin/users" },
+    { icon: UserPlus, label: "Staff Management", path: "/admin/staff" },
+    { icon: MessageSquare, label: "Customer Service", path: "/admin/customer-service" },
     { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
     { icon: Package, label: "Products", path: "/admin/products" },
     { icon: Tag, label: "Categories", path: "/admin/categories" },
