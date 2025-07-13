@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { ShoppingCart, Heart, MessageCircle, Zap } from "lucide-react";
 import { ProductType } from "@/types/supabase";
 import { formatCurrency } from "@/utils/currencyFormatter";
+import { AutoReplenishButton } from "@/components/product/autoReplenish";
 
 interface ProductActionsProps {
   product: ProductType;
@@ -59,6 +60,12 @@ const ProductActions = ({
           Buy Now
         </Button>
       </div>
+
+      {/* Auto Replenish Button */}
+      <AutoReplenishButton 
+        productId={product.id} 
+        productName={product.name}
+      />
 
       {/* WhatsApp Order Button */}
       <Button

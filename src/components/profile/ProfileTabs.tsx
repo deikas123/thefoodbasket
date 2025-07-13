@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PersonalInfoTab from "./PersonalInfoTab";
 import PasswordTab from "./PasswordTab";
 import PreferencesTab from "./PreferencesTab";
+import AutoReplenishTab from "./AutoReplenishTab";
 
 const ProfileTabs = () => {
   return (
@@ -12,6 +13,7 @@ const ProfileTabs = () => {
           <TabsTrigger value="personal">Personal Information</TabsTrigger>
           <TabsTrigger value="password">Password</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsTrigger value="autoreplenish">Auto Replenish</TabsTrigger>
         </TabsList>
         
         <TabsContent value="personal">
@@ -24,6 +26,10 @@ const ProfileTabs = () => {
         
         <TabsContent value="preferences">
           <PreferencesTab />
+        </TabsContent>
+        
+        <TabsContent value="autoreplenish">
+          <AutoReplenishTab />
         </TabsContent>
       </Tabs>
     </div>
