@@ -71,9 +71,9 @@ const AutoReplenishPage = () => {
         // Fetch product details for each item
         const productMap: {[key: string]: Product} = {};
         for (const item of items) {
-          const product = await getProductById(item.productId);
+          const product = await getProductById(item.product_id);
           if (product) {
-            productMap[item.productId] = product;
+            productMap[item.product_id] = product;
           }
         }
         setProducts(productMap);
@@ -160,12 +160,12 @@ const AutoReplenishPage = () => {
       const days = item.custom_days.map(d => dayNames[parseInt(d)]).join(', ');
       return `${days} at ${item.custom_time || '09:00'}`;
     }
-    return `Every ${item.frequencyDays} days at ${item.custom_time || '09:00'}`;
+    return `Every ${item.frequency_days} days at ${item.custom_time || '09:00'}`;
   };
   
   // Group items by status (upcoming and inactive)
   const upcomingItems = autoReplenishItems.filter(item => 
-    item.active && isAfter(new Date(item.nextOrderDate), new Date())
+    item.active && isAfter(new Date(item.next_order_date), new Date())
   );
   
   const inactiveItems = autoReplenishItems.filter(item => !item.active);
@@ -243,7 +243,7 @@ const AutoReplenishPage = () => {
                         </TableHeader>
                         <TableBody>
                           {upcomingItems.map((item) => {
-                            const product = products[item.productId];
+                            const product = products[item.product_id];
                             
                             return (
                               <TableRow key={item.id}>
@@ -269,10 +269,10 @@ const AutoReplenishPage = () => {
                                   <span className="text-sm">{formatSchedule(item)}</span>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="flex items-center">
-                                    <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
-                                    {format(new Date(item.nextOrderDate), "MMM d, yyyy")}
-                                  </div>
+                                   <div className="flex items-center">
+                                     <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
+                                     {format(new Date(item.next_order_date), "MMM d, yyyy")}
+                                   </div>
                                 </TableCell>
                                 <TableCell>
                                   <Badge className="bg-green-500">Active</Badge>
@@ -356,7 +356,7 @@ const AutoReplenishPage = () => {
                         </TableHeader>
                         <TableBody>
                           {inactiveItems.map((item) => {
-                            const product = products[item.productId];
+                            const product = products[item.product_id];
                             
                             return (
                               <TableRow key={item.id}>

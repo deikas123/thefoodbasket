@@ -55,9 +55,9 @@ const AutoReplenishTab = () => {
         // Fetch product details for each item
         const productMap: {[key: string]: Product} = {};
         for (const item of items) {
-          const product = await getProductById(item.productId);
+          const product = await getProductById(item.product_id);
           if (product) {
-            productMap[item.productId] = product;
+            productMap[item.product_id] = product;
           }
         }
         setProducts(productMap);
@@ -124,7 +124,7 @@ const AutoReplenishTab = () => {
       const days = item.custom_days.map(d => dayNames[parseInt(d)]).join(', ');
       return `${days} at ${item.custom_time || '09:00'}`;
     }
-    return `Every ${item.frequencyDays} days at ${item.custom_time || '09:00'}`;
+    return `Every ${item.frequency_days} days at ${item.custom_time || '09:00'}`;
   };
 
   if (isLoading) {
@@ -181,7 +181,7 @@ const AutoReplenishTab = () => {
                 </TableHeader>
                 <TableBody>
                   {autoReplenishItems.slice(0, 5).map((item) => {
-                    const product = products[item.productId];
+                    const product = products[item.product_id];
                     
                     return (
                       <TableRow key={item.id}>
@@ -209,7 +209,7 @@ const AutoReplenishTab = () => {
                         <TableCell>
                           <div className="flex items-center">
                             <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
-                            {format(new Date(item.nextOrderDate), "MMM d, yyyy")}
+                            {format(new Date(item.next_order_date), "MMM d, yyyy")}
                           </div>
                         </TableCell>
                         <TableCell>
