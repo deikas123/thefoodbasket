@@ -19,6 +19,7 @@ const Notifications = lazy(() => import("@/pages/admin/Notifications"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 const PayLaterVerification = lazy(() => import("@/pages/admin/PayLaterVerification"));
 const LoyaltyManagement = lazy(() => import("@/pages/admin/LoyaltyManagement"));
+const AutoReplenishAdmin = lazy(() => import("@/pages/admin/AutoReplenish"));
 const Settings = lazy(() => import("@/pages/admin/Settings"));
 
 const LoadingFallback = () => (
@@ -47,6 +48,7 @@ const AdminRoutes = () => {
           <Route path="delivery-zones" element={<DeliveryZones />} />
           <Route path="discount-codes" element={<DiscountCodes />} />
           <Route path="loyalty" element={<LoyaltyManagement />} />
+          <Route path="auto-replenish" element={<AutoReplenishAdmin />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="content" element={<ContentManagement />} />
           <Route path="pay-later" element={<PayLaterVerification />} />

@@ -17,6 +17,7 @@ import {
   FileText,
   CreditCard,
   Award,
+  RefreshCw,
   Settings,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ const AdminSidebar = () => {
     { icon: MapPin, label: "Delivery Zones", path: "/admin/delivery-zones" },
     { icon: TicketPercent, label: "Discount Codes", path: "/admin/discount-codes" },
     { icon: Award, label: "Loyalty Points", path: "/admin/loyalty" },
+    { icon: RefreshCw, label: "Auto Replenish", path: "/admin/auto-replenish" },
     { icon: Bell, label: "Notifications", path: "/admin/notifications" },
     { icon: FileText, label: "Content", path: "/admin/content" },
     { icon: CreditCard, label: "Pay Later", path: "/admin/pay-later" },
