@@ -45,35 +45,50 @@ const AdminAutoReplenish = () => {
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      // Fetch auto replenish items with user and product data
+      // Fetch auto replenish items first
       const { data: autoReplenishData, error: autoReplenishError } = await supabase
         .from('auto_replenish_items')
-        .select(`
-          *,
-          profiles!auto_replenish_items_user_id_fkey (id),
-          products!auto_replenish_items_product_id_fkey (name, image)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (autoReplenishError) throw autoReplenishError;
 
-      // Get user emails from auth.users
-      const userIds = [...new Set(autoReplenishData?.map(item => item.user_id) || [])];
-      const usersMap = new Map();
-      
-      // For each user ID, we'll use the profiles table or create a placeholder
-      for (const userId of userIds) {
-        // Since we can't directly access auth.users, we'll use user_id as identifier
-        // In a real implementation, you might want to store email in profiles table
-        usersMap.set(userId, `user-${userId.slice(0, 8)}`);
+      if (!autoReplenishData || autoReplenishData.length === 0) {
+        setItems([]);
+        return;
       }
 
-      const formattedItems = autoReplenishData?.map(item => ({
+      // Get unique product IDs and user IDs
+      const productIds = [...new Set(autoReplenishData.map(item => item.product_id))];
+      const userIds = [...new Set(autoReplenishData.map(item => item.user_id))];
+
+      // Fetch products data
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('id, name, image')
+        .in('id', productIds);
+
+      if (productsError) throw productsError;
+
+      // Create products map
+      const productsMap = new Map();
+      productsData?.forEach(product => {
+        productsMap.set(product.id, product);
+      });
+
+      // For user emails, we'll use user IDs as placeholders since we can't access auth.users directly
+      const usersMap = new Map();
+      userIds.forEach(userId => {
+        usersMap.set(userId, `user-${userId.slice(0, 8)}`);
+      });
+
+      // Combine the data
+      const formattedItems = autoReplenishData.map(item => ({
         ...item,
         user_email: usersMap.get(item.user_id) || `user-${item.user_id.slice(0, 8)}`,
-        product_name: (item.products as any)?.name || 'Unknown Product',
-        product_image: (item.products as any)?.image || null,
-      })) || [];
+        product_name: productsMap.get(item.product_id)?.name || 'Unknown Product',
+        product_image: productsMap.get(item.product_id)?.image || null,
+      }));
 
       setItems(formattedItems);
     } catch (error) {
