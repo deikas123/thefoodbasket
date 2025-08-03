@@ -59,15 +59,24 @@ export const deductStock = async (items: CartItem[]): Promise<void> => {
 
 export const restoreStock = async (items: CartItem[]): Promise<void> => {
   for (const item of items) {
-    const { error } = await supabase
+    // Get current stock first
+    const { data: currentProduct } = await supabase
       .from('products')
-      .update({ 
-        stock: supabase.sql`stock + ${item.quantity}`
-      })
-      .eq('id', item.product.id);
+      .select('stock')
+      .eq('id', item.product.id)
+      .single();
 
-    if (error) {
-      console.error('Error restoring stock:', error);
+    if (currentProduct) {
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          stock: currentProduct.stock + item.quantity
+        })
+        .eq('id', item.product.id);
+
+      if (error) {
+        console.error('Error restoring stock:', error);
+      }
     }
   }
 };
