@@ -1,1 +1,24 @@
 project_id = "fwtqeukqejnpcbdufonl"
+
+[auth]
+enabled = true
+site_url = "https://7b3b2h8c4-3000.uks1.devtunnels.ms"
+additional_redirect_urls = ["https://localhost:3000"]
+
+[db]
+password = "FreshGroceryStore2024!"
+
+[studio]
+enabled = true
+
+[edge_functions]
+enabled = true
+
+[functions.create-staff]
+verify_jwt = true
+
+[functions.send-receipt] 
+verify_jwt = false
+
+[functions.assign-chat]
+verify_jwt = true

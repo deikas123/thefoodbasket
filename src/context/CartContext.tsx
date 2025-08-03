@@ -94,6 +94,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     notes?: string
   ): Promise<Order> => {
     try {
+      // Import inventory service
+      const { validateStock, deductStock } = await import('@/services/inventoryService');
+      
+      // Validate stock before proceeding
+      const stockValidation = await validateStock(items);
+      if (!stockValidation.isValid) {
+        const errorMessage = stockValidation.insufficientItems.map(item => 
+          `${item.productId}: ${item.available} available, ${item.requested} requested`
+        ).join('\n');
+        throw new Error(`Insufficient stock:\n${errorMessage}`);
+      }
+
       const estimatedDelivery = new Date();
       estimatedDelivery.setDate(estimatedDelivery.getDate() + 2);
 
@@ -124,40 +136,59 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         notes
       };
 
-      // Award loyalty points
+      // Deduct stock first (before saving order)
+      await deductStock(items);
+
       try {
-        const { awardLoyaltyPoints } = await import('@/services/loyaltyPointsService');
-        await awardLoyaltyPoints(userId, order.total);
-        console.log(`Awarded ${loyaltyPointsEarned} loyalty points for order ${order.id}`);
-      } catch (error) {
-        console.error('Error awarding loyalty points:', error);
+        // Award loyalty points
+        try {
+          const { awardLoyaltyPoints } = await import('@/services/loyaltyPointsService');
+          await awardLoyaltyPoints(userId, order.total);
+          console.log(`Awarded ${loyaltyPointsEarned} loyalty points for order ${order.id}`);
+        } catch (error) {
+          console.error('Error awarding loyalty points:', error);
+        }
+
+        // Save order to Supabase
+        const { error } = await supabase
+          .from('orders')
+          .insert({
+            user_id: userId,
+            items: order.items,
+            subtotal: order.subtotal,
+            delivery_fee: order.deliveryFee,
+            total: order.total,
+            status: order.status,
+            delivery_address: deliveryAddress,
+            delivery_method: deliveryMethod,
+            payment_method: paymentMethod,
+            estimated_delivery: order.estimatedDelivery,
+            loyalty_points_earned: loyaltyPointsEarned,
+            notes: notes || null
+          });
+
+        if (error) {
+          console.error('Error saving order:', error);
+          throw new Error('Failed to save order');
+        }
+
+        // Generate receipt after successful order
+        try {
+          const { generateReceipt } = await import('@/services/receiptService');
+          await generateReceipt(order);
+        } catch (receiptError) {
+          console.error('Error generating receipt:', receiptError);
+          // Don't fail the whole order for receipt generation
+        }
+
+        clearCart();
+        return order;
+      } catch (orderError) {
+        // If order creation fails, restore the stock
+        const { restoreStock } = await import('@/services/inventoryService');
+        await restoreStock(items);
+        throw orderError;
       }
-
-      // Save order to Supabase
-      const { error } = await supabase
-        .from('orders')
-        .insert({
-          user_id: userId,
-          items: order.items,
-          subtotal: order.subtotal,
-          delivery_fee: order.deliveryFee,
-          total: order.total,
-          status: order.status,
-          delivery_address: deliveryAddress,
-          delivery_method: deliveryMethod,
-          payment_method: paymentMethod,
-          estimated_delivery: order.estimatedDelivery,
-          loyalty_points_earned: loyaltyPointsEarned,
-          notes: notes || null
-        });
-
-      if (error) {
-        console.error('Error saving order:', error);
-        throw new Error('Failed to save order');
-      }
-
-      clearCart();
-      return order;
     } catch (error) {
       console.error('Checkout error:', error);
       throw error;

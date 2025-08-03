@@ -108,6 +108,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       <ProductQuantitySelector
         quantity={quantity}
         stock={product.stock}
+        productId={product.id}
         onIncrement={incrementQuantity}
         onDecrement={decrementQuantity}
       />
