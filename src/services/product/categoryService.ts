@@ -17,35 +17,40 @@ export const getCategories = async (): Promise<Category[]> => {
   try {
     const { data, error } = await supabase
       .from('categories')
-      .select('id, name, slug, description, image, parent_id');
+      .select('id, name, slug, description, image, parent_id')
+      .order('name');
     
     if (error) {
       console.error("Error fetching categories:", error);
       return [];
     }
     
-    // Get product counts for each category
-    const categoriesWithCounts = await Promise.all(
-      data.map(async (category) => {
-        const { count, error: countError } = await supabase
-          .from('products')
-          .select('id', { count: 'exact', head: true })
-          .eq('category_id', category.id);
-        
-        if (countError) {
-          console.error(`Error counting products for category ${category.name}:`, countError);
-        }
-        
-        return {
-          id: category.slug, // Use slug as ID for backwards compatibility
-          name: category.name,
-          description: category.description,
-          image: category.image,
-          parentId: category.parent_id,
-          productCount: count || 0
-        };
-      })
-    );
+    // Get product counts for all categories in one query
+    const { data: productCounts, error: countError } = await supabase
+      .from('products')
+      .select('category_id')
+      .then(({ data, error }) => {
+        if (error) return { data: null, error };
+        const counts: Record<string, number> = {};
+        data?.forEach(product => {
+          counts[product.category_id] = (counts[product.category_id] || 0) + 1;
+        });
+        return { data: counts, error: null };
+      });
+    
+    if (countError) {
+      console.error("Error counting products:", countError);
+    }
+    
+    // Transform categories to use slug as ID and add product counts
+    const categoriesWithCounts = data.map((category) => ({
+      id: category.slug, // Use slug as ID for backwards compatibility
+      name: category.name,
+      description: category.description,
+      image: category.image,
+      parentId: category.parent_id,
+      productCount: productCounts?.[category.id] || 0
+    }));
     
     // Build hierarchy - first get root categories, then add subcategories
     const rootCategories = categoriesWithCounts.filter(cat => !cat.parentId);
