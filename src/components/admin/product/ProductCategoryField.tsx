@@ -1,4 +1,5 @@
 
+import React from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
@@ -9,6 +10,7 @@ interface Category {
   id: string;
   name: string;
   productCount?: number;
+  subcategories?: Category[];
 }
 
 interface ProductCategoryFieldProps {
@@ -49,11 +51,20 @@ const ProductCategoryField = ({ form, categories, isLoading }: ProductCategoryFi
             </FormControl>
             <SelectContent className="bg-white z-50">
               {categories && categories.length > 0 ? (
-                categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))
+                <>
+                  {categories.map((category) => (
+                    <React.Fragment key={category.id}>
+                      <SelectItem value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                      {category.subcategories && category.subcategories.map((subcategory) => (
+                        <SelectItem key={subcategory.id} value={subcategory.id} className="pl-6">
+                          ↳ {subcategory.name}
+                        </SelectItem>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </>
               ) : (
                 <SelectItem value="" disabled>
                   No categories available

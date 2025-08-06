@@ -8,14 +8,16 @@ export interface Category {
   productCount?: number;
   description?: string;
   image?: string;
+  parentId?: string;
+  subcategories?: Category[];
 }
 
-// Get all categories with their product counts
+// Get all categories with their product counts and hierarchy
 export const getCategories = async (): Promise<Category[]> => {
   try {
     const { data, error } = await supabase
       .from('categories')
-      .select('id, name, slug, description, image');
+      .select('id, name, slug, description, image, parent_id');
     
     if (error) {
       console.error("Error fetching categories:", error);
@@ -39,12 +41,22 @@ export const getCategories = async (): Promise<Category[]> => {
           name: category.name,
           description: category.description,
           image: category.image,
+          parentId: category.parent_id,
           productCount: count || 0
         };
       })
     );
     
-    return categoriesWithCounts;
+    // Build hierarchy - first get root categories, then add subcategories
+    const rootCategories = categoriesWithCounts.filter(cat => !cat.parentId);
+    const buildHierarchy = (categories: Category[]): Category[] => {
+      return categories.map(category => ({
+        ...category,
+        subcategories: categoriesWithCounts.filter(sub => sub.parentId === category.id)
+      }));
+    };
+    
+    return buildHierarchy(rootCategories);
   } catch (error) {
     console.error("Error fetching categories:", error);
     return [];
@@ -59,9 +71,9 @@ export const getCategoryById = async (id: string): Promise<Category | null> => {
     // Get the category by slug
     const { data, error } = await supabase
       .from('categories')
-      .select('id, name, slug, description, image')
+      .select('id, name, slug, description, image, parent_id')
       .eq('slug', id)
-      .single();
+      .maybeSingle();
     
     if (error || !data) {
       console.error("Error fetching category:", error);
@@ -78,12 +90,38 @@ export const getCategoryById = async (id: string): Promise<Category | null> => {
       console.error("Error counting products:", countError);
     }
     
+    // Get subcategories
+    const { data: subcategoriesData } = await supabase
+      .from('categories')
+      .select('id, name, slug, description, image, parent_id')
+      .eq('parent_id', data.id);
+    
+    const subcategories = await Promise.all(
+      (subcategoriesData || []).map(async (subcat) => {
+        const { count: subCount } = await supabase
+          .from('products')
+          .select('id', { count: 'exact', head: true })
+          .eq('category_id', subcat.id);
+        
+        return {
+          id: subcat.slug,
+          name: subcat.name,
+          description: subcat.description,
+          image: subcat.image,
+          parentId: subcat.parent_id,
+          productCount: subCount || 0
+        };
+      })
+    );
+    
     return {
       id: data.slug,
       name: data.name,
       description: data.description,
       image: data.image,
-      productCount: count || 0
+      parentId: data.parent_id,
+      productCount: count || 0,
+      subcategories
     };
   } catch (error) {
     console.error("Error fetching category:", error);
@@ -95,7 +133,8 @@ export const getCategoryById = async (id: string): Promise<Category | null> => {
 export const createCategory = async (
   name: string, 
   description: string, 
-  image: string
+  image: string,
+  parentId?: string
 ): Promise<Category | null> => {
   try {
     // Generate slug from name
@@ -110,9 +149,10 @@ export const createCategory = async (
         name, 
         slug,
         description: description || null,
-        image: image || null
+        image: image || null,
+        parent_id: parentId || null
       })
-      .select('id, name, slug, description, image')
+      .select('id, name, slug, description, image, parent_id')
       .single();
     
     if (error) {
@@ -125,6 +165,7 @@ export const createCategory = async (
       name: data.name,
       description: data.description,
       image: data.image,
+      parentId: data.parent_id,
       productCount: 0
     };
   } catch (error) {
@@ -169,7 +210,7 @@ export const updateCategory = async (
       .from('categories')
       .update(updateData)
       .eq('id', categoryData.id)
-      .select('id, name, slug, description, image')
+      .select('id, name, slug, description, image, parent_id')
       .single();
     
     if (error) {
@@ -192,6 +233,7 @@ export const updateCategory = async (
       name: data.name,
       description: data.description,
       image: data.image,
+      parentId: data.parent_id,
       productCount: count || 0
     };
   } catch (error) {

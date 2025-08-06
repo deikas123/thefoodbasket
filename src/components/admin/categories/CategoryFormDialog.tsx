@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import CategoryImageUpload from "./CategoryImageUpload";
+import { Category } from "@/services/product/categoryService";
 
 interface CategoryFormDialogProps {
   isOpen: boolean;
@@ -22,15 +23,18 @@ interface CategoryFormDialogProps {
     name: string;
     description: string;
     image: string;
+    parentId?: string;
   };
   setFormData: React.Dispatch<React.SetStateAction<{
     name: string;
     description: string;
     image: string;
+    parentId?: string;
   }>>;
   isSubmitting: boolean;
   mode: "add" | "edit";
   resetForm: () => void;
+  categories: Category[];
 }
 
 const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
@@ -42,7 +46,22 @@ const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
   isSubmitting,
   mode,
   resetForm,
+  categories
 }) => {
+  
+  // Get all categories for parent selection (flatten hierarchy)
+  const getAllCategories = (cats: Category[]): Category[] => {
+    const result: Category[] = [];
+    cats.forEach(cat => {
+      result.push(cat);
+      if (cat.subcategories) {
+        result.push(...getAllCategories(cat.subcategories));
+      }
+    });
+    return result;
+  };
+  
+  const allCategories = getAllCategories(categories);
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -78,7 +97,23 @@ const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
                 rows={3}
               />
             </div>
-            
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Parent Category (Optional)</label>
+              <select
+                value={formData.parentId || ""}
+                onChange={(e) => setFormData(prev => ({ ...prev, parentId: e.target.value || undefined }))}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">No Parent (Root Category)</option>
+                {allCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <CategoryImageUpload
               value={formData.image}
               onChange={(image) => setFormData({ ...formData, image })}

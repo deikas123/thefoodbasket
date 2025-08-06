@@ -26,7 +26,8 @@ const Categories = () => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    image: ""
+    image: "",
+    parentId: undefined as string | undefined
   });
   
   // Fetch categories
@@ -37,8 +38,8 @@ const Categories = () => {
   
   // Create category mutation
   const createMutation = useMutation({
-    mutationFn: (data: { name: string; description: string; image: string }) => 
-      createCategory(data.name, data.description, data.image),
+    mutationFn: (data: { name: string; description: string; image: string; parentId?: string }) => 
+      createCategory(data.name, data.description, data.image, data.parentId),
     onSuccess: () => {
       toast.success("Category created", {
         description: "The category has been created successfully."
@@ -97,7 +98,8 @@ const Categories = () => {
     setFormData({
       name: "",
       description: "",
-      image: ""
+      image: "",
+      parentId: undefined
     });
     setCurrentCategory(null);
   };
@@ -108,7 +110,8 @@ const Categories = () => {
     setFormData({
       name: category.name,
       description: category.description || "",
-      image: category.image || ""
+      image: category.image || "",
+      parentId: category.parentId
     });
     setIsEditDialogOpen(true);
   };
@@ -130,7 +133,8 @@ const Categories = () => {
         updates: {
           name: formData.name,
           description: formData.description,
-          image: formData.image
+          image: formData.image,
+          parentId: formData.parentId
         }
       });
     } else {
@@ -176,6 +180,7 @@ const Categories = () => {
         isSubmitting={createMutation.isPending}
         mode="add"
         resetForm={resetForm}
+        categories={categories}
       />
       
       {/* Edit Category Dialog */}
@@ -188,6 +193,7 @@ const Categories = () => {
         isSubmitting={updateMutation.isPending}
         mode="edit"
         resetForm={resetForm}
+        categories={categories}
       />
     </div>
   );
