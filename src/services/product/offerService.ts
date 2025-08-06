@@ -70,7 +70,7 @@ export const getDailyOffersWithProducts = async (): Promise<DailyOffer[]> => {
       .from('daily_offers')
       .select(`
         *,
-        products!inner (
+        product:product_id (
           id,
           name,
           price,
@@ -84,21 +84,14 @@ export const getDailyOffersWithProducts = async (): Promise<DailyOffer[]> => {
       .eq('active', true)
       .gte('end_date', currentDate)
       .lte('start_date', currentDate)
-      .order('created_at', { ascending: false })
-      .limit(8);
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error("Error fetching daily offers:", error);
-      return [];
+      throw error;
     }
 
-    // Transform the data to match expected structure
-    const transformedData = (data || []).map(offer => ({
-      ...offer,
-      product: Array.isArray(offer.products) ? offer.products[0] : offer.products
-    }));
-
-    return transformedData;
+    return data || [];
   } catch (error) {
     console.error("Error in getDailyOffersWithProducts:", error);
     return [];

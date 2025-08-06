@@ -63,26 +63,8 @@ const FeaturedProducts = () => {
     );
   }
   
-  // Always show the section, even with no products
-  if (products.length === 0 && !isLoading) {
-    return (
-      <section className="py-12">
-        <div className="container">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold">Featured Products</h2>
-            <Button variant="outline" asChild>
-              <Link to="/shop" className="flex items-center gap-2">
-                View All <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No featured products available at the moment.</p>
-            <Button onClick={() => refetch()} className="mt-4">Refresh</Button>
-          </div>
-        </div>
-      </section>
-    );
+  if (products.length === 0) {
+    return null;
   }
   
   return (
