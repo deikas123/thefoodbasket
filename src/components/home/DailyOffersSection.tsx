@@ -134,8 +134,44 @@ const DailyOffersSection = memo(() => {
     );
   }
   
-  if (productsWithDiscount.length === 0) {
-    return null; // Don't show the section if there are no offers
+  // Show section even if no offers, to indicate that daily offers feature exists
+  if (productsWithDiscount.length === 0 && !isLoading) {
+    return (
+      <section className="py-12 bg-gray-50 dark:bg-gray-800/30">
+        <div className="container">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold">Daily Special Offers</h2>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center">
+                <div className="flex items-center">
+                  <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+                    {timeLeft.hours}
+                  </div>
+                  <span className="mx-1 text-primary font-medium">:</span>
+                  <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+                    {timeLeft.minutes}
+                  </div>
+                  <span className="mx-1 text-primary font-medium">:</span>
+                  <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+                    {timeLeft.seconds}
+                  </div>
+                </div>
+              </div>
+              
+              <Link to="/shop?deals=true">
+                <Button variant="outline" size="sm" className="gap-2">
+                  View All <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No special offers available today. Check back tomorrow!</p>
+            <Button onClick={() => refetch()} className="mt-4">Refresh</Button>
+          </div>
+        </div>
+      </section>
+    );
   }
   
   return (

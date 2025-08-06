@@ -37,8 +37,26 @@ const OtherProducts = () => {
     fetchProducts();
   }, []);
   
+  // Always show the section, even with no products
   if (!products.length && !isLoading) {
-    return null;
+    return (
+      <div className="py-8 md:py-12">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold">More to Explore</h2>
+            <Link to="/shop">
+              <Button variant="outline" className="gap-2 button-animation">
+                View All
+                <ArrowRight size={16} />
+              </Button>
+            </Link>
+          </div>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No products available at the moment.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
   
   return (

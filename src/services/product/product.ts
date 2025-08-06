@@ -56,7 +56,9 @@ export const getProducts = async (
       query = query.gt('stock', 0);
     }
     
-    const { data, error } = await query;
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .limit(50); // Add performance limit
     
     if (error) {
       console.error("Error fetching products:", error);
@@ -98,7 +100,9 @@ export const getFeaturedProducts = async (): Promise<ProductType[]> => {
     const { data, error } = await supabase
       .from('products')
       .select('*, categories(name, slug)')
-      .eq('featured', true);
+      .eq('featured', true)
+      .order('created_at', { ascending: false })
+      .limit(8); // Limit for performance
     
     if (error) {
       console.error("Error fetching featured products:", error);
