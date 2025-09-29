@@ -11,6 +11,9 @@ import ScrollToTop from "@/components/ScrollToTop";
 import AppRoutes from "@/components/routing/AppRoutes";
 import FloatingChatButtons from "@/components/chat/FloatingChatButtons";
 import FloatingActionButtons from "@/components/FloatingActionButtons";
+import BottomNavigation from "@/components/mobile/BottomNavigation";
+import CategoryCarousel from "@/components/mobile/CategoryCarousel";
+import { useIsMobile } from "@/types";
 import { queryClient, prefetchCriticalData } from "@/lib/queryClient";
 
 // Lazy load the initial setup component
@@ -37,18 +40,7 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
-              {isLoading && <Preloader />}
-              
-              <ScrollToTop />
-              <AppRoutes />
-              
-              <FloatingChatButtons />
-              <FloatingActionButtons />
-              
-              <Suspense fallback={<div />}>
-                <InitialSetup />
-              </Suspense>
-              <Toaster />
+              <MobileAwareLayout isLoading={isLoading} />
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>
@@ -56,5 +48,31 @@ function App() {
     </QueryClientProvider>
   );
 }
+
+const MobileAwareLayout = ({ isLoading }: { isLoading: boolean }) => {
+  const isMobile = useIsMobile();
+
+  return (
+    <>
+      {isLoading && <Preloader />}
+      
+      <ScrollToTop />
+      {isMobile && <CategoryCarousel />}
+      
+      <div className={isMobile ? "pb-16" : ""}>
+        <AppRoutes />
+      </div>
+      
+      <FloatingChatButtons />
+      <FloatingActionButtons />
+      {isMobile && <BottomNavigation />}
+      
+      <Suspense fallback={<div />}>
+        <InitialSetup />
+      </Suspense>
+      <Toaster />
+    </>
+  );
+};
 
 export default App;

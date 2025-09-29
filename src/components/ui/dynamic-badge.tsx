@@ -10,8 +10,8 @@ const dynamicBadgeVariants = cva(
       variant: {
         default: "border-transparent",
         outline: "text-foreground",
-        discount: "border-transparent bg-red-500 text-white hover:bg-red-600",
-        featured: "border-transparent bg-green-500 text-white hover:bg-green-600",
+        discount: "border-transparent bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:from-red-600 hover:to-red-700",
+        featured: "border-transparent bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:from-green-600 hover:to-green-700",
       },
     },
     defaultVariants: {

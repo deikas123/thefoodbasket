@@ -24,18 +24,18 @@ const ProductCardActions = ({
           variant="outline"
           onClick={onAddToCart}
           disabled={product.stock <= 0}
-          className="text-xs"
+          className="text-xs h-9 touch-manipulation"
         >
-          <ShoppingCart className="h-3 w-3 mr-1" />
-          Add to Cart
+          <ShoppingCart className="h-4 w-4 mr-1" />
+          Add
         </Button>
         <Button
           size="sm"
           onClick={onBuyNow}
           disabled={product.stock <= 0}
-          className="text-xs"
+          className="text-xs h-9 touch-manipulation bg-primary hover:bg-primary/90"
         >
-          <Zap className="h-3 w-3 mr-1" />
+          <Zap className="h-4 w-4 mr-1" />
           Buy Now
         </Button>
       </div>
@@ -44,10 +44,10 @@ const ProductCardActions = ({
         variant="outline"
         onClick={onWhatsAppOrder}
         disabled={product.stock <= 0}
-        className="w-full text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+        className="w-full text-xs h-9 touch-manipulation bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
       >
-        <MessageCircle className="h-3 w-3 mr-1" />
-        Order via WhatsApp
+        <MessageCircle className="h-4 w-4 mr-1" />
+        WhatsApp Order
       </Button>
     </div>
   );

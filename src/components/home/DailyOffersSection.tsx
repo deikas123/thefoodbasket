@@ -143,26 +143,26 @@ const DailyOffersSection = memo(() => {
       <div className="container">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Daily Special Offers</h2>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 md:gap-6">
             <div className="flex items-center">
-              <div className="flex items-center">
-                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+              <div className="flex items-center gap-1">
+                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono text-sm md:text-base">
                   {timeLeft.hours}
                 </div>
-                <span className="mx-1 text-primary font-medium">:</span>
-                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+                <span className="text-primary font-medium">:</span>
+                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono text-sm md:text-base">
                   {timeLeft.minutes}
                 </div>
-                <span className="mx-1 text-primary font-medium">:</span>
-                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono">
+                <span className="text-primary font-medium">:</span>
+                <div className="bg-primary/10 px-2 py-1 rounded text-primary font-mono text-sm md:text-base">
                   {timeLeft.seconds}
                 </div>
               </div>
             </div>
             
             <Link to="/shop?deals=true">
-              <Button variant="outline" size="sm" className="gap-2">
-                View All <ArrowRight className="h-4 w-4" />
+              <Button variant="outline" size="sm" className="gap-2 text-xs md:text-sm">
+                View All <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
             </Link>
           </div>

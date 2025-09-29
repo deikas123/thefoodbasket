@@ -20,32 +20,39 @@ const ProductCardInfo = ({ product }: ProductCardInfoProps) => {
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`h-3.5 w-3.5 ${
+            className={`h-4 w-4 ${
               i < Math.round(product.rating)
                 ? "text-yellow-400 fill-yellow-400"
                 : "text-gray-300"
             }`}
           />
         ))}
-        <span className="text-xs text-gray-500 ml-1">
-          ({product.numReviews || product.num_reviews || 0})
+        <span className="text-xs font-medium text-muted-foreground ml-2">
+          {product.rating.toFixed(1)} ({product.numReviews || product.num_reviews || 0} reviews)
         </span>
       </div>
       
-      {/* Stock quantity display */}
+      {/* Stock quantity display with urgency */}
       <div className="mb-2">
         {product.stock > 0 ? (
-          <span className={`text-xs font-medium ${
-            product.stock <= 5 
-              ? 'text-orange-600' 
-              : product.stock <= 10 
-                ? 'text-yellow-600' 
-                : 'text-green-600'
-          }`}>
-            {product.stock} left in stock
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+              product.stock <= 5 
+                ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' 
+                : product.stock <= 10 
+                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
+                  : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+            }`}>
+              {product.stock <= 5 ? 'Only ' : ''}{product.stock} left
+            </span>
+            {product.stock <= 5 && (
+              <span className="text-xs text-red-600 font-medium animate-pulse">
+                Selling fast!
+              </span>
+            )}
+          </div>
         ) : (
-          <span className="text-xs font-medium text-red-600">
+          <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full dark:bg-red-900/20 dark:text-red-400">
             Out of stock
           </span>
         )}

@@ -48,10 +48,9 @@ const Header = () => {
   return (
     <header
       className={cn(
-        "fixed top-0 w-full z-40 transition-all duration-300 border-b backdrop-blur-sm",
-        isScrolled
-          ? "bg-background/98 backdrop-blur-md py-2 shadow-lg border-border/50"
-          : "bg-background/90 py-3 md:py-4"
+        "fixed top-0 w-full z-40 transition-all duration-300 border-b backdrop-blur-md",
+        "bg-background/98 shadow-sm border-border/50",
+        isMobile ? "py-2" : "py-3"
       )}
     >
       <div className="container mx-auto px-3 md:px-4">

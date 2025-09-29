@@ -16,7 +16,10 @@ const FloatingActionButtons = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+    <div className={cn(
+      "fixed z-50 flex flex-col gap-3",
+      isMobile ? "bottom-20 right-4" : "bottom-6 right-6"
+    )}>
       {/* Floating Cart Button - Only show on mobile when there are items */}
       {isMobile && totalItems > 0 && (
         <div className="relative">
