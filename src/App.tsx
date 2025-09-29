@@ -10,6 +10,7 @@ import Preloader from "@/components/Preloader";
 import ScrollToTop from "@/components/ScrollToTop";
 import AppRoutes from "@/components/routing/AppRoutes";
 import FloatingChatButtons from "@/components/chat/FloatingChatButtons";
+import FloatingActionButtons from "@/components/FloatingActionButtons";
 import { queryClient, prefetchCriticalData } from "@/lib/queryClient";
 
 // Lazy load the initial setup component
@@ -42,6 +43,7 @@ function App() {
               <AppRoutes />
               
               <FloatingChatButtons />
+              <FloatingActionButtons />
               
               <Suspense fallback={<div />}>
                 <InitialSetup />

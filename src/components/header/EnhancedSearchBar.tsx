@@ -98,8 +98,8 @@ const EnhancedSearchBar = () => {
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products..."
-            className="pl-8 pr-20 h-9 md:w-[180px] lg:w-[300px] rounded-full bg-muted focus:bg-background"
+            placeholder="Search fresh groceries, fruits, or vegetables..."
+            className="pl-8 pr-20 h-10 md:w-[280px] lg:w-[400px] rounded-full bg-muted focus:bg-background focus:ring-2 focus:ring-primary/20"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
