@@ -26,15 +26,15 @@ const Hero = () => {
         <div className="flex flex-col lg:flex-row items-center pt-16 pb-16 md:py-24">
           {/* Hero content */}
           <div className="w-full lg:w-1/2 text-center lg:text-left mb-12 lg:mb-0 animate-slide-up">
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+            <span className="inline-block px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs md:text-sm font-medium mb-4">
               Fresh From Farm to Table
             </span>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 md:mb-6">
               Fresh Groceries <br />
               Delivered to <br /> 
               <span className="text-primary">Your Doorstep</span>
             </h1>
-            <p className="text-gray-600 dark:text-gray-300 text-lg md:text-xl max-w-xl mx-auto lg:mx-0 mb-8">
+            <p className="text-muted-foreground text-base md:text-lg lg:text-xl max-w-xl mx-auto lg:mx-0 mb-6 md:mb-8">
               Get farm-fresh produce, organic essentials, and gourmet delights delivered directly to your home.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">

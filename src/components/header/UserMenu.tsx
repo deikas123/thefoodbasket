@@ -11,15 +11,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Package, Wallet, Clock, CalendarClock, LogOut, ShieldAlert, Truck } from "lucide-react";
+import { User, Package, Wallet, Clock, CalendarClock, LogOut, ShieldAlert, Truck, Heart, Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useIsMobile } from "@/types";
+import { useWishlist } from "@/context/WishlistContext";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const UserMenu = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { itemCount } = useWishlist();
   
   const handleLogout = () => {
     logout();
@@ -91,6 +94,31 @@ const UserMenu = () => {
             <span>Orders</span>
           </Link>
         </DropdownMenuItem>
+        
+        {isMobile && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link to="/wishlist" className="cursor-pointer">
+                <Heart className="mr-2 h-4 w-4" />
+                <span className="flex items-center justify-between w-full">
+                  Wishlist
+                  {itemCount > 0 && (
+                    <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
+                      {itemCount}
+                    </Badge>
+                  )}
+                </span>
+              </Link>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem asChild>
+              <Link to="/notifications" className="cursor-pointer">
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Notifications</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
         
         {!isMobile && (
           <>

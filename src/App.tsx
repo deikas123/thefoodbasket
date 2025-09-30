@@ -9,7 +9,6 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import Preloader from "@/components/Preloader";
 import ScrollToTop from "@/components/ScrollToTop";
 import AppRoutes from "@/components/routing/AppRoutes";
-import FloatingChatButtons from "@/components/chat/FloatingChatButtons";
 import FloatingActionButtons from "@/components/FloatingActionButtons";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
 import CategoryCarousel from "@/components/mobile/CategoryCarousel";
@@ -63,7 +62,6 @@ const MobileAwareLayout = ({ isLoading }: { isLoading: boolean }) => {
         <AppRoutes />
       </div>
       
-      <FloatingChatButtons />
       <FloatingActionButtons />
       {isMobile && <BottomNavigation />}
       

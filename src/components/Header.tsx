@@ -82,22 +82,7 @@ const Header = () => {
                 </SheetContent>
               </Sheet>
 
-              <Link to="/wishlist">
-                <Button variant="ghost" size="icon" className="relative h-9 w-9">
-                  <Heart className="h-4 w-4" />
-                  {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full text-xs w-4 h-4 flex items-center justify-center">
-                      {itemCount}
-                    </span>
-                  )}
-                  <span className="sr-only">Wishlist</span>
-                </Button>
-              </Link>
-
               <UserMenu />
-              <NotificationsMenu />
-              <CartButton />
-              <ThemeToggle />
             </div>
           </div>
         ) : (
