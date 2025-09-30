@@ -9,7 +9,6 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import Preloader from "@/components/Preloader";
 import ScrollToTop from "@/components/ScrollToTop";
 import AppRoutes from "@/components/routing/AppRoutes";
-import FloatingActionButtons from "@/components/FloatingActionButtons";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
 import CategoryCarousel from "@/components/mobile/CategoryCarousel";
 import { useIsMobile } from "@/types";
@@ -58,11 +57,10 @@ const MobileAwareLayout = ({ isLoading }: { isLoading: boolean }) => {
       <ScrollToTop />
       {isMobile && <CategoryCarousel />}
       
-      <div className={isMobile ? "pb-16" : ""}>
+      <div className={isMobile ? "pb-20" : ""}>
         <AppRoutes />
       </div>
       
-      <FloatingActionButtons />
       {isMobile && <BottomNavigation />}
       
       <Suspense fallback={<div />}>

@@ -23,21 +23,22 @@ const categories: Category[] = [
 
 const CategoryCarousel = () => {
   return (
-    <div className="bg-background sticky top-16 z-30 border-b border-border/50 md:hidden">
+    <div className="bg-background/95 sticky top-16 z-30 border-b border-border/30 md:hidden backdrop-blur-sm">
       <ScrollArea className="w-full">
-        <div className="flex gap-3 p-3">
+        <div className="flex gap-2.5 p-3">
           {categories.map((category) => (
             <Link
               key={category.id}
               to={category.href}
               className={cn(
-                "flex flex-col items-center justify-center min-w-[65px] h-[72px] rounded-xl transition-all duration-200",
-                "bg-card hover:bg-accent hover:scale-105 active:scale-95",
-                "border border-border shadow-sm"
+                "flex flex-col items-center justify-center min-w-[68px] h-[68px] rounded-2xl transition-all duration-200",
+                "bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10",
+                "hover:scale-105 active:scale-95",
+                "border border-primary/20 shadow-sm"
               )}
             >
-              <span className="text-xl mb-1.5">{category.icon}</span>
-              <span className="text-[10px] font-medium text-center leading-tight px-1">
+              <span className="text-2xl mb-1">{category.icon}</span>
+              <span className="text-[9px] font-semibold text-center leading-tight px-1">
                 {category.name}
               </span>
             </Link>
