@@ -22,23 +22,31 @@ const categories: Category[] = [
 ];
 
 const CategoryCarousel = () => {
+  const categoryColors = [
+    "bg-orange-100", "bg-green-100", "bg-yellow-100", "bg-pink-100",
+    "bg-red-100", "bg-blue-100", "bg-purple-100", "bg-teal-100"
+  ];
+
   return (
-    <div className="bg-background/95 sticky top-16 z-30 border-b border-border/30 md:hidden backdrop-blur-sm">
+    <div className="bg-background sticky top-16 z-30 md:hidden py-3">
       <ScrollArea className="w-full">
-        <div className="flex gap-2.5 p-3">
-          {categories.map((category) => (
+        <div className="flex gap-3 px-4">
+          {categories.map((category, index) => (
             <Link
               key={category.id}
               to={category.href}
               className={cn(
-                "flex flex-col items-center justify-center min-w-[68px] h-[68px] rounded-2xl transition-all duration-200",
-                "bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10",
-                "hover:scale-105 active:scale-95",
-                "border border-primary/20 shadow-sm"
+                "flex flex-col items-center justify-center min-w-[70px] transition-all duration-200",
+                "hover:scale-105 active:scale-95"
               )}
             >
-              <span className="text-2xl mb-1">{category.icon}</span>
-              <span className="text-[9px] font-semibold text-center leading-tight px-1">
+              <div className={cn(
+                "w-16 h-16 rounded-full flex items-center justify-center mb-1.5 shadow-sm",
+                categoryColors[index % categoryColors.length]
+              )}>
+                <span className="text-3xl">{category.icon}</span>
+              </div>
+              <span className="text-[10px] font-medium text-center leading-tight text-foreground">
                 {category.name}
               </span>
             </Link>

@@ -48,8 +48,8 @@ const Header = () => {
   return (
     <header
       className={cn(
-        "fixed top-0 w-full z-40 transition-all duration-300 border-b backdrop-blur-md",
-        "bg-background/98 shadow-sm border-border/50",
+        "fixed top-0 w-full z-40 transition-all duration-300",
+        "bg-primary text-primary-foreground shadow-md",
         isMobile ? "py-2" : "py-3"
       )}
     >

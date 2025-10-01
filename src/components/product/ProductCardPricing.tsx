@@ -11,16 +11,16 @@ const ProductCardPricing = ({ product, getDiscountedPrice }: ProductCardPricingP
   return (
     <div className="mb-3">
       {product.discountPercentage && product.discountPercentage > 0 ? (
-        <div className="flex items-center gap-1.5">
-          <span className="font-bold">
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-accent">
             {formatCurrency(getDiscountedPrice())}
           </span>
-          <span className="text-sm text-gray-500 line-through">
+          <span className="text-sm text-muted-foreground line-through">
             {formatCurrency(product.price)}
           </span>
         </div>
       ) : (
-        <span className="font-bold">{formatCurrency(product.price)}</span>
+        <span className="text-lg font-bold text-accent">{formatCurrency(product.price)}</span>
       )}
     </div>
   );

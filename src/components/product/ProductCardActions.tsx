@@ -18,36 +18,14 @@ const ProductCardActions = ({
 }: ProductCardActionsProps) => {
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onAddToCart}
-          disabled={product.stock <= 0}
-          className="text-xs h-9 touch-manipulation"
-        >
-          <ShoppingCart className="h-4 w-4 mr-1" />
-          Add
-        </Button>
-        <Button
-          size="sm"
-          onClick={onBuyNow}
-          disabled={product.stock <= 0}
-          className="text-xs h-9 touch-manipulation bg-primary hover:bg-primary/90"
-        >
-          <Zap className="h-4 w-4 mr-1" />
-          Buy Now
-        </Button>
-      </div>
       <Button
         size="sm"
-        variant="outline"
-        onClick={onWhatsAppOrder}
+        onClick={onAddToCart}
         disabled={product.stock <= 0}
-        className="w-full text-xs h-9 touch-manipulation bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+        className="w-full text-sm h-10 touch-manipulation bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl font-medium"
       >
-        <MessageCircle className="h-4 w-4 mr-1" />
-        WhatsApp Order
+        <ShoppingCart className="h-4 w-4 mr-2" />
+        Add to Cart
       </Button>
     </div>
   );
