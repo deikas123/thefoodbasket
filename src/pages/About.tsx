@@ -27,7 +27,7 @@ const About = () => {
               <div>
                 <h2 className="text-3xl font-bold mb-6">Our Story</h2>
                 <p className="text-muted-foreground mb-4">
-                  Founded in 2020, FreshMart started with a simple vision: to connect 
+                  Founded in 2020, TheFoodBasket started with a simple vision: to connect 
                   communities with local farmers and provide access to fresh, organic 
                   produce without the hassle of traditional grocery shopping.
                 </p>
