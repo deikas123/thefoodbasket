@@ -8,6 +8,7 @@ export const productSchema = z.object({
   image: z.string().min(1, { message: "Image is required" }),
   category: z.string().min(1, { message: "Category is required" }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer" }),
+  unit: z.enum(['piece', 'kg', 'g', 'bunch', 'pack', 'liter', 'ml']).default('piece'),
   featured: z.boolean().default(false),
   discountPercentage: z.coerce.number().min(0).max(100).optional(),
   tags: z.array(z.string()).default([]),

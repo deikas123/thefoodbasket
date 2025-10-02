@@ -24,6 +24,7 @@ export interface ProductType {
   image: string;
   category: string;
   stock: number;
+  unit?: string;
   featured: boolean;
   rating: number;
   num_reviews?: number;

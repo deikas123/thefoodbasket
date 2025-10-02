@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
 import ProductBasicFields from "./product/ProductBasicFields";
 import ProductPriceStockFields from "./product/ProductPriceStockFields";
+import ProductUnitField from "./product/ProductUnitField";
 import ProductCategoryField from "./product/ProductCategoryField";
 import ProductDiscountFeaturedFields from "./product/ProductDiscountFeaturedFields";
 import ProductTagsField from "./product/ProductTagsField";
@@ -134,6 +135,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <ProductBasicFields form={form} />
             <ProductPriceStockFields form={form} />
+            <ProductUnitField form={form} />
 
             <FormField
               control={form.control}

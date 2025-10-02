@@ -36,6 +36,7 @@ export interface Product {
   rating: number;
   numReviews: number;
   stock: number;
+  unit?: string;
   discountPercentage?: number;
 }
 

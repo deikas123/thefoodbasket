@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import CustomerChatWidget from "@/components/chat/CustomerChatWidget";
 
 const BottomNavigation = () => {
-  const { itemCount } = useCart();
+  const { itemCount, openCart } = useCart();
   const { user } = useAuth();
   const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -43,14 +43,12 @@ const BottomNavigation = () => {
             <span className="text-[10px] font-medium">Shop</span>
           </NavLink>
 
-          <NavLink
-            to="/checkout"
-            className={({ isActive }) =>
-              cn(
-                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 relative",
-                isActive ? "text-accent" : "text-muted-foreground hover:text-foreground"
-              )
-            }
+          <button
+            onClick={openCart}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 relative",
+              "text-muted-foreground hover:text-foreground active:scale-95"
+            )}
           >
             <div className="relative">
               <ShoppingCart className="h-5 w-5" />
@@ -64,7 +62,7 @@ const BottomNavigation = () => {
               )}
             </div>
             <span className="text-[10px] font-medium">Cart</span>
-          </NavLink>
+          </button>
 
           <NavLink
             to="/wishlist"

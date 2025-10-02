@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -189,6 +189,7 @@ export type Database = {
           id: string
           image: string | null
           name: string
+          parent_id: string | null
           slug: string
           updated_at: string
         }
@@ -198,6 +199,7 @@ export type Database = {
           id?: string
           image?: string | null
           name: string
+          parent_id?: string | null
           slug: string
           updated_at?: string
         }
@@ -207,10 +209,19 @@ export type Database = {
           id?: string
           image?: string | null
           name?: string
+          parent_id?: string | null
           slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_messages: {
         Row: {
@@ -971,6 +982,7 @@ export type Database = {
           price: number
           rating: number
           stock: number
+          unit: string | null
           updated_at: string
         }
         Insert: {
@@ -986,6 +998,7 @@ export type Database = {
           price: number
           rating?: number
           stock?: number
+          unit?: string | null
           updated_at?: string
         }
         Update: {
@@ -1001,6 +1014,7 @@ export type Database = {
           price?: number
           rating?: number
           stock?: number
+          unit?: string | null
           updated_at?: string
         }
         Relationships: [
