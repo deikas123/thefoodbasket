@@ -9,12 +9,15 @@ interface ProductPricingProps {
 }
 
 const ProductPricing = ({ product, getDiscountedPrice }: ProductPricingProps) => {
+  const unitDisplay = product.unit && product.unit !== 'piece' ? `/${product.unit}` : '';
+  
   return (
     <div>
       {product.discountPercentage ? (
         <div className="flex items-center space-x-2">
           <span className="text-2xl font-bold text-primary">
             {formatCurrency(getDiscountedPrice())}
+            <span className="text-lg font-normal text-muted-foreground">{unitDisplay}</span>
           </span>
           <span className="text-lg line-through text-muted-foreground">
             {formatCurrency(product.price)}
@@ -24,7 +27,10 @@ const ProductPricing = ({ product, getDiscountedPrice }: ProductPricingProps) =>
           </Badge>
         </div>
       ) : (
-        <span className="text-2xl font-bold">{formatCurrency(product.price)}</span>
+        <span className="text-2xl font-bold">
+          {formatCurrency(product.price)}
+          <span className="text-lg font-normal text-muted-foreground">{unitDisplay}</span>
+        </span>
       )}
     </div>
   );
