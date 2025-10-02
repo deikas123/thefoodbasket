@@ -21,7 +21,8 @@ interface ProductInfoProps {
 }
 
 const ProductInfo = ({ product }: ProductInfoProps) => {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(100);
+  const [selectedUnit, setSelectedUnit] = useState(product.unit || 'piece');
   const { addItem } = useCart();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
@@ -90,14 +91,12 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     }
   };
   
-  const incrementQuantity = () => setQuantity(prev => prev + 1);
-  const decrementQuantity = () => setQuantity(prev => prev - 1);
-
   return (
     <div className="space-y-5">
-      <ProductHeader product={product} />
-      
-      <ProductPricing product={product} getDiscountedPrice={getDiscountedPrice} />
+      <ProductHeader 
+        product={product} 
+        price={<ProductPricing product={product} getDiscountedPrice={getDiscountedPrice} />}
+      />
       
       <ProductStock product={product} />
       
@@ -109,8 +108,9 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         quantity={quantity}
         stock={product.stock}
         productId={product.id}
-        onIncrement={incrementQuantity}
-        onDecrement={decrementQuantity}
+        unit={selectedUnit}
+        onQuantityChange={setQuantity}
+        onUnitChange={setSelectedUnit}
       />
       
       <ProductActions

@@ -12,25 +12,23 @@ const ProductPricing = ({ product, getDiscountedPrice }: ProductPricingProps) =>
   const unitDisplay = product.unit && product.unit !== 'piece' ? `/${product.unit}` : '';
   
   return (
-    <div>
+    <div className="text-right">
       {product.discountPercentage ? (
-        <div className="flex items-center space-x-2">
-          <span className="text-2xl font-bold text-primary">
-            {formatCurrency(getDiscountedPrice())}
-            <span className="text-lg font-normal text-muted-foreground">{unitDisplay}</span>
-          </span>
-          <span className="text-lg line-through text-muted-foreground">
+        <div className="space-y-1">
+          <div className="text-2xl font-bold text-primary">
+            {formatCurrency(getDiscountedPrice())}{unitDisplay}
+          </div>
+          <div className="text-sm line-through text-muted-foreground">
             {formatCurrency(product.price)}
-          </span>
-          <Badge variant="destructive">
+          </div>
+          <Badge variant="destructive" className="text-xs">
             {product.discountPercentage}% OFF
           </Badge>
         </div>
       ) : (
-        <span className="text-2xl font-bold">
-          {formatCurrency(product.price)}
-          <span className="text-lg font-normal text-muted-foreground">{unitDisplay}</span>
-        </span>
+        <div className="text-2xl font-bold text-primary">
+          {formatCurrency(product.price)}{unitDisplay}
+        </div>
       )}
     </div>
   );
