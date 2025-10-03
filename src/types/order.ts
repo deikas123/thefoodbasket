@@ -50,6 +50,7 @@ export interface Order {
   promoCode?: string;
   total: number;
   notes?: string;
+  assignedTo?: string;
   createdAt: string;
   updatedAt: string;
   estimatedDelivery: string;

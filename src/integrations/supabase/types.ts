@@ -739,6 +739,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          assigned_to: string | null
           created_at: string
           delivery_address: Json
           delivery_fee: number
@@ -761,6 +762,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           delivery_address: Json
           delivery_fee: number
@@ -783,6 +785,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           delivery_address?: Json
           delivery_fee?: number

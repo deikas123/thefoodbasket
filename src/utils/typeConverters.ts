@@ -29,6 +29,7 @@ export const convertToOrder = (orderType: OrderType): Order => {
     promoCode: orderType.promo_code,
     total: orderType.total,
     notes: orderType.notes,
+    assignedTo: (orderType as any).assigned_to,
     createdAt: orderType.created_at,
     updatedAt: orderType.updated_at,
     estimatedDelivery: orderType.estimated_delivery,

@@ -75,39 +75,42 @@ const OrderAssignmentDialog: React.FC<OrderAssignmentDialogProps> = ({
   // Assign order mutation
   const assignOrderMutation = useMutation({
     mutationFn: async (staffId: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('orders')
-        .update({
-          assigned_to: staffId,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', order.id);
+        .update({ assigned_to: staffId })
+        .eq('id', order.id)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
-        title: "Order Assigned",
-        description: "Order has been successfully assigned to staff member",
+        title: "Order assigned successfully",
+        description: `Order has been assigned to the selected staff member.`,
       });
+      
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
       
-      // Update the order with assignment info
-      const updatedOrder = {
-        ...order,
-        updatedAt: new Date().toISOString()
-      };
+      // Update the order with the new assignment
+      if (data) {
+        const updatedOrder = {
+          ...order,
+          assignedTo: data.assigned_to
+        };
+        onOrderUpdate(updatedOrder);
+      }
       
-      onOrderUpdate(updatedOrder);
       onClose();
     },
     onError: (error: any) => {
       toast({
-        title: "Assignment Failed",
-        description: error.message || "Could not assign the order",
+        title: "Failed to assign order",
+        description: error.message || "There was an error assigning the order. Please try again.",
         variant: "destructive",
       });
-    }
+    },
   });
 
   const handleAssignment = () => {
