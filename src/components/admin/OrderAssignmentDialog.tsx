@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useMemo } from 'react';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Order } from "@/types/order";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { getAllUserRoles } from "@/services/roleService";
+import { useUsersData } from "@/hooks/useUsersData";
 import { User, Package, Clock } from "lucide-react";
 import { formatCurrency } from "@/utils/currencyFormatter";
 
@@ -18,13 +18,6 @@ interface OrderAssignmentDialogProps {
   onClose: () => void;
   order: Order;
   onOrderUpdate: (updatedOrder: Order) => void;
-}
-
-interface StaffMember {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
 }
 
 const OrderAssignmentDialog: React.FC<OrderAssignmentDialogProps> = ({
@@ -37,40 +30,15 @@ const OrderAssignmentDialog: React.FC<OrderAssignmentDialogProps> = ({
   const [isAssigning, setIsAssigning] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch staff members who can handle orders
-  const { data: staffMembers, isLoading } = useQuery({
-    queryKey: ["assignment-staff"],
-    queryFn: async () => {
-      // Get all users with staff roles
-      const userRoles = await getAllUserRoles();
-      const staffRoles = userRoles.filter(ur => 
-        ['order_fulfillment', 'delivery', 'customer_service'].includes(ur.role)
-      );
-      
-      const staffData: StaffMember[] = [];
-      
-      for (const { userId, role } of staffRoles) {
-        // Get profile data
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-          
-        if (profile) {
-          staffData.push({
-            id: userId,
-            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
-            role: role,
-            email: `${profile.first_name?.toLowerCase()}.${profile.last_name?.toLowerCase()}@foodbasket.com`
-          });
-        }
-      }
-      
-      return staffData;
-    },
-    enabled: isOpen
-  });
+  // Fetch all users data
+  const { data: users = [], isLoading } = useUsersData();
+
+  // Filter for staff members with appropriate roles
+  const staffMembers = useMemo(() => {
+    return users.filter(user => 
+      user.role && ['order_fulfillment', 'delivery', 'customer_service'].includes(user.role)
+    );
+  }, [users]);
 
   // Assign order mutation
   const assignOrderMutation = useMutation({
@@ -196,23 +164,23 @@ const OrderAssignmentDialog: React.FC<OrderAssignmentDialogProps> = ({
                   <SelectValue placeholder="Choose a staff member" />
                 </SelectTrigger>
                 <SelectContent>
-                  {staffMembers?.map((staff) => (
+                  {staffMembers.map((staff) => (
                     <SelectItem key={staff.id} value={staff.id}>
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          <span>{staff.name}</span>
+                          <span>{`${staff.firstName} ${staff.lastName}`.trim() || staff.email}</span>
                         </div>
                         <Badge 
                           variant="outline" 
-                          className={`ml-2 ${getRoleBadgeColor(staff.role)}`}
+                          className={`ml-2 ${getRoleBadgeColor(staff.role || '')}`}
                         >
-                          {formatRoleName(staff.role)}
+                          {formatRoleName(staff.role || '')}
                         </Badge>
                       </div>
                     </SelectItem>
                   ))}
-                  {staffMembers?.length === 0 && (
+                  {staffMembers.length === 0 && (
                     <SelectItem value="none" disabled>
                       No staff members available
                     </SelectItem>
