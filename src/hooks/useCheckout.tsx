@@ -103,6 +103,7 @@ export const useCheckout = () => {
         estimatedDelivery: `${selectedDelivery.estimated_delivery_days} days`
       };
 
+      console.log("Calling checkout function...");
       const order = await checkout(
         user.id,
         addressForCheckout,
@@ -112,18 +113,25 @@ export const useCheckout = () => {
       
       console.log("Order placed successfully:", order);
       
-      setCompletedOrder(order);
-      setCurrentStep("confirmation");
-      
-      toast({
-        title: "Order placed successfully!",
-        description: "Thank you for your order. We'll process it right away.",
-      });
+      if (order) {
+        setCompletedOrder(order);
+        setCurrentStep("confirmation");
+        
+        toast({
+          title: "Order placed successfully!",
+          description: "Thank you for your order. We'll process it right away.",
+        });
+        
+        // Navigate to confirmation/order details after a short delay
+        setTimeout(() => {
+          navigate(`/orders/${order.id}`);
+        }, 2000);
+      }
     } catch (error) {
       console.error("Error placing order:", error);
       toast({
         title: "Failed to place order",
-        description: "There was an error processing your order. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error processing your order. Please try again.",
         variant: "destructive",
       });
     } finally {

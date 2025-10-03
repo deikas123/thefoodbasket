@@ -13,6 +13,7 @@ import BottomNavigation from "@/components/mobile/BottomNavigation";
 import CategoryCarousel from "@/components/mobile/CategoryCarousel";
 import { useIsMobile } from "@/types";
 import { queryClient, prefetchCriticalData } from "@/lib/queryClient";
+import Cart from "@/components/Cart";
 
 // Lazy load the initial setup component
 const InitialSetup = lazy(() => import("@/components/setup/InitialSetup"));
@@ -62,6 +63,8 @@ const MobileAwareLayout = ({ isLoading }: { isLoading: boolean }) => {
       </div>
       
       {isMobile && <BottomNavigation />}
+      
+      <Cart />
       
       <Suspense fallback={<div />}>
         <InitialSetup />
