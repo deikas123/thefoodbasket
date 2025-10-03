@@ -1,13 +1,12 @@
 
 export const formatCurrency = (amount: number): string => {
-  // Use a more explicit approach to ensure KSH is always displayed
-  return `KSH ${amount.toLocaleString('en-KE', { 
+  return `${amount.toLocaleString('en-KE', { 
     minimumFractionDigits: 0, 
-    maximumFractionDigits: 2 
-  })}`;
+    maximumFractionDigits: 0
+  })}sh`;
 };
 
 // Alternative simple formatter for cases where Intl might not work as expected
 export const formatCurrencySimple = (amount: number): string => {
-  return `KSH ${amount.toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  return `${amount.toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}sh`;
 };
