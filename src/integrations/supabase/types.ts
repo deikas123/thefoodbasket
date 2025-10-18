@@ -1041,6 +1041,12 @@ export type Database = {
           id: string
           last_name: string | null
           loyalty_points: number
+          notification_order_email: boolean | null
+          notification_order_sms: boolean | null
+          notification_product_email: boolean | null
+          notification_product_sms: boolean | null
+          notification_promo_email: boolean | null
+          notification_promo_sms: boolean | null
           phone: string | null
         }
         Insert: {
@@ -1050,6 +1056,12 @@ export type Database = {
           id: string
           last_name?: string | null
           loyalty_points?: number
+          notification_order_email?: boolean | null
+          notification_order_sms?: boolean | null
+          notification_product_email?: boolean | null
+          notification_product_sms?: boolean | null
+          notification_promo_email?: boolean | null
+          notification_promo_sms?: boolean | null
           phone?: string | null
         }
         Update: {
@@ -1059,6 +1071,12 @@ export type Database = {
           id?: string
           last_name?: string | null
           loyalty_points?: number
+          notification_order_email?: boolean | null
+          notification_order_sms?: boolean | null
+          notification_product_email?: boolean | null
+          notification_product_sms?: boolean | null
+          notification_promo_email?: boolean | null
+          notification_promo_sms?: boolean | null
           phone?: string | null
         }
         Relationships: []

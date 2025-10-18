@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { updateUserProfile } from "@/services/profileService";
 
 const PersonalInfoTab = () => {
   const { user } = useAuth();
@@ -23,16 +24,31 @@ const PersonalInfoTab = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Add actual API call to update profile
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been saved.",
-    });
+    if (!user?.id) return;
     
-    setIsEditing(false);
+    try {
+      await updateUserProfile(user.id, {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+      });
+      
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved.",
+      });
+      
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
