@@ -6,6 +6,7 @@ export interface FoodBasket {
   recipe: string;
   image?: string;
   totalPrice: number;
+  userId?: string;
   createdAt: string;
   updatedAt: string;
   items: FoodBasketItem[];

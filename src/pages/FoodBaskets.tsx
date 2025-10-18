@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FoodBasketTabs from "@/components/foodBaskets/FoodBasketTabs";
-import { getAllFoodBaskets } from "@/services/foodBasketService";
+import { getAllFoodBaskets, getUserFoodBaskets } from "@/services/foodBasketService";
 import { generateAIFoodBaskets, saveGeneratedBasket } from "@/services/aiFoodBasketService";
 import { FoodBasket } from "@/types/foodBasket";
 import { getProductById } from "@/services/productService";
@@ -15,34 +16,26 @@ import { convertToProduct } from "@/utils/typeConverters";
 
 const FoodBaskets = () => {
   const { addItem } = useCart();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
   const [sort, setSort] = useState<"price_asc" | "price_desc">("price_asc");
   const [productDetails, setProductDetails] = useState<{[key: string]: Product}>({});
   const [isGeneratingBaskets, setIsGeneratingBaskets] = useState(false);
   const [aiGeneratedBaskets, setAiGeneratedBaskets] = useState<any[]>([]);
-  
-  const generatePersonalizedBaskets = async (): Promise<FoodBasket[]> => {
-    const allBaskets = await getAllFoodBaskets();
-    return allBaskets ? allBaskets.slice(0, 2).map(basket => ({
-      ...basket,
-      name: `Personalized: ${basket.name}`,
-      totalPrice: Math.round(basket.totalPrice * 0.95 * 100) / 100
-    })) : [];
-  };
 
   const foodBasketsQuery = useQuery({
     queryKey: ["foodBaskets"],
     queryFn: getAllFoodBaskets
   });
 
-  const personalizedBasketsQuery = useQuery({
-    queryKey: ["personalizedBaskets"],
-    queryFn: generatePersonalizedBaskets,
-    enabled: activeTab === "personalized"
+  const userBasketsQuery = useQuery({
+    queryKey: ["userFoodBaskets", user?.id],
+    queryFn: getUserFoodBaskets,
+    enabled: !!user && activeTab === "personalized"
   });
 
   const allBaskets = foodBasketsQuery.data || [];
-  const personalizedBaskets = personalizedBasketsQuery.data || [];
+  const personalizedBaskets = userBasketsQuery.data || [];
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -136,14 +129,25 @@ const FoodBaskets = () => {
   };
 
   const handleSaveAIBasket = async (basket: any) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to save baskets to your collection.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const savedId = await saveGeneratedBasket(basket);
       if (savedId) {
         toast({
           title: "Basket Saved!",
-          description: "The AI-generated basket has been saved to your collection.",
+          description: "The AI-generated basket has been saved to your personalized collection.",
         });
-        foodBasketsQuery.refetch();
+        userBasketsQuery.refetch();
+        // Switch to personalized tab to show the saved basket
+        setActiveTab("personalized");
       }
     } catch (error) {
       console.error("Error saving AI basket:", error);
@@ -179,7 +183,7 @@ const FoodBaskets = () => {
             personalizedBaskets={personalizedBaskets}
             aiGeneratedBaskets={aiGeneratedBaskets}
             isLoadingAll={foodBasketsQuery.isLoading}
-            isLoadingPersonalized={personalizedBasketsQuery.isLoading}
+            isLoadingPersonalized={userBasketsQuery.isLoading}
             isGeneratingBaskets={isGeneratingBaskets}
             productDetails={productDetails}
             sort={sort}

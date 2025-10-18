@@ -51,7 +51,7 @@ const FoodBasketTabs = ({
               All Baskets
             </TabsTrigger>
             <TabsTrigger value="personalized" className="text-xs sm:text-sm whitespace-nowrap">
-              Personalized
+              My Saved Baskets
             </TabsTrigger>
             <TabsTrigger value="ai-generated" className="flex items-center gap-1 text-xs sm:text-sm whitespace-nowrap">
               <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />

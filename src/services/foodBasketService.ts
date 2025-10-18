@@ -105,3 +105,50 @@ export const getFoodBasketWithProducts = async (basketId: string): Promise<{bask
     return { basket: null, products: [] };
   }
 };
+
+// Get user's saved baskets
+export const getUserFoodBaskets = async (): Promise<FoodBasket[]> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return [];
+    }
+    
+    const { data, error } = await supabase
+      .from('food_baskets')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching user food baskets:", error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Error in getUserFoodBaskets:", error);
+    return [];
+  }
+};
+
+// Delete a food basket
+export const deleteFoodBasket = async (basketId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('food_baskets')
+      .delete()
+      .eq('id', basketId);
+    
+    if (error) {
+      console.error("Error deleting food basket:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in deleteFoodBasket:", error);
+    return false;
+  }
+};

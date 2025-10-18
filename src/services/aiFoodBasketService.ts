@@ -215,6 +215,14 @@ const calculateTotalPrice = (products: { product: Product; quantity: number }[])
 
 export const saveGeneratedBasket = async (basket: GeneratedBasket): Promise<string | null> => {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error("User must be logged in to save baskets");
+      return null;
+    }
+    
     // Create the food basket
     const { data: basketData, error: basketError } = await supabase
       .from('food_baskets')
@@ -223,7 +231,8 @@ export const saveGeneratedBasket = async (basket: GeneratedBasket): Promise<stri
         description: basket.description,
         recipe: basket.recipe,
         total_price: basket.totalPrice,
-        image: basket.products[0]?.product.image || null
+        image: basket.products[0]?.product.image || null,
+        user_id: user.id
       })
       .select()
       .single();
