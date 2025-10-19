@@ -1,82 +1,65 @@
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getProducts, getCategories } from "@/services/productService";
-import { formatCurrency } from "@/utils/currencyFormatter";
-import Header from "@/components/Header";
+import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import EnhancedSearchBar from "@/components/header/EnhancedSearchBar";
+import TopGroceryStores from "@/components/home/TopGroceryStores";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
-import { Separator } from "@/components/ui/separator";
-import { FilterX } from "lucide-react";
+import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { ProductType } from "@/types/supabase";
+import { Badge } from "@/components/ui/badge";
 
 const Shop = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Extract filter values from URL params
   const initialCategory = searchParams.get("category") || "";
   const initialSearch = searchParams.get("search") || "";
-  const initialMinPrice = Number(searchParams.get("minPrice")) || 0;
-  const initialMaxPrice = Number(searchParams.get("maxPrice")) || 50000;
-  const initialInStock = searchParams.get("inStock") === "true";
-  const initialSort = searchParams.get("sort") || "name_asc";
+  const initialSort = searchParams.get("sort") || "";
+  const initialStore = searchParams.get("store") || "";
   
   // State for filters
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
-  const [priceRange, setPriceRange] = useState<[number, number]>([initialMinPrice, initialMaxPrice]);
-  const [manualPriceMin, setManualPriceMin] = useState(initialMinPrice.toString());
-  const [manualPriceMax, setManualPriceMax] = useState(initialMaxPrice.toString());
-  const [inStockOnly, setInStockOnly] = useState(initialInStock);
   const [sortOption, setSortOption] = useState(initialSort);
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [selectedStore, setSelectedStore] = useState(initialStore);
+  const [showFilters, setShowFilters] = useState(false);
   
   // Fetch categories
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: getCategories
   });
-  
-  // Fetch products with filters - use category slug for filtering
-  const productsQuery = useQuery({
-    queryKey: ["products", selectedCategory, searchTerm, priceRange, inStockOnly],
+
+  // Fetch stores
+  const storesQuery = useQuery({
+    queryKey: ["stores"],
     queryFn: async () => {
-      console.log("Fetching products with filters:", {
-        selectedCategory,
-        searchTerm,
-        priceRange,
-        inStockOnly
-      });
-      
+      const { data, error } = await supabase
+        .from("stores")
+        .select("*")
+        .eq("active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    }
+  });
+  
+  // Fetch products with filters
+  const productsQuery = useQuery({
+    queryKey: ["products", selectedCategory, searchTerm, selectedStore],
+    queryFn: async () => {
       return getProducts(
         selectedCategory || undefined,
         searchTerm || undefined,
-        priceRange[0],
-        priceRange[1],
-        inStockOnly
+        0,
+        50000,
+        false
       );
     }
   });
@@ -84,18 +67,14 @@ const Shop = () => {
   // Update URL params when filters change
   useEffect(() => {
     const params = new URLSearchParams();
-    
     if (selectedCategory) params.set("category", selectedCategory);
     if (searchTerm) params.set("search", searchTerm);
-    if (priceRange[0] > 0) params.set("minPrice", priceRange[0].toString());
-    if (priceRange[1] < 50000) params.set("maxPrice", priceRange[1].toString());
-    if (inStockOnly) params.set("inStock", "true");
-    params.set("sort", sortOption);
-    
+    if (sortOption) params.set("sort", sortOption);
+    if (selectedStore) params.set("store", selectedStore);
     setSearchParams(params);
-  }, [selectedCategory, searchTerm, priceRange, inStockOnly, sortOption, setSearchParams]);
+  }, [selectedCategory, searchTerm, sortOption, selectedStore, setSearchParams]);
   
-  // Update search term when URL changes (from enhanced search bar navigation)
+  // Update search term when URL changes
   useEffect(() => {
     const urlSearchTerm = searchParams.get("search") || "";
     if (urlSearchTerm !== searchTerm) {
@@ -103,320 +82,156 @@ const Shop = () => {
     }
   }, [searchParams, searchTerm]);
   
-  // Handle manual price input changes
-  const handleManualPriceChange = (type: 'min' | 'max', value: string) => {
-    const numValue = parseInt(value) || 0;
-    if (type === 'min') {
-      setManualPriceMin(value);
-      if (numValue <= priceRange[1]) {
-        setPriceRange([numValue, priceRange[1]]);
-      }
-    } else {
-      setManualPriceMax(value);
-      if (numValue >= priceRange[0]) {
-        setPriceRange([priceRange[0], numValue]);
-      }
-    }
-  };
-  
-  // Update manual inputs when slider changes
-  useEffect(() => {
-    setManualPriceMin(priceRange[0].toString());
-    setManualPriceMax(priceRange[1].toString());
-  }, [priceRange]);
-  
   // Handle clearing all filters
   const clearFilters = () => {
     setSelectedCategory("");
     setSearchTerm("");
-    setPriceRange([0, 50000]);
-    setManualPriceMin("0");
-    setManualPriceMax("50000");
-    setInStockOnly(false);
-    setSortOption("name_asc");
+    setSortOption("");
+    setSelectedStore("");
   };
   
-  // Sort products
+  // Filter and sort products
+  const filteredProducts = productsQuery.data || [];
+
   const sortProducts = (products: ProductType[]) => {
-    const sortedProducts = [...products];
-    
-    switch (sortOption) {
-      case "name_asc":
-        return sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
-      case "name_desc":
-        return sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
-      case "price_asc":
-        return sortedProducts.sort((a, b) => a.price - b.price);
-      case "price_desc":
-        return sortedProducts.sort((a, b) => b.price - a.price);
-      default:
-        return sortedProducts;
-    }
+    const sorted = [...products];
+    if (sortOption === "price_asc") return sorted.sort((a, b) => a.price - b.price);
+    if (sortOption === "price_desc") return sorted.sort((a, b) => b.price - a.price);
+    return sorted;
   };
   
-  const sortedProducts = productsQuery.data ? sortProducts(productsQuery.data) : [];
+  const sortedProducts = sortProducts(filteredProducts);
   
-  // Filter UI component (shared between desktop and mobile)
-  const FiltersContent = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium mb-2">Categories</h3>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Checkbox 
-              id="all-categories" 
-              checked={selectedCategory === ""}
-              onCheckedChange={() => setSelectedCategory("")}
-            />
-            <Label htmlFor="all-categories">All Categories</Label>
-          </div>
-          
-          {categoriesQuery.data && categoriesQuery.data.map(category => (
-            <div key={category.id} className="flex items-center gap-2">
-              <Checkbox 
-                id={`category-${category.id}`}
-                checked={selectedCategory === category.id}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedCategory(category.id);
-                  } else {
-                    setSelectedCategory("");
-                  }
-                }}
-              />
-              <Label htmlFor={`category-${category.id}`}>
-                {category.name} ({category.productCount || 0})
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      <Separator />
-      
-      <div>
-        <h3 className="text-lg font-medium mb-4">Price Range</h3>
-        
-        {/* Manual Price Inputs */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <div>
-            <Label htmlFor="min-price" className="text-xs">Min Price</Label>
-            <Input
-              id="min-price"
-              type="number"
-              value={manualPriceMin}
-              onChange={(e) => handleManualPriceChange('min', e.target.value)}
-              className="h-8 text-xs"
-              min="0"
-              max="50000"
-            />
-          </div>
-          <div>
-            <Label htmlFor="max-price" className="text-xs">Max Price</Label>
-            <Input
-              id="max-price"
-              type="number"
-              value={manualPriceMax}
-              onChange={(e) => handleManualPriceChange('max', e.target.value)}
-              className="h-8 text-xs"
-              min="0"
-              max="50000"
-            />
-          </div>
-        </div>
-        
-        {/* Price Slider */}
-        <Slider
-          value={priceRange}
-          max={50000}
-          step={50}
-          onValueChange={(value) => setPriceRange(value as [number, number])}
-          className="mb-4"
-        />
-        
-        {/* Price Display */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{formatCurrency(priceRange[0])}</span>
-          <span>{formatCurrency(priceRange[1])}</span>
-        </div>
-        
-        {/* Quick Price Buttons */}
-        <div className="grid grid-cols-2 gap-1 mt-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setPriceRange([0, 1000])}
-          >
-            Under {formatCurrency(1000)}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setPriceRange([1000, 5000])}
-          >
-            {formatCurrency(1000)} - {formatCurrency(5000)}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setPriceRange([5000, 15000])}
-          >
-            {formatCurrency(5000)} - {formatCurrency(15000)}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setPriceRange([15000, 50000])}
-          >
-            Over {formatCurrency(15000)}
-          </Button>
-        </div>
-      </div>
-      
-      <Separator />
-      
-      <div>
-        <h3 className="text-lg font-medium mb-2">Availability</h3>
-        <div className="flex items-center gap-2">
-          <Checkbox 
-            id="in-stock"
-            checked={inStockOnly}
-            onCheckedChange={(checked) => setInStockOnly(checked === true)}
-          />
-          <Label htmlFor="in-stock">Show In-Stock Only</Label>
-        </div>
-      </div>
-      
-      <Button 
-        variant="outline" 
-        className="w-full mt-4"
-        onClick={clearFilters}
-      >
-        <FilterX className="mr-2 h-4 w-4" />
-        Clear Filters
-      </Button>
-    </div>
-  );
+  const activeFiltersCount = [selectedCategory, sortOption, selectedStore].filter(Boolean).length;
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      
-      <main className="flex-grow pt-20 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Desktop Filters Sidebar */}
-            <aside className="hidden lg:block">
-              <div className="sticky top-24 p-6 border rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold mb-6">Filters</h2>
-                <FiltersContent />
-              </div>
-            </aside>
+    <div className="flex flex-col min-h-screen bg-background pb-20">
+      {/* Header with back button and search */}
+      <header className="sticky top-0 z-50 bg-background border-b">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="h-9 w-9"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             
-            {/* Products Grid */}
-            <div className="lg:col-span-3 space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between gap-4">
-                {/* Enhanced Search Bar */}
-                <div className="flex w-full max-w-sm">
-                  <EnhancedSearchBar />
-                </div>
-                
-                <div className="flex gap-2">
-                  {/* Mobile Filters Button */}
-                  <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
-                    <SheetTrigger asChild>
-                      <Button variant="outline" className="lg:hidden">
-                        Filters
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent>
-                      <SheetHeader>
-                        <SheetTitle>Filters</SheetTitle>
-                        <SheetDescription>
-                          Refine your product search
-                        </SheetDescription>
-                      </SheetHeader>
-                      <div className="py-6">
-                        <FiltersContent />
-                      </div>
-                    </SheetContent>
-                  </Sheet>
-                  
-                  {/* Sort Dropdown */}
-                  <Select value={sortOption} onValueChange={setSortOption}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="name_asc">Name (A-Z)</SelectItem>
-                      <SelectItem value="name_desc">Name (Z-A)</SelectItem>
-                      <SelectItem value="price_asc">Price (Low to High)</SelectItem>
-                      <SelectItem value="price_desc">Price (High to Low)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              {/* Results Info */}
-              <div className="flex justify-between items-center">
-                <p className="text-muted-foreground">
-                  {productsQuery.isLoading 
-                    ? 'Loading products...'
-                    : `Showing ${sortedProducts.length} products`
-                  }
-                </p>
-                
-                {/* Active Filters */}
-                {(selectedCategory || searchTerm || priceRange[0] > 0 || priceRange[1] < 50000 || inStockOnly) && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={clearFilters}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <FilterX className="h-4 w-4 mr-2" />
-                    Clear Filters
-                  </Button>
-                )}
-              </div>
-              
-              {/* Product Grid */}
-              {productsQuery.isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="border rounded-lg p-4 space-y-4">
-                      <Skeleton className="h-48 w-full rounded-md" />
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <div className="flex justify-between">
-                        <Skeleton className="h-8 w-20" />
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : sortedProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sortedProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <h3 className="text-xl font-medium mb-2">No products found</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Try adjusting your filters or search terms
-                  </p>
-                  <Button onClick={clearFilters}>Clear Filters</Button>
-                </div>
-              )}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Would you like to eat something?"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 rounded-lg bg-muted border-0 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+              />
             </div>
           </div>
         </div>
+      </header>
+
+      {/* Filter chips */}
+      <div className="sticky top-[61px] z-40 bg-background border-b">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <Button
+              variant={showFilters ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex-shrink-0 h-8 gap-1.5"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {sortOption && <span className="text-xs">Sort by</span>}
+            </Button>
+
+            {categoriesQuery.data?.slice(0, 5).map((category) => (
+              <Badge
+                key={category.id}
+                variant={selectedCategory === category.id ? "default" : "outline"}
+                className="flex-shrink-0 cursor-pointer h-8 px-3"
+                onClick={() => setSelectedCategory(selectedCategory === category.id ? "" : category.id)}
+              >
+                {category.name}
+              </Badge>
+            ))}
+
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="flex-shrink-0 h-8 gap-1"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </Button>
+            )}
+          </div>
+
+          {/* Sort options dropdown */}
+          {showFilters && (
+            <div className="mt-3 flex gap-2">
+              <Badge
+                variant={sortOption === "price_asc" ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setSortOption(sortOption === "price_asc" ? "" : "price_asc")}
+              >
+                Price: Low to High
+              </Badge>
+              <Badge
+                variant={sortOption === "price_desc" ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setSortOption(sortOption === "price_desc" ? "" : "price_desc")}
+              >
+                Price: High to Low
+              </Badge>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <main className="flex-grow">
+        {/* Top Grocery Stores */}
+        <TopGroceryStores />
+
+        {/* Products Section */}
+        <section className="py-6">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Top Items 2025</h2>
+              <button className="text-sm text-primary hover:underline">View all</button>
+            </div>
+            
+            {productsQuery.isLoading ? (
+              <div className="grid grid-cols-2 gap-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-card rounded-xl p-3">
+                    <Skeleton className="aspect-square w-full rounded-lg mb-2" />
+                    <Skeleton className="h-4 w-16 mb-1" />
+                    <Skeleton className="h-3 w-full mb-1" />
+                    <Skeleton className="h-3 w-3/4" />
+                  </div>
+                ))}
+              </div>
+            ) : sortedProducts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {sortedProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No products found</p>
+                <Button onClick={clearFilters} className="mt-4" size="sm">
+                  Clear Filters
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
       </main>
       
       <Footer />
