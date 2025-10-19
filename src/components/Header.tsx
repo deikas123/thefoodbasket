@@ -49,7 +49,7 @@ const Header = () => {
     <header
       className={cn(
         "fixed top-0 w-full z-40 transition-all duration-300",
-        "bg-primary text-primary-foreground shadow-md",
+        "bg-card border-b border-border shadow-sm",
         isMobile ? "py-2" : "py-3"
       )}
     >

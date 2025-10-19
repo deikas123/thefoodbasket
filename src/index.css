@@ -22,27 +22,27 @@
 
 @layer base {
   :root {
-    --background: 350 100% 98%;
-    --foreground: 0 0% 20%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    --card-foreground: 0 0% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
-    --primary: 178 65% 35%;
+    --popover-foreground: 0 0% 15%;
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 350 100% 98%;
-    --secondary-foreground: 0 0% 20%;
-    --muted: 350 50% 95%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 0 0% 15%;
+    --muted: 210 40% 96%;
     --muted-foreground: 0 0% 45%;
-    --accent: 351 83% 57%;
+    --accent: 142 76% 36%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 351 83% 57%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 95%;
-    --ring: 178 65% 35%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 142 76% 36%;
     --radius: 1rem;
-    --chart-1: 178 65% 35%;
+    --chart-1: 142 76% 36%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
@@ -56,25 +56,36 @@
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 95%;
-    --primary: 178 65% 35%;
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 95%;
     --muted: 0 0% 20%;
     --muted-foreground: 0 0% 65%;
-    --accent: 351 83% 57%;
+    --accent: 142 76% 36%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 351 83% 57%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 178 65% 35%;
+    --ring: 142 76% 36%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 @layer base {
