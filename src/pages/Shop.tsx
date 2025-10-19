@@ -133,67 +133,7 @@ const Shop = () => {
         </div>
       </header>
 
-      {/* Filter chips */}
-      <div className="sticky top-[61px] z-40 bg-background border-b">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            <Button
-              variant={showFilters ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex-shrink-0 h-8 gap-1.5"
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              {sortOption && <span className="text-xs">Sort by</span>}
-            </Button>
-
-            {categoriesQuery.data?.slice(0, 5).map((category) => (
-              <Badge
-                key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
-                className="flex-shrink-0 cursor-pointer h-8 px-3"
-                onClick={() => setSelectedCategory(selectedCategory === category.id ? "" : category.id)}
-              >
-                {category.name}
-              </Badge>
-            ))}
-
-            {activeFiltersCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="flex-shrink-0 h-8 gap-1"
-              >
-                <X className="h-3.5 w-3.5" />
-                Clear
-              </Button>
-            )}
-          </div>
-
-          {/* Sort options dropdown */}
-          {showFilters && (
-            <div className="mt-3 flex gap-2">
-              <Badge
-                variant={sortOption === "price_asc" ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setSortOption(sortOption === "price_asc" ? "" : "price_asc")}
-              >
-                Price: Low to High
-              </Badge>
-              <Badge
-                variant={sortOption === "price_desc" ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setSortOption(sortOption === "price_desc" ? "" : "price_desc")}
-              >
-                Price: High to Low
-              </Badge>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <main className="flex-grow">
+      <main className="flex-grow">{/* Filter chips removed for cleaner mobile experience */}
         {/* Top Grocery Stores */}
         <TopGroceryStores />
 
