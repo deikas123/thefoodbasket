@@ -150,22 +150,10 @@ const ProductDetailsPage = () => {
   
   if (productQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-background pb-24">
-        <div className="sticky top-0 z-50 bg-background border-b">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <Skeleton className="h-9 w-9 rounded-full" />
-            <Skeleton className="h-6 w-24" />
-            <div className="flex gap-2">
-              <Skeleton className="h-9 w-9 rounded-full" />
-              <Skeleton className="h-9 w-9 rounded-full" />
-            </div>
-          </div>
-        </div>
-        <div className="container mx-auto px-4 py-6">
-          <Skeleton className="aspect-square w-full rounded-2xl mb-6" />
-          <Skeleton className="h-8 w-3/4 mb-2" />
-          <Skeleton className="h-6 w-1/2 mb-4" />
-          <Skeleton className="h-24 w-full" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-sm text-muted-foreground animate-pulse">Loading product...</p>
         </div>
       </div>
     );
