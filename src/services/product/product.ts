@@ -16,10 +16,12 @@ export const getProducts = async (
       .from('products')
       .select('*, categories(name, slug)');
     
-    // Apply filters if provided
-    if (categoryId) {
-      // Check if categoryId is actually a UUID (for direct category ID filtering)
-      // or if it's a slug and we need to convert it
+    // If there's a search term, search across ALL products (ignore category filter)
+    if (searchTerm) {
+      const term = `%${searchTerm.toLowerCase()}%`;
+      query = query.or(`name.ilike.${term},description.ilike.${term}`);
+    } else if (categoryId) {
+      // Only apply category filter if there's NO search term
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       
       if (uuidRegex.test(categoryId)) {
@@ -37,11 +39,6 @@ export const getProducts = async (
           query = query.eq('category_id', categoryData.id);
         }
       }
-    }
-    
-    if (searchTerm) {
-      const term = `%${searchTerm.toLowerCase()}%`;
-      query = query.or(`name.ilike.${term},description.ilike.${term}`);
     }
     
     if (typeof minPrice === 'number') {
