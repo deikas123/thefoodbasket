@@ -1018,6 +1018,7 @@ export type Database = {
       }
       products: {
         Row: {
+          brand_name: string | null
           category_id: string
           created_at: string
           description: string
@@ -1033,8 +1034,10 @@ export type Database = {
           store_id: string | null
           unit: string | null
           updated_at: string
+          weight: string | null
         }
         Insert: {
+          brand_name?: string | null
           category_id: string
           created_at?: string
           description: string
@@ -1050,8 +1053,10 @@ export type Database = {
           store_id?: string | null
           unit?: string | null
           updated_at?: string
+          weight?: string | null
         }
         Update: {
+          brand_name?: string | null
           category_id?: string
           created_at?: string
           description?: string
@@ -1067,6 +1072,7 @@ export type Database = {
           store_id?: string | null
           unit?: string | null
           updated_at?: string
+          weight?: string | null
         }
         Relationships: [
           {

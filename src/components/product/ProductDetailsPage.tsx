@@ -280,16 +280,18 @@ const ProductDetailsPage = () => {
 
         {/* Product Details */}
         <div className="space-y-2">
+          {store && (
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-sm text-muted-foreground">Brand Name:</span>
+              <span className="text-sm font-medium">{store?.name || 'Generic'}</span>
+            </div>
+          )}
           <div className="flex justify-between py-2 border-b">
-            <span className="text-sm text-muted-foreground">Brand Name:</span>
-            <span className="text-sm font-medium">{store?.name || 'Generic'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b">
-            <span className="text-sm text-muted-foreground">Quantity:</span>
+            <span className="text-sm text-muted-foreground">Quantity in Stock:</span>
             <span className="text-sm font-medium">{product.stock} Pcs</span>
           </div>
           <div className="flex justify-between py-2 border-b">
-            <span className="text-sm text-muted-foreground">Weight:</span>
+            <span className="text-sm text-muted-foreground">Weight/Size:</span>
             <span className="text-sm font-medium">2kg = 4.409 lb</span>
           </div>
         </div>
@@ -312,10 +314,11 @@ const ProductDetailsPage = () => {
         )}
       </div>
 
-      {/* Bottom Add to Cart */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-40">
-        <div className="container mx-auto flex items-center gap-3">
-          <div className="flex items-center gap-3 bg-muted rounded-lg p-2">
+      {/* Bottom Action Buttons */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-40 space-y-2">
+        <div className="container mx-auto">
+          {/* Quantity Selector */}
+          <div className="flex items-center justify-center gap-3 bg-muted rounded-lg p-2 mb-3">
             <Button
               variant="ghost"
               size="icon"
@@ -325,7 +328,7 @@ const ProductDetailsPage = () => {
             >
               <Minus className="h-4 w-4" />
             </Button>
-            <span className="font-semibold w-8 text-center">{quantity}</span>
+            <span className="font-semibold w-12 text-center">{quantity}</span>
             <Button
               variant="ghost"
               size="icon"
@@ -336,13 +339,41 @@ const ProductDetailsPage = () => {
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              onClick={handleAddToCart}
+              disabled={!inStock}
+              variant="outline"
+              className="h-12"
+            >
+              Add to Cart
+            </Button>
+            
+            <Button 
+              onClick={() => {
+                handleAddToCart();
+                navigate("/checkout");
+              }}
+              disabled={!inStock}
+              className="h-12 bg-primary hover:bg-primary/90"
+            >
+              Order Now
+            </Button>
+          </div>
+
           <Button 
-            onClick={handleAddToCart}
+            onClick={() => {
+              const message = `Hi! I'd like to order:\n\nProduct: ${product.name}\nQuantity: ${quantity}\nPrice: ${formatCurrency(getDiscountedPrice() * quantity)}\n\nProduct ID: ${product.id}`;
+              const whatsappUrl = `https://wa.me/254798435685?text=${encodeURIComponent(message)}`;
+              window.open(whatsappUrl, '_blank');
+            }}
             disabled={!inStock}
-            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+            variant="secondary"
+            className="w-full h-12 mt-2 bg-green-600 hover:bg-green-700 text-white"
           >
-            Add to Basket - {formatCurrency(getDiscountedPrice() * quantity)}
+            Order via WhatsApp
           </Button>
         </div>
       </div>

@@ -28,6 +28,20 @@ const ProductBasicFields = ({ form }: ProductBasicFieldsProps) => {
 
       <FormField
         control={form.control}
+        name="brand_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Brand Name (Optional)</FormLabel>
+            <FormControl>
+              <Input placeholder="Enter brand name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
         name="description"
         render={({ field }) => (
           <FormItem>
