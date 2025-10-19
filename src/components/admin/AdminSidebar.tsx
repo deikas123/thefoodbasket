@@ -21,6 +21,7 @@ import {
   Settings,
   MessageSquare,
   UserPlus,
+  Store,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -30,6 +31,7 @@ const AdminSidebar = () => {
     { icon: UserPlus, label: "Staff Management", path: "/admin/staff" },
     { icon: MessageSquare, label: "Customer Service", path: "/admin/customer-service" },
     { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
+    { icon: Store, label: "Stores", path: "/admin/stores" },
     { icon: Package, label: "Products", path: "/admin/products" },
     { icon: Tag, label: "Categories", path: "/admin/categories" },
     { icon: Image, label: "Banners", path: "/admin/banners" },

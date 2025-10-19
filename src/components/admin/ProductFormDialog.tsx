@@ -11,6 +11,7 @@ import ProductBasicFields from "./product/ProductBasicFields";
 import ProductPriceStockFields from "./product/ProductPriceStockFields";
 import ProductUnitField from "./product/ProductUnitField";
 import ProductCategoryField from "./product/ProductCategoryField";
+import ProductStoreField from "./product/ProductStoreField";
 import ProductDiscountFeaturedFields from "./product/ProductDiscountFeaturedFields";
 import ProductTagsField from "./product/ProductTagsField";
 import { useProductFormSubmit } from "./product/useProductFormSubmit";
@@ -73,6 +74,16 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
     enabled: !!product?.id
   });
 
+  // Fetch stores
+  const { data: stores, isLoading: storesLoading } = useQuery({
+    queryKey: ["stores"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('stores').select('id, name').eq('active', true);
+      if (error) throw error;
+      return data;
+    }
+  });
+
   // Form setup
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -86,6 +97,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       featured: false,
       discountPercentage: 0,
       tags: [],
+      store_id: "",
     },
   });
 
@@ -105,6 +117,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         featured: product.featured,
         discountPercentage: product.discountPercentage || 0,
         tags: productTags || [],
+        store_id: (product as any).store_id || "",
       });
     } else {
       form.reset({
@@ -117,6 +130,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         featured: false,
         discountPercentage: 0,
         tags: [],
+        store_id: "",
       });
     }
   }, [product, form, productTags]);
@@ -157,6 +171,11 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
               form={form} 
               categories={categories} 
               isLoading={categoriesLoading}
+            />
+            <ProductStoreField 
+              form={form} 
+              stores={stores} 
+              isLoading={storesLoading}
             />
             <ProductDiscountFeaturedFields form={form} />
             <ProductTagsField form={form} availableTags={availableTags} />

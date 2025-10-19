@@ -12,6 +12,7 @@ export const productSchema = z.object({
   featured: z.boolean().default(false),
   discountPercentage: z.coerce.number().min(0).max(100).optional(),
   tags: z.array(z.string()).default([]),
+  store_id: z.string().optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;

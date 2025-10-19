@@ -7,6 +7,7 @@ const Dashboard = lazy(() => import("@/pages/admin/Dashboard"));
 const Users = lazy(() => import("@/pages/admin/Users"));
 const Orders = lazy(() => import("@/pages/admin/Orders"));
 const Products = lazy(() => import("@/pages/admin/Products"));
+const Stores = lazy(() => import("@/pages/admin/Stores"));
 const Categories = lazy(() => import("@/pages/admin/Categories"));
 const Banners = lazy(() => import("@/pages/admin/Banners"));
 const DailyOffers = lazy(() => import("@/pages/admin/DailyOffers"));
@@ -41,6 +42,7 @@ const AdminRoutes = () => {
           <Route path="users" element={<Users />} />
           <Route path="orders" element={<Orders />} />
           <Route path="products" element={<Products />} />
+          <Route path="stores" element={<Stores />} />
           <Route path="categories" element={<Categories />} />
           <Route path="banners" element={<Banners />} />
           <Route path="daily-offers" element={<DailyOffers />} />
