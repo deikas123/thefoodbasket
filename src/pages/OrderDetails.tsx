@@ -8,6 +8,7 @@ import DeliveryInfo from "@/components/orders/DeliveryInfo";
 import OrderSummaryCard from "@/components/orders/OrderSummaryCard";
 import OrderDetailsError from "@/components/orders/OrderDetailsError";
 import OrderDetailsLoading from "@/components/orders/OrderDetailsLoading";
+import ReceiptCard from "@/components/orders/ReceiptCard";
 import { useOrderDetails } from "@/hooks/useOrderDetails";
 
 const OrderDetails = () => {
@@ -44,14 +45,15 @@ const OrderDetails = () => {
           {/* Order details */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Order items */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 space-y-6">
               <OrderItemsList order={order} />
               <DeliveryInfo order={order} />
             </div>
             
-            {/* Order summary */}
-            <div>
+            {/* Order summary and receipt */}
+            <div className="space-y-6">
               <OrderSummaryCard order={order} />
+              <ReceiptCard orderId={order.id} />
             </div>
           </div>
         </div>

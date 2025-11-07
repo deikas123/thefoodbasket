@@ -1139,6 +1139,42 @@ export type Database = {
         }
         Relationships: []
       }
+      receipts: {
+        Row: {
+          created_at: string
+          email_sent_to: string | null
+          id: string
+          order_id: string
+          receipt_number: string
+          sent_at: string | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_sent_to?: string | null
+          id?: string
+          order_id: string
+          receipt_number: string
+          sent_at?: string | null
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_sent_to?: string | null
+          id?: string
+          order_id?: string
+          receipt_number?: string
+          sent_at?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       store_admins: {
         Row: {
           created_at: string
@@ -1338,18 +1374,9 @@ export type Database = {
         Args: { product_id: string; quantity_to_deduct: number }
         Returns: undefined
       }
-      get_delivery_settings: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      process_auto_replenish_orders: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      upsert_delivery_settings: {
-        Args: { settings_data: Json }
-        Returns: Json
-      }
+      get_delivery_settings: { Args: never; Returns: Json }
+      process_auto_replenish_orders: { Args: never; Returns: undefined }
+      upsert_delivery_settings: { Args: { settings_data: Json }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

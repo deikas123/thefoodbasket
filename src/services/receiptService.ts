@@ -61,11 +61,35 @@ export const generateReceipt = async (order: Order): Promise<Receipt> => {
       issuedAt: new Date().toISOString()
     };
 
-    // Save receipt to database (you might want to create a receipts table)
-    console.log('Receipt generated:', receipt);
+    console.log('Generated receipt:', receipt);
+    
+    // Save receipt to database
+    const { data: savedReceipt, error: saveError } = await supabase
+      .from('receipts')
+      .insert({
+        order_id: order.id,
+        user_id: order.userId,
+        receipt_number: receipt.receiptNumber,
+        total_amount: receipt.total,
+        email_sent_to: receipt.customerInfo.email,
+      })
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('Error saving receipt to database:', saveError);
+    }
     
     // Send receipt via email
     await sendReceiptEmail(receipt);
+    
+    // Update receipt as sent
+    if (savedReceipt) {
+      await supabase
+        .from('receipts')
+        .update({ sent_at: new Date().toISOString() })
+        .eq('id', savedReceipt.id);
+    }
     
     return receipt;
   } catch (error) {
@@ -190,4 +214,31 @@ const generateReceiptHTML = (receipt: Receipt): string => {
     </body>
     </html>
   `;
+};
+
+export const getOrderReceipt = async (orderId: string) => {
+  const { data, error } = await supabase
+    .from('receipts')
+    .select('*')
+    .eq('order_id', orderId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching receipt:', error);
+    return null;
+  }
+
+  return data;
+};
+
+export const resendReceipt = async (orderId: string): Promise<void> => {
+  const { data: order } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', orderId)
+    .single();
+
+  if (!order) throw new Error('Order not found');
+
+  await generateReceipt(order as any);
 };
