@@ -13,7 +13,18 @@ import TopGroceryStores from "@/components/home/TopGroceryStores";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
 
 const Index = () => {
-  const { addItem } = useCart();
+  const cartContext = useCart();
+  
+  // Guard against undefined context during initial render
+  if (!cartContext) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+  
+  const { addItem } = cartContext;
 
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
