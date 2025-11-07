@@ -8,7 +8,6 @@ import { useCart } from "@/context/CartContext";
 import AdminBanner from "@/components/AdminBanner";
 import OtherProducts from "@/components/OtherProducts";
 import DailyOffersSection from "@/components/home/DailyOffersSection";
-import IconCategories from "@/components/home/IconCategories";
 import TopGroceryStores from "@/components/home/TopGroceryStores";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
 
@@ -33,26 +32,29 @@ const Index = () => {
         <Hero />
         
         {/* Admin Promotional Banner */}
-        <section className="py-4 md:py-6">
+        <section className="py-6 md:py-8">
           <div className="container mx-auto px-4">
             <AdminBanner />
           </div>
         </section>
         
-        {/* Icon-based Categories - Mobile First */}
-        <IconCategories />
-        
-        {/* Top Grocery Stores Section - NEW */}
+        {/* Top Grocery Stores Section */}
         <TopGroceryStores />
         
         {/* Daily Offers Section */}
-        <DailyOffersSection />
+        <section className="py-4 md:py-6">
+          <DailyOffersSection />
+        </section>
         
         {/* Featured Products Section */}
-        <FeaturedProducts />
+        <section className="py-4 md:py-6">
+          <FeaturedProducts />
+        </section>
         
         {/* Other Products Section */}
-        <OtherProducts />
+        <section className="py-4 md:py-6">
+          <OtherProducts />
+        </section>
         
       </main>
       

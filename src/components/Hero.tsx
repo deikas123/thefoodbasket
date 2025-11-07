@@ -10,24 +10,24 @@ const Hero = () => {
     <div className="relative w-full overflow-hidden pt-16 md:pt-20">
       <div className="container mx-auto px-4">
         {/* Promotional Banner Card */}
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 shadow-lg mt-4 mb-6">
-          <div className="grid md:grid-cols-2 gap-4 items-center p-6 md:p-8">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 dark:from-green-950/40 dark:via-emerald-950/40 dark:to-green-900/40 shadow-xl mt-6 mb-8">
+          <div className="grid md:grid-cols-2 gap-6 items-center p-8 md:p-12">
             {/* Left Content */}
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3 leading-tight">
                   Vegetable Offers
                 </h2>
-                <Badge className="bg-accent text-accent-foreground text-sm font-bold px-3 py-1">
+                <Badge className="bg-accent text-accent-foreground text-base font-bold px-4 py-1.5">
                   20% OFF
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 10 October, 2025
               </p>
               <Button 
-                size="sm"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6"
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 shadow-md hover:shadow-lg transition-shadow"
                 onClick={() => navigate('/shop')}
               >
                 Get Now
@@ -35,11 +35,11 @@ const Hero = () => {
             </div>
 
             {/* Right Image */}
-            <div className="relative h-48 md:h-56">
+            <div className="relative h-56 md:h-64">
               <img
                 src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&auto=format&fit=crop&q=80"
                 alt="Fresh vegetables"
-                className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+                className="absolute inset-0 w-full h-full object-cover rounded-2xl shadow-md"
               />
             </div>
           </div>

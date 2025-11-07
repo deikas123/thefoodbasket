@@ -10,7 +10,6 @@ import Preloader from "@/components/Preloader";
 import ScrollToTop from "@/components/ScrollToTop";
 import AppRoutes from "@/components/routing/AppRoutes";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
-import CategoryCarousel from "@/components/mobile/CategoryCarousel";
 import { useIsMobile } from "@/types";
 import { queryClient, prefetchCriticalData } from "@/lib/queryClient";
 import Cart from "@/components/Cart";
@@ -56,7 +55,6 @@ const MobileAwareLayout = ({ isLoading }: { isLoading: boolean }) => {
       {isLoading && <Preloader />}
       
       <ScrollToTop />
-      {isMobile && <CategoryCarousel />}
       
       <div className={isMobile ? "pb-20" : ""}>
         <AppRoutes />
