@@ -3,6 +3,7 @@ import React, { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const Waitlist = lazy(() => import("@/pages/Waitlist"));
 const Home = lazy(() => import("@/pages/Index"));
 const Shop = lazy(() => import("@/pages/Shop"));
 const About = lazy(() => import("@/pages/About"));
