@@ -22,3 +22,6 @@ verify_jwt = false
 
 [functions.assign-chat]
 verify_jwt = true
+
+[functions.waitlist-notification]
+verify_jwt = false

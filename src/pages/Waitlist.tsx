@@ -28,6 +28,20 @@ const Waitlist = () => {
 
       if (error) throw error;
 
+      // Send notification to admin
+      try {
+        await supabase.functions.invoke('waitlist-notification', {
+          body: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone
+          }
+        });
+      } catch (notifError) {
+        console.error("Failed to send admin notification:", notifError);
+        // Don't fail the signup if notification fails
+      }
+
       setSubmitted(true);
       toast.success("You're on the list! 🎉");
     } catch (error: any) {
@@ -40,10 +54,10 @@ const Waitlist = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-20 pb-16 md:pt-28 md:pb-24">
+      <section className="relative overflow-hidden pt-20 pb-16 md:pt-28 md:pb-24 animate-fade-in">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
               <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
                 🥦 Fresh. Local. Delivered.
               </h1>
@@ -55,17 +69,17 @@ const Waitlist = () => {
               </p>
               <Button 
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 text-lg shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 text-lg shadow-lg hover-scale"
                 onClick={() => document.getElementById('signup-form')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Join the Waitlist
               </Button>
             </div>
-            <div className="relative h-[400px] md:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
+            <div className="relative h-[400px] md:h-[500px] rounded-2xl overflow-hidden shadow-2xl animate-scale-in" style={{ animationDelay: '0.2s' }}>
               <img
                 src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&auto=format&fit=crop&q=80"
                 alt="Fresh Food Basket"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
               />
             </div>
           </div>
@@ -75,33 +89,33 @@ const Waitlist = () => {
       {/* Value Proposition Section */}
       <section className="py-16 bg-secondary/10">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground animate-fade-in">
             Why Join Our Waitlist?
           </h2>
           <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+            <div className="text-center space-y-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center hover-scale">
                 <Leaf className="w-8 h-8 text-primary" />
               </div>
               <h3 className="font-semibold text-lg">100% Local Produce</h3>
               <p className="text-muted-foreground">Sourced directly from local farms</p>
             </div>
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+            <div className="text-center space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center hover-scale">
                 <ShoppingBasket className="w-8 h-8 text-primary" />
               </div>
               <h3 className="font-semibold text-lg">Handpicked Weekly Baskets</h3>
               <p className="text-muted-foreground">Curated selection of fresh produce</p>
             </div>
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+            <div className="text-center space-y-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center hover-scale">
                 <Truck className="w-8 h-8 text-primary" />
               </div>
               <h3 className="font-semibold text-lg">Doorstep Delivery</h3>
               <p className="text-muted-foreground">Convenient delivery to your door</p>
             </div>
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+            <div className="text-center space-y-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center hover-scale">
                 <Gift className="w-8 h-8 text-primary" />
               </div>
               <h3 className="font-semibold text-lg">Exclusive Launch Discount</h3>
@@ -114,29 +128,29 @@ const Waitlist = () => {
       {/* Visual Gallery Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground animate-fade-in">
             Fresh from the Farm
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+            <div className="relative h-64 rounded-xl overflow-hidden shadow-lg animate-scale-in" style={{ animationDelay: '0.1s' }}>
               <img
                 src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=80"
                 alt="Fresh vegetables"
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
             </div>
-            <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+            <div className="relative h-64 rounded-xl overflow-hidden shadow-lg animate-scale-in" style={{ animationDelay: '0.2s' }}>
               <img
                 src="https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=500&auto=format&fit=crop&q=80"
                 alt="Farm fresh produce"
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
             </div>
-            <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+            <div className="relative h-64 rounded-xl overflow-hidden shadow-lg animate-scale-in" style={{ animationDelay: '0.3s' }}>
               <img
                 src="https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=500&auto=format&fit=crop&q=80"
                 alt="Organic vegetables"
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
             </div>
           </div>
@@ -147,7 +161,7 @@ const Waitlist = () => {
       <section id="signup-form" className="py-16 bg-secondary/10">
         <div className="container mx-auto px-4 max-w-2xl">
           {!submitted ? (
-            <div className="bg-card rounded-2xl shadow-xl p-8 md:p-12 border border-border">
+            <div className="bg-card rounded-2xl shadow-xl p-8 md:p-12 border border-border animate-scale-in">
               <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-foreground">
                 Join the Waitlist
               </h2>
@@ -200,8 +214,8 @@ const Waitlist = () => {
               </form>
             </div>
           ) : (
-            <div className="bg-card rounded-2xl shadow-xl p-8 md:p-12 text-center border border-border">
-              <CheckCircle2 className="w-20 h-20 text-primary mx-auto mb-6" />
+            <div className="bg-card rounded-2xl shadow-xl p-8 md:p-12 text-center border border-border animate-scale-in">
+              <CheckCircle2 className="w-20 h-20 text-primary mx-auto mb-6 animate-scale-in" />
               <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
                 You're on the list! 🎉
               </h2>
