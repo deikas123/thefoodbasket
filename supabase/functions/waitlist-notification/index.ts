@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send notification to admin
-    const emailResponse = await resend.emails.send({
+    const adminEmailResponse = await resend.emails.send({
       from: "Waitlist <onboarding@resend.dev>",
       to: [adminEmail],
       subject: "🎉 New Waitlist Signup!",
@@ -66,9 +66,50 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Admin notification sent successfully:", emailResponse);
+    console.log("Admin notification sent successfully:", adminEmailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
+    // Send confirmation email to user
+    const userEmailResponse = await resend.emails.send({
+      from: "Food Basket <onboarding@resend.dev>",
+      to: [email],
+      subject: "Welcome to the Food Basket Waitlist! 🥦",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px;">
+            Welcome, ${name}! 🎉
+          </h1>
+          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="font-size: 16px; line-height: 1.6;">
+              Thank you for joining our waitlist! We're excited to have you as part of our community.
+            </p>
+            <p style="font-size: 16px; line-height: 1.6;">
+              You'll be among the first to know when we launch our farm-fresh Food Baskets, 
+              and you'll receive an exclusive <strong style="color: #4CAF50;">10% discount</strong> on your first order!
+            </p>
+          </div>
+          <div style="background-color: #4CAF50; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: white; font-size: 16px; margin: 0; text-align: center;">
+              🌱 Fresh from the farm to your door 🚚
+            </p>
+          </div>
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            We'll keep you updated on our launch date and share exclusive content about our local farmers 
+            and sustainable practices.
+          </p>
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            Food Basket - Fresh, Local, Delivered
+          </p>
+        </div>
+      `,
+    });
+
+    console.log("User confirmation sent successfully:", userEmailResponse);
+
+    return new Response(JSON.stringify({ 
+      admin: adminEmailResponse, 
+      user: userEmailResponse 
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
