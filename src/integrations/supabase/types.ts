@@ -1268,26 +1268,56 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          grocery_challenges: string | null
           id: string
+          interests: string[] | null
+          location: string | null
           name: string
           phone: string | null
+          preferred_delivery_time: string | null
+          product_types: string[] | null
+          referral_source: string | null
+          shopping_frequency: string | null
           updated_at: string
+          value_proposition: string | null
+          wants_beta_testing: boolean | null
+          wants_early_access: boolean | null
         }
         Insert: {
           created_at?: string
           email: string
+          grocery_challenges?: string | null
           id?: string
+          interests?: string[] | null
+          location?: string | null
           name: string
           phone?: string | null
+          preferred_delivery_time?: string | null
+          product_types?: string[] | null
+          referral_source?: string | null
+          shopping_frequency?: string | null
           updated_at?: string
+          value_proposition?: string | null
+          wants_beta_testing?: boolean | null
+          wants_early_access?: boolean | null
         }
         Update: {
           created_at?: string
           email?: string
+          grocery_challenges?: string | null
           id?: string
+          interests?: string[] | null
+          location?: string | null
           name?: string
           phone?: string | null
+          preferred_delivery_time?: string | null
+          product_types?: string[] | null
+          referral_source?: string | null
+          shopping_frequency?: string | null
           updated_at?: string
+          value_proposition?: string | null
+          wants_beta_testing?: boolean | null
+          wants_early_access?: boolean | null
         }
         Relationships: []
       }
