@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,23 @@ import { ProductType } from "@/types/supabase";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 import BarcodeScanner from "./BarcodeScanner";
 
+// Debounce hook
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 const EnhancedSearchBar = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isListening, setIsListening] = useState(false);
@@ -20,22 +37,26 @@ const EnhancedSearchBar = () => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { searchHistory, addSearchTerm, removeSearchTerm, clearSearchHistory } = useSearchHistory();
 
-  // Fetch product suggestions based on search term
+  // Debounce search term to reduce flickering
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Fetch product suggestions based on debounced search term
   const { data: suggestions = [] } = useQuery({
-    queryKey: ["search-suggestions", searchTerm],
+    queryKey: ["search-suggestions", debouncedSearchTerm],
     queryFn: async () => {
-      if (!searchTerm || searchTerm.length < 2) return [];
+      if (!debouncedSearchTerm || debouncedSearchTerm.length < 2) return [];
       
       const { data, error } = await supabase
         .from("products")
         .select("id, name, price, image")
-        .ilike("name", `%${searchTerm}%`)
+        .ilike("name", `%${debouncedSearchTerm}%`)
         .limit(5);
       
       if (error) throw error;
       return data as ProductType[];
     },
-    enabled: searchTerm.length >= 2
+    enabled: debouncedSearchTerm.length >= 2,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   // Close suggestions when clicking outside
@@ -161,15 +182,21 @@ const EnhancedSearchBar = () => {
           className="pl-10 pr-24 h-10 rounded-full bg-muted/50 border-border focus:bg-background transition-colors"
           value={searchTerm}
           onChange={(e) => {
-            setSearchTerm(e.target.value);
-            if (e.target.value.length >= 2) {
-              setShowSuggestions(true);
+            const value = e.target.value;
+            setSearchTerm(value);
+            setSelectedIndex(-1);
+            
+            // Only show/hide based on actual input length, not debounced
+            if (value.length >= 2) {
               setShowHistory(false);
+              // Don't show suggestions immediately - wait for debounce
+            } else if (value.length === 0 && searchHistory.length > 0) {
+              setShowSuggestions(false);
+              setShowHistory(true);
             } else {
               setShowSuggestions(false);
               setShowHistory(false);
             }
-            setSelectedIndex(-1);
           }}
           onFocus={() => {
             if (searchTerm.length >= 2) {
@@ -216,7 +243,7 @@ const EnhancedSearchBar = () => {
 
       {/* Search History Dropdown */}
       {showHistory && searchHistory.length > 0 && !searchTerm && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-2xl shadow-lg overflow-hidden z-50">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-2xl shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-200">
           <div className="py-2">
             <div className="flex items-center justify-between px-4 py-2 border-b border-border">
               <div className="flex items-center gap-2 text-sm font-medium">
@@ -264,9 +291,9 @@ const EnhancedSearchBar = () => {
         </div>
       )}
 
-      {/* Search Suggestions Dropdown */}
-      {showSuggestions && suggestions.length > 0 && searchTerm && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-2xl shadow-lg overflow-hidden z-50">
+      {/* Search Suggestions Dropdown - Only show when debounced term is ready */}
+      {showSuggestions && debouncedSearchTerm.length >= 2 && suggestions.length > 0 && searchTerm && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-2xl shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-200">
           <div className="py-2">
             {suggestions.map((product, index) => (
               <button
