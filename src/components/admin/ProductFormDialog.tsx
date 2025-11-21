@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductType } from "@/types/supabase";
 import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
+import MultipleImageUpload from "./MultipleImageUpload";
 import ProductBasicFields from "./product/ProductBasicFields";
 import ProductPriceStockFields from "./product/ProductPriceStockFields";
 import ProductUnitField from "./product/ProductUnitField";
@@ -70,6 +71,27 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       }
       
       return data.map(item => item.tag_id);
+    },
+    enabled: !!product?.id
+  });
+
+  // Fetch existing additional images for this product
+  const { data: productImages, refetch: refetchImages } = useQuery({
+    queryKey: ["product-images", product?.id],
+    queryFn: async () => {
+      if (!product?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('product_images')
+        .select('image_url')
+        .eq('product_id', product.id);
+      
+      if (error) {
+        console.error("Error fetching product images:", error);
+        return [];
+      }
+      
+      return data.map(item => item.image_url);
     },
     enabled: !!product?.id
   });
@@ -179,6 +201,15 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
             />
             <ProductDiscountFeaturedFields form={form} />
             <ProductTagsField form={form} availableTags={availableTags} />
+
+            {/* Multiple Images Upload */}
+            {product?.id && (
+              <MultipleImageUpload 
+                productId={product.id} 
+                existingImages={productImages}
+                onImagesChange={() => refetchImages()}
+              />
+            )}
 
             <DialogFooter>
               <Button 
