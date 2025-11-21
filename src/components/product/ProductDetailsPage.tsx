@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ProductCard from "@/components/ProductCard";
 import ProductImageGallery from "@/components/product/ProductImageGallery";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
+import { FrequentlyBoughtTogether } from "@/components/product/FrequentlyBoughtTogether";
+import { ProductBundles } from "@/components/product/ProductBundles";
 import { SmartRecommendations } from "@/components/product/SmartRecommendations";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { toast } from "sonner";
@@ -316,6 +318,15 @@ const ProductDetailsPage = () => {
             <span className="text-sm font-semibold">2kg (4.409 lb)</span>
           </div>
         </div>
+
+        {/* Frequently Bought Together */}
+        <FrequentlyBoughtTogether 
+          productId={productId || ""}
+          currentProduct={product}
+        />
+
+        {/* Product Bundles */}
+        <ProductBundles productId={productId} />
 
         {/* Reviews Section */}
         <div className="pt-8">
