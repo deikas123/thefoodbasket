@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Hero from "@/components/Hero";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import Header from "@/components/Header";
@@ -12,12 +13,23 @@ import BottomNavigation from "@/components/mobile/BottomNavigation";
 import { RecentlyViewedProducts } from "@/components/product/RecentlyViewedProducts";
 import { SmartRecommendations } from "@/components/product/SmartRecommendations";
 import { PersonalizedBundleRecommendations } from "@/components/product/PersonalizedBundleRecommendations";
+import Waitlist from "@/pages/Waitlist";
+import { getWaitlistMode } from "@/services/contentService";
 
 const Index = () => {
   const cartContext = useCart();
+  const [isWaitlistMode, setIsWaitlistMode] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    const checkWaitlistMode = async () => {
+      const enabled = await getWaitlistMode();
+      setIsWaitlistMode(enabled);
+    };
+    checkWaitlistMode();
+  }, []);
   
   // Guard against undefined context during initial render
-  if (!cartContext) {
+  if (!cartContext || isWaitlistMode === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -26,6 +38,11 @@ const Index = () => {
   }
   
   const { addItem } = cartContext;
+
+  // Show waitlist page if enabled
+  if (isWaitlistMode) {
+    return <Waitlist />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
