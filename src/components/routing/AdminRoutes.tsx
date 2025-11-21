@@ -24,6 +24,7 @@ const AutoReplenishAdmin = lazy(() => import("@/pages/admin/AutoReplenish"));
 const Staff = lazy(() => import("@/pages/admin/Staff"));
 const CustomerServiceAdmin = lazy(() => import("@/pages/admin/CustomerService"));
 const Settings = lazy(() => import("@/pages/admin/Settings"));
+const Waitlist = lazy(() => import("@/pages/admin/Waitlist"));
 
 const LoadingFallback = () => (
   <div className="p-6 space-y-4">
@@ -58,6 +59,7 @@ const AdminRoutes = () => {
           <Route path="notifications" element={<Notifications />} />
           <Route path="content" element={<ContentManagement />} />
           <Route path="pay-later" element={<PayLaterVerification />} />
+          <Route path="waitlist" element={<Waitlist />} />
           <Route path="settings" element={<Settings />} />
         </Routes>
       </Suspense>

@@ -22,6 +22,7 @@ import {
   MessageSquare,
   UserPlus,
   Store,
+  ClipboardList,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -46,6 +47,7 @@ const AdminSidebar = () => {
     { icon: Bell, label: "Notifications", path: "/admin/notifications" },
     { icon: FileText, label: "Content", path: "/admin/content" },
     { icon: CreditCard, label: "Pay Later", path: "/admin/pay-later" },
+    { icon: ClipboardList, label: "Waitlist", path: "/admin/waitlist" },
     { icon: Settings, label: "Settings", path: "/admin/settings" },
   ];
 
