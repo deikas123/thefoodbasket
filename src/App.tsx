@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { ComparisonProvider } from "@/context/ComparisonContext";
+import { RecentlyViewedProvider } from "@/context/RecentlyViewedContext";
 import { useState, useEffect, lazy, Suspense } from "react";
 import Preloader from "@/components/Preloader";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -40,7 +41,9 @@ function App() {
           <CartProvider>
             <WishlistProvider>
               <ComparisonProvider>
-                <MobileAwareLayout isLoading={isLoading} />
+                <RecentlyViewedProvider>
+                  <MobileAwareLayout isLoading={isLoading} />
+                </RecentlyViewedProvider>
               </ComparisonProvider>
             </WishlistProvider>
           </CartProvider>
