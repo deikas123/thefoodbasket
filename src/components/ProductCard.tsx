@@ -1,47 +1,35 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { ProductType } from "@/types/supabase";
+import { useComparison } from "@/context/ComparisonContext";
+import { Heart, ShoppingCart, Eye, GitCompare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { toast } from "sonner";
-import { Product } from "@/types";
 import { useNavigate } from "react-router-dom";
-import ProductCardImage from "./product/ProductCardImage";
-import ProductCardInfo from "./product/ProductCardInfo";
-import ProductCardPricing from "./product/ProductCardPricing";
-import ProductCardActions from "./product/ProductCardActions";
+import { toast } from "sonner";
+import { QuickViewModal } from "@/components/product/QuickViewModal";
 
 interface ProductCardProps {
-  product: ProductType;
+  product: Product;
   className?: string;
 }
 
 const ProductCard = ({ product, className }: ProductCardProps) => {
   const { addItem } = useCart();
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
+  const { addToComparison, isInComparison, comparisonItems } = useComparison();
   const navigate = useNavigate();
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
 
-  // Handle image URL - support both base64 and regular URLs
   const getImageUrl = (imageData: string) => {
     if (!imageData) return '/placeholder.svg';
-    
-    // If it's already a base64 data URL, return as is
-    if (imageData.startsWith('data:')) {
-      return imageData;
-    }
-    
-    // If it's a regular URL, return as is
-    if (imageData.startsWith('http') || imageData.startsWith('/')) {
-      return imageData;
-    }
-    
-    // Otherwise, assume it's base64 without the data URL prefix
+    if (imageData.startsWith('data:')) return imageData;
+    if (imageData.startsWith('http') || imageData.startsWith('/')) return imageData;
     return `data:image/jpeg;base64,${imageData}`;
   };
 
-  // First image if multiple images
-  const mainImage = getImageUrl(product.image);
-  
   const getDiscountedPrice = () => {
     if (!product.discountPercentage) return product.price;
     const discount = (product.price * product.discountPercentage) / 100;
@@ -49,120 +37,139 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
-    
-    if (product.stock <= 0) {
-      toast("This product is currently unavailable");
+    addItem(product, 1);
+    toast(`${product.name} added to cart`);
+  };
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToWishlist(product);
+    toast(isInWishlist(product.id) ? "Removed from wishlist" : "Added to wishlist");
+  };
+
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (comparisonItems.length >= 4 && !isInComparison(product.id)) {
+      toast.error("Maximum 4 products can be compared");
       return;
     }
-    
-    // Convert to Product type expected by cart
-    const cartProduct: Product = {
-      id: product.id,
-      name: product.name,
-      price: getDiscountedPrice(),
-      image: mainImage,
-      description: product.description || "",
-      category: product.category || "",
-      stock: product.stock || 0,
-      featured: product.featured || false,
-      rating: product.rating || 0,
-      numReviews: product.numReviews || product.num_reviews || 0,
-      discountPercentage: product.discountPercentage || 0
-    };
-    
-    addItem(cartProduct, 1);
-    toast(`${product.name} has been added to your cart`);
+    addToComparison(product);
+    toast.success("Added to comparison");
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleQuickView = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleAddToCart(e);
-    navigate("/checkout");
+    setQuickViewOpen(true);
   };
 
-  const handleWhatsAppOrder = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const message = `Hi! I'd like to order:\n\nProduct: ${product.name}\nQuantity: 1\nPrice: ${formatCurrency(getDiscountedPrice())}\n\nProduct ID: ${product.id}`;
-    const whatsappUrl = `https://wa.me/254798435685?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
-  
-  const handleAddToWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Convert to Product type expected by wishlist
-    const wishlistProduct: Product = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: mainImage,
-      description: product.description || "",
-      category: product.category || "",
-      stock: product.stock || 0,
-      featured: product.featured || false,
-      rating: product.rating || 0,
-      numReviews: product.numReviews || product.num_reviews || 0,
-      discountPercentage: product.discountPercentage || 0
-    };
-    
-    addToWishlist(wishlistProduct);
-    toast(`${product.name} has been added to your wishlist`);
-  };
-  
-  const wishlistActive = isInWishlist(product.id);
-  
   return (
-    <Link to={`/product/${product.id}`} className={`group ${className || ''}`}>
-      <div className="bg-card rounded-2xl overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 border border-border/50 relative duration-300">
-        {/* Product Image */}
-        <div className="aspect-square bg-muted relative overflow-hidden">
+    <>
+      <Card 
+        className={`group overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-primary/20 rounded-2xl ${className || ''}`}
+        onClick={() => navigate(`/product/${product.id}`)}
+      >
+        <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
-            src={mainImage}
+            src={getImageUrl(product.image)}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
           />
-          {product.discountPercentage && (
-            <div className="absolute top-3 right-3 bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-              -{product.discountPercentage}%
-            </div>
-          )}
-          {product.stock <= 5 && product.stock > 0 && (
-            <div className="absolute top-3 left-3 bg-orange-500/90 text-white text-xs font-medium px-2 py-1 rounded-full">
-              Low Stock
-            </div>
-          )}
-        </div>
-        
-        {/* Product Info */}
-        <div className="p-4">
-          <h3 className="text-sm font-semibold line-clamp-2 mb-2 min-h-[2.5rem]">{product.name}</h3>
           
-          <div className="flex items-end justify-between gap-2">
-            <div className="flex-1">
+          {/* Action Buttons */}
+          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-9 w-9 rounded-full shadow-md"
+              onClick={handleWishlistClick}
+            >
+              <Heart 
+                className={`h-4 w-4 transition-all ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : ''}`} 
+              />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-9 w-9 rounded-full shadow-md"
+              onClick={handleQuickView}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-9 w-9 rounded-full shadow-md"
+              onClick={handleCompareClick}
+            >
+              <GitCompare className={`h-4 w-4 ${isInComparison(product.id) ? 'text-primary' : ''}`} />
+            </Button>
+          </div>
+
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex flex-col gap-2">
+            {product.discountPercentage && (
+              <div className="bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                -{product.discountPercentage}% OFF
+              </div>
+            )}
+            {product.featured && (
+              <div className="bg-gradient-to-br from-primary to-primary/80 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                Featured
+              </div>
+            )}
+            {product.stock < 10 && product.stock > 0 && (
+              <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                Only {product.stock} left
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-4">
+          <h3 className="font-semibold text-base mb-2 line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+          
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-1">
+              <span className="text-yellow-500">⭐</span>
+              <span className="text-sm font-medium">{product.rating || 0}</span>
+              <span className="text-xs text-muted-foreground">({product.numReviews || 0})</span>
+            </div>
+          </div>
+
+          <div className="flex items-end justify-between gap-2 mb-3">
+            <div>
               <p className="font-bold text-xl text-primary">{formatCurrency(getDiscountedPrice())}</p>
               {product.discountPercentage && (
-                <p className="text-xs text-muted-foreground line-through mt-0.5">
+                <p className="text-sm text-muted-foreground line-through">
                   {formatCurrency(product.price)}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground mt-1">Per 1 KG</p>
             </div>
-            <button
-              onClick={handleAddToCart}
-              className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 hover:scale-110 transition-all shadow-md flex-shrink-0"
-            >
-              <span className="text-xl font-bold">+</span>
-            </button>
+            <div className={`text-xs font-semibold px-2 py-1 rounded-full ${
+              product.stock > 0 ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'
+            }`}>
+              {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+            </div>
           </div>
+
+          <Button 
+            onClick={handleAddToCart}
+            disabled={product.stock <= 0}
+            className="w-full h-10 rounded-xl font-semibold"
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Add to Cart
+          </Button>
         </div>
-      </div>
-    </Link>
+      </Card>
+
+      <QuickViewModal 
+        productId={product.id}
+        isOpen={quickViewOpen}
+        onClose={() => setQuickViewOpen(false)}
+      />
+    </>
   );
 };
 

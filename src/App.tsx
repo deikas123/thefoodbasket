@@ -1,10 +1,10 @@
-
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { ComparisonProvider } from "@/context/ComparisonContext";
 import { useState, useEffect, lazy, Suspense } from "react";
 import Preloader from "@/components/Preloader";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -13,6 +13,7 @@ import BottomNavigation from "@/components/mobile/BottomNavigation";
 import { useIsMobile } from "@/types";
 import { queryClient, prefetchCriticalData } from "@/lib/queryClient";
 import Cart from "@/components/Cart";
+import { FloatingCompareButton } from "@/components/FloatingCompareButton";
 
 // Lazy load the initial setup component
 const InitialSetup = lazy(() => import("@/components/setup/InitialSetup"));
@@ -38,7 +39,9 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
-              <MobileAwareLayout isLoading={isLoading} />
+              <ComparisonProvider>
+                <MobileAwareLayout isLoading={isLoading} />
+              </ComparisonProvider>
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>
@@ -63,6 +66,7 @@ const MobileAwareLayout = ({ isLoading }: { isLoading: boolean }) => {
       {isMobile && <BottomNavigation />}
       
       <Cart />
+      <FloatingCompareButton />
       
       <Suspense fallback={<div />}>
         <InitialSetup />
