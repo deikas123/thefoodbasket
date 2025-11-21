@@ -109,12 +109,14 @@ export const getWaitlistMode = async (): Promise<boolean> => {
 
 export const setWaitlistMode = async (enabled: boolean): Promise<boolean> => {
   try {
-    const { data: existing } = await supabase
+    const { data: existing, error: selectError } = await supabase
       .from('website_sections')
       .select('id')
       .eq('type', 'waitlist_mode')
       .eq('name', 'waitlist_mode')
-      .single();
+      .maybeSingle();
+
+    if (selectError) throw selectError;
 
     if (existing) {
       const { error } = await supabase
@@ -145,7 +147,7 @@ export const setWaitlistMode = async (enabled: boolean): Promise<boolean> => {
     return true;
   } catch (error: any) {
     console.error('Failed to update waitlist mode:', error);
-    toast.error('Failed to update homepage mode');
+    toast.error(`Failed to update homepage mode: ${error.message}`);
     return false;
   }
 };
