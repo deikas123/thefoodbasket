@@ -193,6 +193,45 @@ export type Database = {
           },
         ]
       }
+      bundle_items: {
+        Row: {
+          bundle_id: string
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_items_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "product_bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bundle_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -685,6 +724,60 @@ export type Database = {
         }
         Relationships: []
       }
+      loyalty_transactions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_id: string | null
+          points: number
+          referrer_user_id: string | null
+          review_id: string | null
+          source: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          points: number
+          referrer_user_id?: string | null
+          review_id?: string | null
+          source: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          points?: number
+          referrer_user_id?: string | null
+          review_id?: string | null
+          source?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "product_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -897,6 +990,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_bundles: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          image: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          image?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          image?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       product_images: {
         Row: {
@@ -1112,6 +1238,8 @@ export type Database = {
           notification_promo_email: boolean | null
           notification_promo_sms: boolean | null
           phone: string | null
+          referral_code: string | null
+          referred_by: string | null
         }
         Insert: {
           created_at?: string
@@ -1127,6 +1255,8 @@ export type Database = {
           notification_promo_email?: boolean | null
           notification_promo_sms?: boolean | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
         }
         Update: {
           created_at?: string
@@ -1142,8 +1272,18 @@ export type Database = {
           notification_promo_email?: boolean | null
           notification_promo_sms?: boolean | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       receipts: {
         Row: {
@@ -1212,6 +1352,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_points_earned: number | null
+          referred_user_id: string
+          referrer_points_earned: number | null
+          referrer_user_id: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_points_earned?: number | null
+          referred_user_id: string
+          referrer_points_earned?: number | null
+          referrer_user_id: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_points_earned?: number | null
+          referred_user_id?: string
+          referrer_points_earned?: number | null
+          referrer_user_id?: string
+          status?: string
+        }
+        Relationships: []
       }
       review_helpfulness: {
         Row: {
@@ -1501,7 +1677,16 @@ export type Database = {
         Args: { product_id: string; quantity_to_deduct: number }
         Returns: undefined
       }
+      generate_referral_code: { Args: never; Returns: string }
       get_delivery_settings: { Args: never; Returns: Json }
+      get_frequently_bought_together: {
+        Args: { p_limit?: number; p_product_id: string }
+        Returns: {
+          confidence_score: number
+          product_id: string
+          purchase_count: number
+        }[]
+      }
       get_product_recommendations: {
         Args: { p_limit?: number; p_product_id?: string; p_user_id?: string }
         Returns: {

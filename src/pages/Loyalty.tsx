@@ -1,8 +1,9 @@
-
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import UserLoyaltyDashboard from "@/components/loyalty/UserLoyaltyDashboard";
-import { useAuth } from "@/context/AuthContext";
+import { LoyaltyRewards } from "@/components/loyalty/LoyaltyRewards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Award } from "lucide-react";
@@ -50,7 +51,14 @@ const Loyalty = () => {
       <Header />
       <main className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <UserLoyaltyDashboard />
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Loyalty Rewards</h1>
+            <p className="text-muted-foreground">
+              Earn points with every purchase, review, and referral!
+            </p>
+          </div>
+          
+          <LoyaltyRewards />
         </div>
       </main>
       <Footer />
