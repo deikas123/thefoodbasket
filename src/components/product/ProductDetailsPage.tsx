@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Share2, Heart, Minus, Plus, Store } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCard from "@/components/ProductCard";
+import ProductImageGallery from "@/components/product/ProductImageGallery";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { toast } from "sonner";
 import { Product } from "@/types";
@@ -54,6 +55,19 @@ const ProductDetailsPage = () => {
       return data;
     },
     enabled: !!fullProductQuery.data?.store_id
+  });
+
+  const productImagesQuery = useQuery({
+    queryKey: ["product-images", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_images")
+        .select("image_url")
+        .eq("product_id", productId);
+      if (error) throw error;
+      return data?.map(img => img.image_url) || [];
+    },
+    enabled: !!productId
   });
 
   const relatedProductsQuery = useQuery({
@@ -211,20 +225,17 @@ const ProductDetailsPage = () => {
         </div>
       </header>
 
-      {/* Product Image */}
+      {/* Product Image Gallery */}
       <div className="bg-muted/30">
         <div className="container mx-auto px-4 py-8">
-          <div className="aspect-square max-w-md mx-auto bg-background rounded-3xl overflow-hidden shadow-lg relative">
-            <img
-              src={getImageUrl(product.image)}
-              alt={product.name}
-              className="w-full h-full object-contain p-4"
+          <div className="max-w-md mx-auto">
+            <ProductImageGallery
+              images={productImagesQuery.data}
+              image={product.image}
+              name={product.name}
+              discountPercentage={product.discountPercentage}
+              featured={product.featured}
             />
-            {product.discountPercentage && (
-              <div className="absolute top-4 right-4 bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg">
-                -{product.discountPercentage}% OFF
-              </div>
-            )}
           </div>
         </div>
       </div>
