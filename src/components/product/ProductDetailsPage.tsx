@@ -200,7 +200,7 @@ const ProductDetailsPage = () => {
   const inStock = product.stock > 0;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background">{/* Removed pb-24 since buttons are no longer floating */}
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
@@ -279,6 +279,67 @@ const ProductDetailsPage = () => {
               {inStock ? '✓ In Stock' : '✗ Out of Stock'}
             </div>
           </div>
+
+          {/* Quantity Selector */}
+          <div className="mt-6">
+            <div className="flex items-center justify-center gap-4 bg-muted/50 rounded-2xl p-3 mb-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="h-10 w-10 rounded-full hover:bg-background"
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-5 w-5" />
+              </Button>
+              <span className="font-bold text-lg w-16 text-center">{quantity}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                className="h-10 w-10 rounded-full hover:bg-background"
+                disabled={quantity >= product.stock}
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <Button 
+                onClick={handleAddToCart}
+                disabled={!inStock}
+                variant="outline"
+                className="h-14 rounded-2xl font-semibold border-2 hover:bg-muted"
+              >
+                Add to Cart
+              </Button>
+              
+              <Button 
+                onClick={() => {
+                  handleAddToCart();
+                  navigate("/checkout");
+                }}
+                disabled={!inStock}
+                className="h-14 rounded-2xl font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+              >
+                Order Now
+              </Button>
+            </div>
+
+            <Button 
+              onClick={() => {
+                const message = `Hi! I'd like to order:\n\nProduct: ${product.name}\nQuantity: ${quantity}\nPrice: ${formatCurrency(getDiscountedPrice() * quantity)}\n\nProduct ID: ${product.id}`;
+                const whatsappUrl = `https://wa.me/254798435685?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+              }}
+              disabled={!inStock}
+              variant="secondary"
+              className="w-full h-14 rounded-2xl font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg"
+            >
+              Order via WhatsApp
+            </Button>
+          </div>
         </div>
 
         {/* Store Info */}
@@ -356,70 +417,6 @@ const ProductDetailsPage = () => {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Bottom Action Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg p-4 z-40">
-        <div className="container mx-auto max-w-2xl">
-          {/* Quantity Selector */}
-          <div className="flex items-center justify-center gap-4 bg-muted/50 rounded-2xl p-3 mb-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="h-10 w-10 rounded-full hover:bg-background"
-              disabled={quantity <= 1}
-            >
-              <Minus className="h-5 w-5" />
-            </Button>
-            <span className="font-bold text-lg w-16 text-center">{quantity}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-              className="h-10 w-10 rounded-full hover:bg-background"
-              disabled={quantity >= product.stock}
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <Button 
-              onClick={handleAddToCart}
-              disabled={!inStock}
-              variant="outline"
-              className="h-14 rounded-2xl font-semibold border-2 hover:bg-muted"
-            >
-              Add to Cart
-            </Button>
-            
-            <Button 
-              onClick={() => {
-                handleAddToCart();
-                navigate("/checkout");
-              }}
-              disabled={!inStock}
-              className="h-14 rounded-2xl font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-            >
-              Order Now
-            </Button>
-          </div>
-
-          <Button 
-            onClick={() => {
-              const message = `Hi! I'd like to order:\n\nProduct: ${product.name}\nQuantity: ${quantity}\nPrice: ${formatCurrency(getDiscountedPrice() * quantity)}\n\nProduct ID: ${product.id}`;
-              const whatsappUrl = `https://wa.me/254798435685?text=${encodeURIComponent(message)}`;
-              window.open(whatsappUrl, '_blank');
-            }}
-            disabled={!inStock}
-            variant="secondary"
-            className="w-full h-14 rounded-2xl font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg"
-          >
-            Order via WhatsApp
-          </Button>
-        </div>
       </div>
     </div>
   );
