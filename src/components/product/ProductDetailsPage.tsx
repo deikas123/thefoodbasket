@@ -175,26 +175,26 @@ const ProductDetailsPage = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background border-b">
-        <div className="container mx-auto px-4 py-3">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
-              className="h-9 w-9"
+              className="h-10 w-10 rounded-full"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             
-            <h1 className="text-base font-semibold">Details</h1>
+            <h1 className="text-lg font-bold">Product Details</h1>
             
             <div className="flex gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleShare}
-                className="h-9 w-9"
+                className="h-10 w-10 rounded-full"
               >
                 <Share2 className="h-5 w-5" />
               </Button>
@@ -202,9 +202,9 @@ const ProductDetailsPage = () => {
                 variant="ghost"
                 size="icon"
                 onClick={handleWishlistToggle}
-                className="h-9 w-9"
+                className="h-10 w-10 rounded-full"
               >
-                <Heart className={`h-5 w-5 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                <Heart className={`h-5 w-5 transition-all ${isInWishlist(product.id) ? 'fill-red-500 text-red-500 scale-110' : ''}`} />
               </Button>
             </div>
           </div>
@@ -212,88 +212,99 @@ const ProductDetailsPage = () => {
       </header>
 
       {/* Product Image */}
-      <div className="bg-background">
-        <div className="container mx-auto px-4 py-6">
-          <div className="aspect-square bg-background rounded-2xl overflow-hidden relative">
+      <div className="bg-muted/30">
+        <div className="container mx-auto px-4 py-8">
+          <div className="aspect-square max-w-md mx-auto bg-background rounded-3xl overflow-hidden shadow-lg relative">
             <img
               src={getImageUrl(product.image)}
               alt={product.name}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain p-4"
             />
+            {product.discountPercentage && (
+              <div className="absolute top-4 right-4 bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg">
+                -{product.discountPercentage}% OFF
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Product Info */}
-      <div className="container mx-auto px-4 space-y-4">
+      <div className="container mx-auto px-4 space-y-6">
         {/* Title and Price */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <h2 className="text-xl font-bold mb-1">{product.name}</h2>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {product.description}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xl font-bold text-primary">{formatCurrency(getDiscountedPrice())}</p>
-            {product.discountPercentage && (
-              <p className="text-sm text-muted-foreground line-through">
-                {formatCurrency(product.price)}
+        <div className="bg-card rounded-2xl p-6 shadow-sm border">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {product.description}
               </p>
-            )}
-            <p className="text-xs text-green-600 font-medium mt-1">
-              {inStock ? 'In Stock' : 'Out of Stock'}
-            </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div>
+              <p className="text-3xl font-bold text-primary">{formatCurrency(getDiscountedPrice())}</p>
+              {product.discountPercentage && (
+                <p className="text-base text-muted-foreground line-through mt-1">
+                  {formatCurrency(product.price)}
+                </p>
+              )}
+            </div>
+            <div className={`px-4 py-2 rounded-full text-sm font-semibold ${inStock ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+              {inStock ? '✓ In Stock' : '✗ Out of Stock'}
+            </div>
           </div>
         </div>
 
         {/* Store Info */}
         {store && (
-          <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-            <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center overflow-hidden">
+          <div className="flex items-center gap-4 p-4 bg-card rounded-2xl shadow-sm border">
+            <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
               {store.logo ? (
-                <img src={store.logo} alt={store.name} className="w-full h-full object-contain" />
+                <img src={store.logo} alt={store.name} className="w-full h-full object-contain p-2" />
               ) : (
-                <Store className="h-5 w-5 text-muted-foreground" />
+                <Store className="h-6 w-6 text-muted-foreground" />
               )}
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-sm">{store.name}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-base mb-0.5">{store.name}</p>
               {store.address && (
-                <p className="text-xs text-muted-foreground">{store.address}</p>
+                <p className="text-sm text-muted-foreground truncate">{store.address}</p>
               )}
             </div>
           </div>
         )}
 
         {/* Product Details */}
-        <div className="space-y-2">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border space-y-3">
+          <h3 className="font-bold text-lg mb-4">Product Information</h3>
           {store && (
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-sm text-muted-foreground">Brand Name:</span>
-              <span className="text-sm font-medium">{store?.name || 'Generic'}</span>
+            <div className="flex justify-between py-3 border-b last:border-0">
+              <span className="text-sm text-muted-foreground font-medium">Brand Name</span>
+              <span className="text-sm font-semibold">{store?.name || 'Generic'}</span>
             </div>
           )}
-          <div className="flex justify-between py-2 border-b">
-            <span className="text-sm text-muted-foreground">Quantity in Stock:</span>
-            <span className="text-sm font-medium">{product.stock} Pcs</span>
+          <div className="flex justify-between py-3 border-b last:border-0">
+            <span className="text-sm text-muted-foreground font-medium">Stock Available</span>
+            <span className="text-sm font-semibold">{product.stock} Pieces</span>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <span className="text-sm text-muted-foreground">Weight/Size:</span>
-            <span className="text-sm font-medium">2kg = 4.409 lb</span>
+          <div className="flex justify-between py-3 border-b last:border-0">
+            <span className="text-sm text-muted-foreground font-medium">Weight/Size</span>
+            <span className="text-sm font-semibold">2kg (4.409 lb)</span>
           </div>
         </div>
 
         {/* People Also Ordered */}
         {relatedProducts.length > 0 && (
-          <div className="pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">People also Ordered</h3>
-              <button className="text-sm text-primary hover:underline">View all</button>
+          <div className="pt-2">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-xl font-bold">You May Also Like</h3>
+              <button className="text-sm text-primary hover:underline font-medium">View all →</button>
             </div>
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4">
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
               {relatedProducts.map((relatedProduct) => (
-                <div key={relatedProduct.id} className="flex-shrink-0 w-40">
+                <div key={relatedProduct.id} className="flex-shrink-0 w-44">
                   <ProductCard product={relatedProduct} />
                 </div>
               ))}
@@ -303,38 +314,38 @@ const ProductDetailsPage = () => {
       </div>
 
       {/* Bottom Action Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-40 space-y-2">
-        <div className="container mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg p-4 z-40">
+        <div className="container mx-auto max-w-2xl">
           {/* Quantity Selector */}
-          <div className="flex items-center justify-center gap-3 bg-muted rounded-lg p-2 mb-3">
+          <div className="flex items-center justify-center gap-4 bg-muted/50 rounded-2xl p-3 mb-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="h-8 w-8"
+              className="h-10 w-10 rounded-full hover:bg-background"
               disabled={quantity <= 1}
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-5 w-5" />
             </Button>
-            <span className="font-semibold w-12 text-center">{quantity}</span>
+            <span className="font-bold text-lg w-16 text-center">{quantity}</span>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-              className="h-8 w-8"
+              className="h-10 w-10 rounded-full hover:bg-background"
               disabled={quantity >= product.stock}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-5 w-5" />
             </Button>
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3 mb-3">
             <Button 
               onClick={handleAddToCart}
               disabled={!inStock}
               variant="outline"
-              className="h-12"
+              className="h-14 rounded-2xl font-semibold border-2 hover:bg-muted"
             >
               Add to Cart
             </Button>
@@ -345,7 +356,7 @@ const ProductDetailsPage = () => {
                 navigate("/checkout");
               }}
               disabled={!inStock}
-              className="h-12 bg-primary hover:bg-primary/90"
+              className="h-14 rounded-2xl font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
             >
               Order Now
             </Button>
@@ -359,7 +370,7 @@ const ProductDetailsPage = () => {
             }}
             disabled={!inStock}
             variant="secondary"
-            className="w-full h-12 mt-2 bg-green-600 hover:bg-green-700 text-white"
+            className="w-full h-14 rounded-2xl font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg"
           >
             Order via WhatsApp
           </Button>

@@ -119,42 +119,47 @@ const ProductCard = ({ product, className }: ProductCardProps) => {
   
   return (
     <Link to={`/product/${product.id}`} className={`group ${className || ''}`}>
-      <div className="bg-card rounded-xl overflow-hidden transition-all hover:shadow-md border relative">
+      <div className="bg-card rounded-2xl overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 border border-border/50 relative duration-300">
         {/* Product Image */}
         <div className="aspect-square bg-muted relative overflow-hidden">
           <img
             src={mainImage}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
           {product.discountPercentage && (
-            <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+            <div className="absolute top-3 right-3 bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
               -{product.discountPercentage}%
+            </div>
+          )}
+          {product.stock <= 5 && product.stock > 0 && (
+            <div className="absolute top-3 left-3 bg-orange-500/90 text-white text-xs font-medium px-2 py-1 rounded-full">
+              Low Stock
             </div>
           )}
         </div>
         
         {/* Product Info */}
-        <div className="p-3">
-          <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="p-4">
+          <h3 className="text-sm font-semibold line-clamp-2 mb-2 min-h-[2.5rem]">{product.name}</h3>
+          
+          <div className="flex items-end justify-between gap-2">
             <div className="flex-1">
-              <p className="font-bold text-lg">{formatCurrency(getDiscountedPrice())}</p>
+              <p className="font-bold text-xl text-primary">{formatCurrency(getDiscountedPrice())}</p>
               {product.discountPercentage && (
-                <p className="text-xs text-muted-foreground line-through">
+                <p className="text-xs text-muted-foreground line-through mt-0.5">
                   {formatCurrency(product.price)}
                 </p>
               )}
+              <p className="text-xs text-muted-foreground mt-1">Per 1 KG</p>
             </div>
             <button
               onClick={handleAddToCart}
-              className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors flex-shrink-0"
+              className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 hover:scale-110 transition-all shadow-md flex-shrink-0"
             >
-              <span className="text-lg font-semibold">+</span>
+              <span className="text-xl font-bold">+</span>
             </button>
           </div>
-          
-          <h3 className="text-sm font-medium line-clamp-2 mb-0.5">{product.name}</h3>
-          <p className="text-xs text-muted-foreground">Per 1 KG (Pcs)</p>
         </div>
       </div>
     </Link>
