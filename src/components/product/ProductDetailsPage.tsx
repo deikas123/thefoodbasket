@@ -18,6 +18,8 @@ import { SmartRecommendations } from "@/components/product/SmartRecommendations"
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { toast } from "sonner";
 import { Product } from "@/types";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const ProductDetailsPage = () => {
   const { id: productId } = useParams<{ id: string }>();
@@ -200,43 +202,45 @@ const ProductDetailsPage = () => {
   const inStock = product.stock > 0;
 
   return (
-    <div className="min-h-screen bg-background">{/* Removed pb-24 since buttons are no longer floating */}
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="h-10 w-10 rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            
-            <h1 className="text-lg font-bold">Product Details</h1>
-            
-            <div className="flex gap-2">
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow pt-20 pb-16">
+        {/* Product header section */}
+        <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleShare}
+                onClick={() => navigate(-1)}
                 className="h-10 w-10 rounded-full"
               >
-                <Share2 className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleWishlistToggle}
-                className="h-10 w-10 rounded-full"
-              >
-                <Heart className={`h-5 w-5 transition-all ${isInWishlist(product.id) ? 'fill-red-500 text-red-500 scale-110' : ''}`} />
-              </Button>
+              
+              <h1 className="text-lg font-bold">Product Details</h1>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleShare}
+                  className="h-10 w-10 rounded-full"
+                >
+                  <Share2 className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleWishlistToggle}
+                  className="h-10 w-10 rounded-full"
+                >
+                  <Heart className={`h-5 w-5 transition-all ${isInWishlist(product.id) ? 'fill-red-500 text-red-500 scale-110' : ''}`} />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </header>
 
       {/* Product Image Gallery */}
       <div className="bg-muted/30">
@@ -403,7 +407,7 @@ const ProductDetailsPage = () => {
 
         {/* People Also Ordered - Keep as fallback */}
         {relatedProducts.length > 0 && (
-          <div className="pt-2">
+          <div className="pt-2 pb-8">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-xl font-bold">Similar Products</h3>
               <button className="text-sm text-primary hover:underline font-medium">View all →</button>
@@ -418,6 +422,8 @@ const ProductDetailsPage = () => {
           </div>
         )}
       </div>
+      </main>
+      <Footer />
     </div>
   );
 };
