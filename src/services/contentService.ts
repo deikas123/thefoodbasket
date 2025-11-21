@@ -87,3 +87,65 @@ export const deleteImage = async (path: string): Promise<boolean> => {
     return false;
   }
 };
+
+// Waitlist Mode Settings
+export const getWaitlistMode = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('website_sections')
+      .select('settings')
+      .eq('type', 'waitlist_mode')
+      .eq('name', 'waitlist_mode')
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    
+    return data?.settings?.enabled ?? false;
+  } catch (error: any) {
+    console.error('Failed to get waitlist mode:', error);
+    return false;
+  }
+};
+
+export const setWaitlistMode = async (enabled: boolean): Promise<boolean> => {
+  try {
+    const { data: existing } = await supabase
+      .from('website_sections')
+      .select('id')
+      .eq('type', 'waitlist_mode')
+      .eq('name', 'waitlist_mode')
+      .single();
+
+    if (existing) {
+      const { error } = await supabase
+        .from('website_sections')
+        .update({ 
+          settings: { enabled },
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('website_sections')
+        .insert({
+          name: 'waitlist_mode',
+          type: 'waitlist_mode',
+          title: 'Waitlist Mode',
+          settings: { enabled },
+          position: 0,
+          active: true
+        });
+
+      if (error) throw error;
+    }
+
+    toast.success(enabled ? 'Waitlist mode enabled' : 'Normal homepage enabled');
+    return true;
+  } catch (error: any) {
+    console.error('Failed to update waitlist mode:', error);
+    toast.error('Failed to update homepage mode');
+    return false;
+  }
+};
