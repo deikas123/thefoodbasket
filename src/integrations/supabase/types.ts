@@ -1687,6 +1687,14 @@ export type Database = {
           purchase_count: number
         }[]
       }
+      get_personalized_bundle_recommendations: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          bundle_id: string
+          match_reason: string
+          recommendation_score: number
+        }[]
+      }
       get_product_recommendations: {
         Args: { p_limit?: number; p_product_id?: string; p_user_id?: string }
         Returns: {
