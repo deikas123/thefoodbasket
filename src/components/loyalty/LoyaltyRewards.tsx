@@ -21,6 +21,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/currencyFormatter";
+import { SocialShare } from "@/components/ui/social-share";
 
 export const LoyaltyRewards = () => {
   const { user } = useAuth();
@@ -195,9 +196,19 @@ export const LoyaltyRewards = () => {
               <p className="text-3xl font-bold">{profile?.loyalty_points || 0}</p>
             </div>
           </div>
-          <p className="text-sm opacity-90">
-            Worth {formatCurrency(pointsValue)}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm opacity-90">
+              Worth {formatCurrency(pointsValue)}
+            </p>
+            {(profile?.loyalty_points || 0) >= 1000 && (
+              <SocialShare
+                title="Loyalty Achievement Unlocked! 🎉"
+                text={`I just earned ${profile?.loyalty_points} loyalty points! Join me and start earning rewards on every purchase.`}
+                variant="ghost"
+                size="sm"
+              />
+            )}
+          </div>
         </Card>
 
         <Card className="p-6">
@@ -267,6 +278,12 @@ export const LoyaltyRewards = () => {
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
+                  <SocialShare
+                    title="Join me and earn rewards! 🎁"
+                    text={`Use my referral code ${profile.referral_code} to get started and we both earn 100 loyalty points!`}
+                    variant="outline"
+                    size="icon"
+                  />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Share your code and earn 100 points when friends sign up!

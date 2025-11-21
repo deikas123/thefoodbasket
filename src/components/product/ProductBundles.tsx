@@ -8,6 +8,7 @@ import { formatCurrency } from "@/utils/currencyFormatter";
 import { ShoppingCart, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Product } from "@/types";
+import { SocialShare } from "@/components/ui/social-share";
 
 interface ProductBundlesProps {
   productId?: string;
@@ -169,13 +170,21 @@ export const ProductBundles = ({ productId }: ProductBundlesProps) => {
                   )}
                 </div>
 
-                <Button 
-                  className="w-full gap-2"
-                  onClick={() => handleAddBundleToCart(bundle)}
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  Add Bundle to Cart
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    className="flex-1 gap-2"
+                    onClick={() => handleAddBundleToCart(bundle)}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Add Bundle to Cart
+                  </Button>
+                  <SocialShare
+                    title={bundle.name}
+                    text={`Check out this amazing bundle: ${bundle.name}! Save ${bundle.discount_percentage}%`}
+                    variant="outline"
+                    size="default"
+                  />
+                </div>
               </div>
             </Card>
           );
