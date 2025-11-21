@@ -107,66 +107,69 @@ const Shop = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">
       {/* Header with back button and search */}
-      <header className="sticky top-0 z-50 bg-background border-b">
-        <div className="container mx-auto px-4 py-3">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
-              className="h-9 w-9"
+              className="h-10 w-10 rounded-full"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Would you like to eat something?"
+                placeholder="Search for fresh groceries..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 rounded-lg bg-muted border-0 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                className="w-full h-12 pl-12 pr-4 rounded-2xl bg-muted/50 border-0 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
               />
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-grow">{/* Filter chips removed for cleaner mobile experience */}
+      <main className="flex-grow">
         {/* Top Grocery Stores */}
         <TopGroceryStores />
 
         {/* Products Section */}
-        <section className="py-6">
+        <section className="py-8">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Top Items 2025</h2>
-              <button className="text-sm text-primary hover:underline">View all</button>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold mb-1">Top Items 2025</h2>
+                <p className="text-sm text-muted-foreground">{sortedProducts.length} products available</p>
+              </div>
             </div>
             
             {productsQuery.isLoading ? (
-              <div className="grid grid-cols-2 gap-3">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-card rounded-xl p-3">
-                    <Skeleton className="aspect-square w-full rounded-lg mb-2" />
-                    <Skeleton className="h-4 w-16 mb-1" />
-                    <Skeleton className="h-3 w-full mb-1" />
-                    <Skeleton className="h-3 w-3/4" />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="bg-card rounded-2xl p-4 shadow-sm">
+                    <Skeleton className="aspect-square w-full rounded-xl mb-3" />
+                    <Skeleton className="h-5 w-20 mb-2" />
+                    <Skeleton className="h-4 w-full mb-1" />
+                    <Skeleton className="h-3 w-2/3" />
                   </div>
                 ))}
               </div>
             ) : sortedProducts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {sortedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No products found</p>
-                <Button onClick={clearFilters} className="mt-4" size="sm">
-                  Clear Filters
+              <div className="text-center py-16 bg-muted/30 rounded-2xl">
+                <p className="text-muted-foreground text-lg mb-2">No products found</p>
+                <p className="text-sm text-muted-foreground mb-4">Try adjusting your search or filters</p>
+                <Button onClick={clearFilters} size="lg" className="rounded-full">
+                  Clear All Filters
                 </Button>
               </div>
             )}
