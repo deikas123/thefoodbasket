@@ -11,6 +11,7 @@ import TopGroceryStores from "@/components/home/TopGroceryStores";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
 import { RecentlyViewedProducts } from "@/components/product/RecentlyViewedProducts";
 import { SmartRecommendations } from "@/components/product/SmartRecommendations";
+import { PersonalizedBundleRecommendations } from "@/components/product/PersonalizedBundleRecommendations";
 
 const Index = () => {
   const cartContext = useCart();
@@ -51,6 +52,7 @@ const Index = () => {
         <section className="py-4 md:py-6">
           <div className="container mx-auto px-4">
             <RecentlyViewedProducts />
+            <PersonalizedBundleRecommendations />
             <SmartRecommendations title="Recommended For You" limit={8} />
           </div>
         </section>
