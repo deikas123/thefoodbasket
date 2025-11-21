@@ -931,29 +931,35 @@ export type Database = {
         Row: {
           comment: string | null
           created_at: string
+          helpful_count: number | null
           id: string
           product_id: string
           rating: number
           updated_at: string
           user_id: string
+          verified_purchase: boolean | null
         }
         Insert: {
           comment?: string | null
           created_at?: string
+          helpful_count?: number | null
           id?: string
           product_id: string
           rating: number
           updated_at?: string
           user_id: string
+          verified_purchase?: boolean | null
         }
         Update: {
           comment?: string | null
           created_at?: string
+          helpful_count?: number | null
           id?: string
           product_id?: string
           rating?: number
           updated_at?: string
           user_id?: string
+          verified_purchase?: boolean | null
         }
         Relationships: [
           {
@@ -1174,6 +1180,70 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      recently_viewed_products: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recently_viewed_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_helpfulness: {
+        Row: {
+          created_at: string
+          id: string
+          is_helpful: boolean
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_helpful: boolean
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_helpful?: boolean
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_helpfulness_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "product_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       store_admins: {
         Row: {
@@ -1432,6 +1502,13 @@ export type Database = {
         Returns: undefined
       }
       get_delivery_settings: { Args: never; Returns: Json }
+      get_product_recommendations: {
+        Args: { p_limit?: number; p_product_id?: string; p_user_id?: string }
+        Returns: {
+          product_id: string
+          recommendation_score: number
+        }[]
+      }
       process_auto_replenish_orders: { Args: never; Returns: undefined }
       upsert_delivery_settings: { Args: { settings_data: Json }; Returns: Json }
     }

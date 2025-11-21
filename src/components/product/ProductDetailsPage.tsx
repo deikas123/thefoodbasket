@@ -1,15 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getProductById } from "@/services/productService";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useRecentlyViewed } from "@/context/RecentlyViewedContext";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Share2, Heart, Minus, Plus, Store } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCard from "@/components/ProductCard";
 import ProductImageGallery from "@/components/product/ProductImageGallery";
+import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
+import { SmartRecommendations } from "@/components/product/SmartRecommendations";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { toast } from "sonner";
 import { Product } from "@/types";
@@ -19,7 +22,15 @@ const ProductDetailsPage = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
+  const { trackProductView } = useRecentlyViewed();
   const [quantity, setQuantity] = useState(1);
+
+  // Track product view
+  useEffect(() => {
+    if (productId) {
+      trackProductView(productId);
+    }
+  }, [productId, trackProductView]);
   
   const productQuery = useQuery({
     queryKey: ["product", productId],
@@ -306,11 +317,23 @@ const ProductDetailsPage = () => {
           </div>
         </div>
 
-        {/* People Also Ordered */}
+        {/* Reviews Section */}
+        <div className="pt-8">
+          <ProductReviewsSection productId={productId || ""} />
+        </div>
+
+        {/* Smart Recommendations */}
+        <SmartRecommendations 
+          productId={productId}
+          title="You May Also Like"
+          limit={8}
+        />
+
+        {/* People Also Ordered - Keep as fallback */}
         {relatedProducts.length > 0 && (
           <div className="pt-2">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-xl font-bold">You May Also Like</h3>
+              <h3 className="text-xl font-bold">Similar Products</h3>
               <button className="text-sm text-primary hover:underline font-medium">View all →</button>
             </div>
             <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
