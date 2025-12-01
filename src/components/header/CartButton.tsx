@@ -20,6 +20,7 @@ const CartButton = () => {
       variant="ghost"
       size="icon"
       onClick={openCart}
+      data-cart-button
       className="relative transition-all duration-200 hover:scale-105 h-10 w-10"
     >
       <ShoppingBag className="h-5 w-5" />

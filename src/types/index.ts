@@ -153,6 +153,7 @@ export interface DeliveryOption {
 export interface PaymentMethod {
   id: string;
   name: string;
+  type?: string; // Optional type field for identifying payment method (mpesa, card, etc.)
   icon: string;
   description?: string;
 }
