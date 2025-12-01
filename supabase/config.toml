@@ -25,3 +25,9 @@ verify_jwt = true
 
 [functions.waitlist-notification]
 verify_jwt = false
+
+[functions.mpesa-stk-push]
+verify_jwt = false
+
+[functions.mpesa-webhook]
+verify_jwt = false
