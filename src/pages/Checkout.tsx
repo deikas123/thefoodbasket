@@ -107,8 +107,9 @@ const Checkout = () => {
     }
   };
 
-  const handlePlaceOrder = () => {
-    placeOrder(deliveryAddress);
+  // Order Placement
+  const handlePlaceOrder = (phoneNumber?: string) => {
+    placeOrder(deliveryAddress, phoneNumber);
   };
   
   console.log("Rendering checkout with step:", currentStep);

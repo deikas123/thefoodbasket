@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Zap, MessageCircle } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { ProductType } from "@/types/supabase";
+import { useFlyingCart } from "@/hooks/useFlyingCart";
 
 interface ProductCardActionsProps {
   product: ProductType;
@@ -16,11 +17,30 @@ const ProductCardActions = ({
   onBuyNow, 
   onWhatsAppOrder 
 }: ProductCardActionsProps) => {
+  const { flyToCart } = useFlyingCart();
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    // Get button position for animation start
+    const button = e.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    
+    // Trigger flying animation
+    flyToCart({
+      imageUrl: product.image,
+      startX: rect.left + rect.width / 2 - 40,
+      startY: rect.top - 80,
+      targetSelector: '[data-cart-button]',
+    });
+
+    // Call original handler
+    onAddToCart(e);
+  };
+
   return (
     <div className="space-y-2">
       <Button
         size="sm"
-        onClick={onAddToCart}
+        onClick={handleAddToCart}
         disabled={product.stock <= 0}
         className="w-full text-sm h-10 touch-manipulation bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl font-medium"
       >

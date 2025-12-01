@@ -25,30 +25,35 @@ const paymentMethods: PaymentMethod[] = [
   {
     id: "mpesa",
     name: "M-Pesa",
+    type: "mpesa",
     icon: "smartphone",
-    description: "Fast and secure mobile money transfer"
+    description: "Pay with M-Pesa STK Push"
   },
   {
     id: "card",
     name: "Credit/Debit Card",
+    type: "card",
     icon: "credit-card",
-    description: "Pay with Visa, Mastercard, or American Express"
+    description: "Pay with Visa, Mastercard (Coming Soon)"
   },
   {
     id: "wallet",
     name: "E-Wallet",
+    type: "wallet",
     icon: "wallet",
     description: "Pay using your store wallet balance"
   },
   {
     id: "paylater",
     name: "Buy Now, Pay Later",
+    type: "paylater",
     icon: "calendar",
     description: "Pay within 30 days with no interest"
   },
   {
     id: "cod",
     name: "Cash on Delivery",
+    type: "cod",
     icon: "cash",
     description: "Pay with cash when your order is delivered"
   }
@@ -82,6 +87,7 @@ const PaymentMethods = ({
       setSelectedPayment({
         id: "wallet",
         name: "E-Wallet",
+        type: "wallet",
         icon: "wallet",
       });
     } else {
@@ -95,6 +101,7 @@ const PaymentMethods = ({
       setSelectedPayment({
         id: "paylater",
         name: "Buy Now, Pay Later",
+        type: "paylater",
         icon: "calendar",
       });
     } else {

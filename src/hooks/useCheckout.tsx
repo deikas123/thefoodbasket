@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/components/ui/use-toast";
 import { Address, PaymentMethod, Order } from "@/types";
 import { DeliveryOption } from "@/services/deliveryOptionsService";
+import { initiateMpesaPayment } from "@/services/mpesaService";
 
 export const useCheckout = () => {
   const navigate = useNavigate();
@@ -65,18 +66,29 @@ export const useCheckout = () => {
     }
   };
   
-  const placeOrder = async (deliveryAddress: any) => {
+  const placeOrder = async (deliveryAddress: any, phoneNumber?: string) => {
     console.log("Placing order with:", {
       user: !!user,
       selectedDelivery: !!selectedDelivery,
       selectedPayment: !!selectedPayment,
-      deliveryAddress
+      deliveryAddress,
+      phoneNumber
     });
     
     if (!user || !selectedDelivery || !selectedPayment) {
       toast({
         title: "Incomplete information",
         description: "Please fill in all required information.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate phone number for M-Pesa
+    if ((selectedPayment.type === 'mpesa' || selectedPayment.id === 'mpesa') && !phoneNumber) {
+      toast({
+        title: "Phone number required",
+        description: "Please provide your M-Pesa phone number.",
         variant: "destructive",
       });
       return;
@@ -114,12 +126,46 @@ export const useCheckout = () => {
       console.log("Order placed successfully:", order);
       
       if (order) {
+        // If M-Pesa payment, initiate STK push
+        if ((selectedPayment.type === 'mpesa' || selectedPayment.id === 'mpesa') && phoneNumber) {
+          console.log('Initiating M-Pesa STK push for order:', order.id);
+          
+          try {
+            const mpesaResponse = await initiateMpesaPayment(
+              phoneNumber,
+              order.total,
+              order.id
+            );
+
+            if (mpesaResponse.success) {
+              toast({
+                title: "Payment Request Sent",
+                description: "Please check your phone and enter your M-Pesa PIN to complete payment.",
+                duration: 5000,
+              });
+            } else {
+              throw new Error(mpesaResponse.error || 'Failed to initiate M-Pesa payment');
+            }
+          } catch (mpesaError: any) {
+            console.error('M-Pesa payment error:', mpesaError);
+            toast({
+              title: "Payment initiation failed",
+              description: mpesaError.message || "Failed to send M-Pesa payment request. Please try again.",
+              variant: "destructive",
+            });
+            setIsProcessing(false);
+            return;
+          }
+        }
+
         setCompletedOrder(order);
         setCurrentStep("confirmation");
         
         toast({
           title: "Order placed successfully!",
-          description: "Thank you for your order. We'll process it right away.",
+          description: (selectedPayment.type === 'mpesa' || selectedPayment.id === 'mpesa')
+            ? "Complete the M-Pesa payment on your phone."
+            : "Thank you for your order. We'll process it right away.",
         });
         
         // Navigate to confirmation/order details after a short delay
