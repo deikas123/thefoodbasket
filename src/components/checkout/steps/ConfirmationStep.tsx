@@ -1,8 +1,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Truck } from "lucide-react";
+import { CheckCircle, Truck, Receipt, Download } from "lucide-react";
 import { Order } from "@/types";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface ConfirmationStepProps {
   completedOrder: Order;
@@ -51,6 +52,60 @@ const ConfirmationStep = ({
           <div>
             <h3 className="font-medium mb-2 text-sm sm:text-base">Payment Method:</h3>
             <p className="text-xs sm:text-sm">{completedOrder.paymentMethod.name}</p>
+          </div>
+          
+          <Separator className="my-4" />
+          
+          {/* Receipt Summary */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Receipt className="h-4 w-4 text-primary" />
+              <h3 className="font-medium text-sm sm:text-base">Order Receipt</h3>
+            </div>
+            
+            <div className="space-y-2 text-xs sm:text-sm">
+              {completedOrder.items.map((item, index) => (
+                <div key={index} className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {item.quantity}x {item.name}
+                  </span>
+                  <span>{formatCurrency(item.price * item.quantity)}</span>
+                </div>
+              ))}
+              
+              <Separator className="my-2" />
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>{formatCurrency(completedOrder.subtotal)}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Delivery Fee</span>
+                <span>{formatCurrency(completedOrder.deliveryFee)}</span>
+              </div>
+              
+              {completedOrder.discount && completedOrder.discount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Discount</span>
+                  <span>-{formatCurrency(completedOrder.discount)}</span>
+                </div>
+              )}
+              
+              <Separator className="my-2" />
+              
+              <div className="flex justify-between font-bold text-base">
+                <span>Total</span>
+                <span>{formatCurrency(completedOrder.total)}</span>
+              </div>
+              
+              {completedOrder.loyaltyPointsEarned && completedOrder.loyaltyPointsEarned > 0 && (
+                <div className="flex justify-between text-primary text-xs mt-2">
+                  <span>Points Earned</span>
+                  <span>+{completedOrder.loyaltyPointsEarned} points</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         

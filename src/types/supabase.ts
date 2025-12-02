@@ -30,6 +30,9 @@ export interface ProductType {
   num_reviews?: number;
   numReviews: number; // Added to match with Product interface
   discountPercentage?: number;
+  brand_name?: string;
+  weight?: string;
+  store_id?: string;
   created_at: string;
   updated_at: string;
 }

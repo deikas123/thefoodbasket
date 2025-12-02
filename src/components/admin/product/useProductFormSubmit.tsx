@@ -48,6 +48,9 @@ export const useProductFormSubmit = ({ product, onOpenChange }: UseProductFormSu
             featured: values.featured,
             discount_percentage: values.discountPercentage || null,
             store_id: values.store_id || null,
+            unit: values.unit || 'piece',
+            brand_name: values.brand_name || null,
+            weight: values.weight || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', product.id);
@@ -96,6 +99,9 @@ export const useProductFormSubmit = ({ product, onOpenChange }: UseProductFormSu
             featured: values.featured,
             discount_percentage: values.discountPercentage || null,
             store_id: values.store_id || null,
+            unit: values.unit || 'piece',
+            brand_name: values.brand_name || null,
+            weight: values.weight || null,
             rating: 0,
             num_reviews: 0,
             created_at: new Date().toISOString(),

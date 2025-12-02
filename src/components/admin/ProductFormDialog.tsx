@@ -120,6 +120,9 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
       discountPercentage: 0,
       tags: [],
       store_id: "",
+      unit: 'piece',
+      brand_name: "",
+      weight: "",
     },
   });
 
@@ -139,7 +142,10 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         featured: product.featured,
         discountPercentage: product.discountPercentage || 0,
         tags: productTags || [],
-        store_id: (product as any).store_id || "",
+        store_id: product.store_id || "",
+        unit: (product.unit as any) || 'piece',
+        brand_name: product.brand_name || "",
+        weight: product.weight || "",
       });
     } else {
       form.reset({
@@ -153,6 +159,9 @@ const ProductFormDialog = ({ open, onOpenChange, product }: ProductFormDialogPro
         discountPercentage: 0,
         tags: [],
         store_id: "",
+        unit: 'piece',
+        brand_name: "",
+        weight: "",
       });
     }
   }, [product, form, productTags]);

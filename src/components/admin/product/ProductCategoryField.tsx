@@ -47,7 +47,7 @@ const ProductCategoryField = ({ form, categories, isLoading }: ProductCategoryFi
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
             </FormControl>
-            <SelectContent className="bg-white z-50">
+            <SelectContent className="bg-background z-50">
               {categories && categories.length > 0 ? (
                 categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
