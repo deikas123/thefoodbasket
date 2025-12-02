@@ -12,8 +12,16 @@ const CartButton = () => {
   
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Don't show cart button on mobile (it's in bottom nav)
-  if (isMobile) return null;
+  // On mobile, render a hidden element for the flying cart animation target
+  if (isMobile) {
+    return (
+      <div 
+        data-cart-button 
+        className="hidden"
+        aria-hidden="true"
+      />
+    );
+  }
 
   return (
     <Button
