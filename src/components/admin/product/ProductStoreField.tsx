@@ -33,9 +33,9 @@ const ProductStoreField = ({ form, stores, isLoading }: ProductStoreFieldProps) 
         <FormItem>
           <FormLabel>Store (Optional)</FormLabel>
           <Select 
-            onValueChange={field.onChange} 
-            defaultValue={field.value || ""}
-            value={field.value || ""}
+            onValueChange={(value) => field.onChange(value === "none" ? "" : value)} 
+            defaultValue={field.value || "none"}
+            value={field.value || "none"}
           >
             <FormControl>
               <SelectTrigger>
@@ -43,18 +43,12 @@ const ProductStoreField = ({ form, stores, isLoading }: ProductStoreFieldProps) 
               </SelectTrigger>
             </FormControl>
             <SelectContent className="bg-background z-50">
-              <SelectItem value="">All Stores</SelectItem>
-              {stores && stores.length > 0 ? (
-                stores.map((store) => (
-                  <SelectItem key={store.id} value={store.id}>
-                    {store.name}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="" disabled>
-                  No stores available
+              <SelectItem value="none">All Stores</SelectItem>
+              {stores && stores.length > 0 && stores.map((store) => (
+                <SelectItem key={store.id} value={store.id}>
+                  {store.name}
                 </SelectItem>
-              )}
+              ))}
             </SelectContent>
           </Select>
           <FormMessage />
