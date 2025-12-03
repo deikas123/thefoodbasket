@@ -7,9 +7,11 @@ import AdminBanner from "@/components/AdminBanner";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
 import { RecentlyViewedProducts } from "@/components/product/RecentlyViewedProducts";
 import Waitlist from "@/pages/Waitlist";
-import { getWaitlistMode } from "@/services/contentService";
+import MaintenancePage from "@/pages/MaintenancePage";
+import PromoPage from "@/pages/PromoPage";
+import { getHomepageMode, HomepageMode } from "@/services/contentService";
 
-// New home page components
+// Home page components
 import HeroBanner from "@/components/home/HeroBanner";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
 import PromoBanners from "@/components/home/PromoBanners";
@@ -18,17 +20,17 @@ import DailyOffersSection from "@/components/home/DailyOffersSection";
 
 const Index = () => {
   const cartContext = useCart();
-  const [isWaitlistMode, setIsWaitlistMode] = useState<boolean | null>(null);
+  const [homepageMode, setHomepageMode] = useState<HomepageMode | null>(null);
   
   useEffect(() => {
-    const checkWaitlistMode = async () => {
-      const enabled = await getWaitlistMode();
-      setIsWaitlistMode(enabled);
+    const checkHomepageMode = async () => {
+      const mode = await getHomepageMode();
+      setHomepageMode(mode);
     };
-    checkWaitlistMode();
+    checkHomepageMode();
   }, []);
   
-  if (!cartContext || isWaitlistMode === null) {
+  if (!cartContext || homepageMode === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -36,10 +38,20 @@ const Index = () => {
     );
   }
 
-  if (isWaitlistMode) {
+  // Render based on homepage mode
+  if (homepageMode === 'waitlist') {
     return <Waitlist />;
   }
 
+  if (homepageMode === 'maintenance') {
+    return <MaintenancePage />;
+  }
+
+  if (homepageMode === 'promo') {
+    return <PromoPage />;
+  }
+
+  // Normal homepage
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       <Header />
