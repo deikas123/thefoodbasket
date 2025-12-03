@@ -1,33 +1,10 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings as SettingsIcon, Globe } from "lucide-react";
+import { Settings as SettingsIcon } from "lucide-react";
 import DeliverySettings from "@/components/admin/delivery/DeliverySettings";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useState, useEffect } from "react";
-import { getWaitlistMode, setWaitlistMode } from "@/services/contentService";
-import { toast } from "sonner";
+import HomepageModeSwitcher from "@/components/admin/HomepageModeSwitcher";
 
 const Settings = () => {
-  const [waitlistMode, setWaitlistModeState] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadWaitlistMode();
-  }, []);
-
-  const loadWaitlistMode = async () => {
-    const enabled = await getWaitlistMode();
-    setWaitlistModeState(enabled);
-    setLoading(false);
-  };
-
-  const handleWaitlistToggle = async (checked: boolean) => {
-    setWaitlistModeState(checked);
-    await setWaitlistMode(checked);
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -46,37 +23,8 @@ const Settings = () => {
 
         <TabsContent value="general">
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  Homepage Mode
-                </CardTitle>
-                <CardDescription>
-                  Switch between normal homepage and waitlist landing page
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="waitlist-mode" className="text-base font-medium">
-                      Waitlist Mode
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {waitlistMode 
-                        ? "Visitors see the waitlist signup page" 
-                        : "Visitors see the normal homepage"}
-                    </p>
-                  </div>
-                  <Switch
-                    id="waitlist-mode"
-                    checked={waitlistMode}
-                    onCheckedChange={handleWaitlistToggle}
-                    disabled={loading}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            {/* Homepage Mode Switcher */}
+            <HomepageModeSwitcher />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>

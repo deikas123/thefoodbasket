@@ -88,32 +88,35 @@ export const deleteImage = async (path: string): Promise<boolean> => {
   }
 };
 
-// Waitlist Mode Settings
-export const getWaitlistMode = async (): Promise<boolean> => {
+// Homepage Mode Types
+export type HomepageMode = 'home' | 'waitlist' | 'maintenance' | 'promo';
+
+// Get Homepage Mode
+export const getHomepageMode = async (): Promise<HomepageMode> => {
   try {
     const { data, error } = await supabase
       .from('website_sections')
       .select('settings')
-      .eq('type', 'waitlist_mode')
-      .eq('name', 'waitlist_mode')
+      .eq('type', 'homepage_mode')
+      .eq('name', 'homepage_mode')
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
     
-    return data?.settings?.enabled ?? false;
+    return data?.settings?.mode ?? 'home';
   } catch (error: any) {
-    console.error('Failed to get waitlist mode:', error);
-    return false;
+    console.error('Failed to get homepage mode:', error);
+    return 'home';
   }
 };
 
-export const setWaitlistMode = async (enabled: boolean): Promise<boolean> => {
+export const setHomepageMode = async (mode: HomepageMode): Promise<boolean> => {
   try {
     const { data: existing, error: selectError } = await supabase
       .from('website_sections')
       .select('id')
-      .eq('type', 'waitlist_mode')
-      .eq('name', 'waitlist_mode')
+      .eq('type', 'homepage_mode')
+      .eq('name', 'homepage_mode')
       .maybeSingle();
 
     if (selectError) throw selectError;
@@ -122,7 +125,7 @@ export const setWaitlistMode = async (enabled: boolean): Promise<boolean> => {
       const { error } = await supabase
         .from('website_sections')
         .update({ 
-          settings: { enabled },
+          settings: { mode },
           updated_at: new Date().toISOString()
         })
         .eq('id', existing.id);
@@ -132,10 +135,10 @@ export const setWaitlistMode = async (enabled: boolean): Promise<boolean> => {
       const { error } = await supabase
         .from('website_sections')
         .insert({
-          name: 'waitlist_mode',
-          type: 'waitlist_mode',
-          title: 'Waitlist Mode',
-          settings: { enabled },
+          name: 'homepage_mode',
+          type: 'homepage_mode',
+          title: 'Homepage Mode',
+          settings: { mode },
           position: 0,
           active: true
         });
@@ -143,11 +146,28 @@ export const setWaitlistMode = async (enabled: boolean): Promise<boolean> => {
       if (error) throw error;
     }
 
-    toast.success(enabled ? 'Waitlist mode enabled' : 'Normal homepage enabled');
+    const modeLabels: Record<HomepageMode, string> = {
+      home: 'Normal Homepage',
+      waitlist: 'Waitlist Page',
+      maintenance: 'Maintenance Page',
+      promo: 'Promotional Page'
+    };
+    
+    toast.success(`Switched to ${modeLabels[mode]}`);
     return true;
   } catch (error: any) {
-    console.error('Failed to update waitlist mode:', error);
+    console.error('Failed to update homepage mode:', error);
     toast.error(`Failed to update homepage mode: ${error.message}`);
     return false;
   }
+};
+
+// Legacy support - maps to new system
+export const getWaitlistMode = async (): Promise<boolean> => {
+  const mode = await getHomepageMode();
+  return mode === 'waitlist';
+};
+
+export const setWaitlistMode = async (enabled: boolean): Promise<boolean> => {
+  return setHomepageMode(enabled ? 'waitlist' : 'home');
 };
