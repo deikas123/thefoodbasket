@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
-import Hero from "@/components/Hero";
-import FeaturedProducts from "@/components/FeaturedProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
 import { useCart } from "@/context/CartContext";
 import AdminBanner from "@/components/AdminBanner";
-import OtherProducts from "@/components/OtherProducts";
-import DailyOffersSection from "@/components/home/DailyOffersSection";
-import TopGroceryStores from "@/components/home/TopGroceryStores";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
 import { RecentlyViewedProducts } from "@/components/product/RecentlyViewedProducts";
-import { SmartRecommendations } from "@/components/product/SmartRecommendations";
-import { PersonalizedBundleRecommendations } from "@/components/product/PersonalizedBundleRecommendations";
 import Waitlist from "@/pages/Waitlist";
 import { getWaitlistMode } from "@/services/contentService";
+
+// New home page components
+import HeroBanner from "@/components/home/HeroBanner";
+import FeaturedCategories from "@/components/home/FeaturedCategories";
+import PromoBanners from "@/components/home/PromoBanners";
+import PopularProducts from "@/components/home/PopularProducts";
+import DailyOffersSection from "@/components/home/DailyOffersSection";
 
 const Index = () => {
   const cartContext = useCart();
@@ -28,7 +28,6 @@ const Index = () => {
     checkWaitlistMode();
   }, []);
   
-  // Guard against undefined context during initial render
   if (!cartContext || isWaitlistMode === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -36,10 +35,7 @@ const Index = () => {
       </div>
     );
   }
-  
-  const { addItem } = cartContext;
 
-  // Show waitlist page if enabled
   if (isWaitlistMode) {
     return <Waitlist />;
   }
@@ -48,42 +44,34 @@ const Index = () => {
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       <Header />
       <main className="flex-grow">
-        <Hero />
+        {/* Hero Banner with subscription */}
+        <HeroBanner />
+        
+        {/* Featured Categories carousel */}
+        <FeaturedCategories />
+        
+        {/* Three Promotional Banners */}
+        <PromoBanners />
         
         {/* Admin Promotional Banner */}
-        <section className="py-6 md:py-8">
+        <section className="py-4">
           <div className="container mx-auto px-4">
             <AdminBanner />
           </div>
         </section>
         
-        {/* Top Grocery Stores Section */}
-        <TopGroceryStores />
-        
-        {/* Daily Offers Section */}
-        <section className="py-4 md:py-6">
-          <DailyOffersSection />
-        </section>
+        {/* Daily Offers */}
+        <DailyOffersSection />
 
-        {/* Recently Viewed & Smart Recommendations */}
+        {/* Popular Products with category tabs */}
+        <PopularProducts />
+        
+        {/* Recently Viewed */}
         <section className="py-4 md:py-6">
           <div className="container mx-auto px-4">
             <RecentlyViewedProducts />
-            <PersonalizedBundleRecommendations />
-            <SmartRecommendations title="Recommended For You" limit={8} />
           </div>
         </section>
-        
-        {/* Featured Products Section */}
-        <section className="py-4 md:py-6">
-          <FeaturedProducts />
-        </section>
-        
-        {/* Other Products Section */}
-        <section className="py-4 md:py-6">
-          <OtherProducts />
-        </section>
-        
       </main>
       
       <Footer />
