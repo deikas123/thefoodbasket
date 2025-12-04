@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Package, Wallet, Clock, CalendarClock, LogOut, ShieldAlert, Truck, Heart, Bell } from "lucide-react";
+import { User, Package, Wallet, Clock, CalendarClock, LogOut, ShieldAlert, Truck, Heart, Bell, Award } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useIsMobile } from "@/types";
 import { useWishlist } from "@/context/WishlistContext";
@@ -140,6 +140,13 @@ const UserMenu = () => {
               <Link to="/auto-replenish" className="cursor-pointer">
                 <CalendarClock className="mr-2 h-4 w-4" />
                 <span>Auto Replenish</span>
+              </Link>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem asChild>
+              <Link to="/loyalty" className="cursor-pointer">
+                <Award className="mr-2 h-4 w-4" />
+                <span>Loyalty Points</span>
               </Link>
             </DropdownMenuItem>
           </>
