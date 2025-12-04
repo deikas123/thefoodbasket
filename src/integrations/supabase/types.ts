@@ -699,27 +699,45 @@ export type Database = {
       }
       loyalty_settings: {
         Row: {
+          bronze_multiplier: number
+          bronze_threshold: number
           created_at: string
+          gold_multiplier: number
+          gold_threshold: number
           id: string
           ksh_per_point: number
           min_redemption_points: number
           points_per_ksh: number
+          silver_multiplier: number
+          silver_threshold: number
           updated_at: string
         }
         Insert: {
+          bronze_multiplier?: number
+          bronze_threshold?: number
           created_at?: string
+          gold_multiplier?: number
+          gold_threshold?: number
           id?: string
           ksh_per_point?: number
           min_redemption_points?: number
           points_per_ksh?: number
+          silver_multiplier?: number
+          silver_threshold?: number
           updated_at?: string
         }
         Update: {
+          bronze_multiplier?: number
+          bronze_threshold?: number
           created_at?: string
+          gold_multiplier?: number
+          gold_threshold?: number
           id?: string
           ksh_per_point?: number
           min_redemption_points?: number
           points_per_ksh?: number
+          silver_multiplier?: number
+          silver_threshold?: number
           updated_at?: string
         }
         Relationships: []
