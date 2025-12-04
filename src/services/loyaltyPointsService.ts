@@ -1,12 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { LoyaltySettings, getTierFromPoints, getTierMultiplier } from "@/types/loyalty";
 
 export const awardLoyaltyPoints = async (userId: string, orderTotal: number): Promise<boolean> => {
   try {
-    // Get loyalty settings to determine points per KSH
+    // Get loyalty settings with tier info
     const { data: settings, error: settingsError } = await supabase
       .from('loyalty_settings')
-      .select('points_per_ksh')
+      .select('*')
       .single();
 
     if (settingsError) {
@@ -14,42 +15,33 @@ export const awardLoyaltyPoints = async (userId: string, orderTotal: number): Pr
       return false;
     }
 
+    // Get user's current points to determine tier
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('loyalty_points')
+      .eq('id', userId)
+      .single();
+
+    const currentPoints = profile?.loyalty_points || 0;
+    const tier = getTierFromPoints(currentPoints, settings as LoyaltySettings);
+    const multiplier = getTierMultiplier(tier, settings as LoyaltySettings);
+
     const pointsPerKsh = settings?.points_per_ksh || 1;
-    const pointsEarned = Math.floor(orderTotal * pointsPerKsh);
+    const basePoints = Math.floor(orderTotal * pointsPerKsh);
+    const pointsEarned = Math.floor(basePoints * multiplier);
 
-    console.log(`Awarding ${pointsEarned} points for order total of ${orderTotal} KSH`);
+    console.log(`Awarding ${pointsEarned} points (${basePoints} base × ${multiplier} ${tier} multiplier) for order total of ${orderTotal} KSH`);
 
-    // Update user's loyalty points
+    const newTotal = currentPoints + pointsEarned;
+
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ 
-        loyalty_points: supabase.rpc('increment_loyalty_points', { 
-          user_id: userId, 
-          points_to_add: pointsEarned 
-        })
-      })
+      .update({ loyalty_points: newTotal })
       .eq('id', userId);
 
     if (updateError) {
-      // Fallback: fetch current points and update
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('loyalty_points')
-        .eq('id', userId)
-        .single();
-
-      const currentPoints = profile?.loyalty_points || 0;
-      const newTotal = currentPoints + pointsEarned;
-
-      const { error: fallbackError } = await supabase
-        .from('profiles')
-        .update({ loyalty_points: newTotal })
-        .eq('id', userId);
-
-      if (fallbackError) {
-        console.error('Error updating loyalty points:', fallbackError);
-        return false;
-      }
+      console.error('Error updating loyalty points:', updateError);
+      return false;
     }
 
     console.log(`Successfully awarded ${pointsEarned} loyalty points to user ${userId}`);

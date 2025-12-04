@@ -23,6 +23,7 @@ import EnhancedSearchBar from "@/components/header/EnhancedSearchBar";
 import UserMenu from "@/components/header/UserMenu";
 import NotificationsMenu from "@/components/header/NotificationsMenu";
 import CartButton from "@/components/header/CartButton";
+import LoyaltyPointsBadge from "@/components/header/LoyaltyPointsBadge";
 
 const Header = () => {
   const isMobile = useIsMobile();
@@ -97,6 +98,8 @@ const Header = () => {
               <EnhancedSearchBar />
 
               <div className="flex items-center gap-2">
+                <LoyaltyPointsBadge />
+                
                 <Link to="/wishlist">
                   <Button variant="ghost" size="icon" className="relative">
                     <Heart className="h-5 w-5" />
