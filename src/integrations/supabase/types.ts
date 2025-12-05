@@ -707,7 +707,10 @@ export type Database = {
           id: string
           ksh_per_point: number
           min_redemption_points: number
+          points_expiration_days: number | null
           points_per_ksh: number
+          referral_purchase_bonus: number | null
+          referral_signup_bonus: number | null
           silver_multiplier: number
           silver_threshold: number
           updated_at: string
@@ -721,7 +724,10 @@ export type Database = {
           id?: string
           ksh_per_point?: number
           min_redemption_points?: number
+          points_expiration_days?: number | null
           points_per_ksh?: number
+          referral_purchase_bonus?: number | null
+          referral_signup_bonus?: number | null
           silver_multiplier?: number
           silver_threshold?: number
           updated_at?: string
@@ -735,7 +741,10 @@ export type Database = {
           id?: string
           ksh_per_point?: number
           min_redemption_points?: number
+          points_expiration_days?: number | null
           points_per_ksh?: number
+          referral_purchase_bonus?: number | null
+          referral_signup_bonus?: number | null
           silver_multiplier?: number
           silver_threshold?: number
           updated_at?: string
@@ -1256,6 +1265,7 @@ export type Database = {
           notification_promo_email: boolean | null
           notification_promo_sms: boolean | null
           phone: string | null
+          points_last_activity: string | null
           referral_code: string | null
           referred_by: string | null
         }
@@ -1273,6 +1283,7 @@ export type Database = {
           notification_promo_email?: boolean | null
           notification_promo_sms?: boolean | null
           phone?: string | null
+          points_last_activity?: string | null
           referral_code?: string | null
           referred_by?: string | null
         }
@@ -1290,6 +1301,7 @@ export type Database = {
           notification_promo_email?: boolean | null
           notification_promo_sms?: boolean | null
           phone?: string | null
+          points_last_activity?: string | null
           referral_code?: string | null
           referred_by?: string | null
         }
@@ -1695,6 +1707,7 @@ export type Database = {
         Args: { product_id: string; quantity_to_deduct: number }
         Returns: undefined
       }
+      expire_inactive_points: { Args: never; Returns: undefined }
       generate_referral_code: { Args: never; Returns: string }
       get_delivery_settings: { Args: never; Returns: Json }
       get_frequently_bought_together: {
