@@ -12,6 +12,9 @@ export interface LoyaltySettings {
   bronze_multiplier: number;
   silver_multiplier: number;
   gold_multiplier: number;
+  points_expiration_days: number;
+  referral_signup_bonus: number;
+  referral_purchase_bonus: number;
   created_at: string;
   updated_at: string;
 }

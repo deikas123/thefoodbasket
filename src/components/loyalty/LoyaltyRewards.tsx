@@ -16,17 +16,22 @@ import {
   Share2, 
   Copy,
   TrendingUp,
-  Award
+  Award,
+  Clock,
+  AlertTriangle
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, differenceInDays, addDays } from "date-fns";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { SocialShare } from "@/components/ui/social-share";
+import { useLoyaltySettings } from "@/hooks/useLoyaltySettings";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const LoyaltyRewards = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [referralCode, setReferralCode] = useState("");
+  const { data: settings } = useLoyaltySettings();
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -43,6 +48,27 @@ export const LoyaltyRewards = () => {
     },
     enabled: !!user
   });
+  
+  // Calculate expiration warning
+  const getExpirationInfo = () => {
+    if (!profile || !settings || !settings.points_expiration_days || settings.points_expiration_days <= 0) {
+      return null;
+    }
+    
+    const lastActivity = profile.points_last_activity ? new Date(profile.points_last_activity) : new Date(profile.created_at);
+    const expirationDate = addDays(lastActivity, settings.points_expiration_days);
+    const daysUntilExpiration = differenceInDays(expirationDate, new Date());
+    
+    if (daysUntilExpiration <= 30 && profile.loyalty_points > 0) {
+      return {
+        daysLeft: Math.max(0, daysUntilExpiration),
+        expirationDate
+      };
+    }
+    return null;
+  };
+  
+  const expirationInfo = getExpirationInfo();
 
   const { data: transactions } = useQuery({
     queryKey: ['loyalty-transactions', user?.id],
@@ -176,14 +202,28 @@ export const LoyaltyRewards = () => {
       case 'review': return <Star className="h-4 w-4" />;
       case 'referral': return <Users className="h-4 w-4" />;
       case 'redemption': return <Gift className="h-4 w-4" />;
+      case 'expiration': return <Clock className="h-4 w-4" />;
       default: return <Trophy className="h-4 w-4" />;
     }
   };
 
-  const pointsValue = (profile?.loyalty_points || 0) * 0.1; // 10 points = KSH 1
+  const pointsValue = (profile?.loyalty_points || 0) * (settings?.ksh_per_point || 0.1);
+  const signupBonus = settings?.referral_signup_bonus || 100;
+  const purchaseBonus = settings?.referral_purchase_bonus || 200;
 
   return (
     <div className="space-y-6">
+      {/* Expiration Warning */}
+      {expirationInfo && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Your {profile?.loyalty_points?.toLocaleString()} points will expire in {expirationInfo.daysLeft} days. 
+            Make a purchase to keep your points active!
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {/* Points Overview */}
       <div className="grid md:grid-cols-3 gap-6">
         <Card className="p-6 bg-gradient-to-br from-primary to-primary/80 text-white">
@@ -280,14 +320,15 @@ export const LoyaltyRewards = () => {
                   </Button>
                   <SocialShare
                     title="Join me and earn rewards! 🎁"
-                    text={`Use my referral code ${profile.referral_code} to get started and we both earn 100 loyalty points!`}
+                    text={`Use my referral code ${profile.referral_code} to get started and we both earn ${signupBonus} loyalty points!`}
                     variant="outline"
                     size="icon"
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Share your code and earn 100 points when friends sign up!
-                </p>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>• Earn <strong>{signupBonus} points</strong> when friends sign up</p>
+                  <p>• Earn <strong>{purchaseBonus} bonus points</strong> when they make their first purchase!</p>
+                </div>
               </div>
             )}
           </Card>
@@ -323,7 +364,7 @@ export const LoyaltyRewards = () => {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold">Make Purchases</p>
-                  <p className="text-sm text-muted-foreground">Earn 1 point for every KSH spent</p>
+                  <p className="text-sm text-muted-foreground">Earn {settings?.points_per_ksh || 1} point for every KSH spent</p>
                 </div>
                 <Badge variant="secondary">Auto</Badge>
               </div>
@@ -345,9 +386,11 @@ export const LoyaltyRewards = () => {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold">Refer Friends</p>
-                  <p className="text-sm text-muted-foreground">Earn 100 points per successful referral</p>
+                  <p className="text-sm text-muted-foreground">
+                    Earn up to {signupBonus + purchaseBonus} points per referral
+                  </p>
                 </div>
-                <Badge variant="secondary">+100</Badge>
+                <Badge variant="secondary">+{signupBonus + purchaseBonus}</Badge>
               </div>
             </div>
           </Card>

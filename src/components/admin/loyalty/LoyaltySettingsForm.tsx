@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Award } from "lucide-react";
+import { Loader2, Award, Users, Clock } from "lucide-react";
 import { useLoyaltySettings, useUpdateLoyaltySettings } from "@/hooks/useLoyaltySettings";
 import { Separator } from "@/components/ui/separator";
 
@@ -22,6 +22,9 @@ const LoyaltySettingsForm = () => {
     bronze_multiplier: 1.0,
     silver_multiplier: 1.5,
     gold_multiplier: 2.0,
+    points_expiration_days: 365,
+    referral_signup_bonus: 100,
+    referral_purchase_bonus: 200,
   });
   
   useEffect(() => {
@@ -36,6 +39,9 @@ const LoyaltySettingsForm = () => {
         bronze_multiplier: settings.bronze_multiplier ?? 1.0,
         silver_multiplier: settings.silver_multiplier ?? 1.5,
         gold_multiplier: settings.gold_multiplier ?? 2.0,
+        points_expiration_days: settings.points_expiration_days ?? 365,
+        referral_signup_bonus: settings.referral_signup_bonus ?? 100,
+        referral_purchase_bonus: settings.referral_purchase_bonus ?? 200,
       });
     }
   }, [settings]);
@@ -64,7 +70,7 @@ const LoyaltySettingsForm = () => {
     <Card>
       <CardHeader>
         <CardTitle>Loyalty Points Settings</CardTitle>
-        <CardDescription>Configure points earning rates and tier thresholds</CardDescription>
+        <CardDescription>Configure points earning rates, tier thresholds, referral bonuses, and expiration</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -124,6 +130,85 @@ const LoyaltySettingsForm = () => {
                   Minimum points to redeem
                 </p>
               </div>
+            </div>
+          </div>
+          
+          <Separator />
+          
+          {/* Referral Settings */}
+          <div>
+            <h3 className="font-medium mb-3 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Referral Bonuses
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Configure bonus points for referral program
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="referral_signup_bonus">Signup Bonus</Label>
+                <Input
+                  id="referral_signup_bonus"
+                  type="number"
+                  min="0"
+                  value={formData.referral_signup_bonus}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    referral_signup_bonus: parseInt(e.target.value) || 0
+                  })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Points awarded when a referred user signs up
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="referral_purchase_bonus">First Purchase Bonus</Label>
+                <Input
+                  id="referral_purchase_bonus"
+                  type="number"
+                  min="0"
+                  value={formData.referral_purchase_bonus}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    referral_purchase_bonus: parseInt(e.target.value) || 0
+                  })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Bonus points when referred user makes first purchase
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <Separator />
+          
+          {/* Expiration Settings */}
+          <div>
+            <h3 className="font-medium mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Points Expiration
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Points expire after a period of inactivity (no purchases or earning)
+            </p>
+            
+            <div className="max-w-xs">
+              <Label htmlFor="points_expiration_days">Expiration Period (days)</Label>
+              <Input
+                id="points_expiration_days"
+                type="number"
+                min="0"
+                value={formData.points_expiration_days}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  points_expiration_days: parseInt(e.target.value) || 0
+                })}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Set to 0 to disable expiration
+              </p>
             </div>
           </div>
           
