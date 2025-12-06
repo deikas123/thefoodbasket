@@ -11,7 +11,7 @@ export const useUsersData = () => {
       console.log("Fetching all users for admin...");
       
       try {
-        // Get all profiles
+        // Get all profiles (admin RLS policy allows viewing all)
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('*')
@@ -22,7 +22,7 @@ export const useUsersData = () => {
           throw profilesError;
         }
         
-        console.log("Profiles found:", profiles);
+        console.log("Profiles found:", profiles?.length || 0);
         
         if (!profiles || profiles.length === 0) {
           console.log("No profiles found");
@@ -38,33 +38,17 @@ export const useUsersData = () => {
           console.error("Error fetching user roles:", rolesError);
         }
         
-        console.log("User roles found:", userRoles);
-        
-        // Get actual auth users to get real email addresses
-        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-        
-        if (authError) {
-          console.error("Error fetching auth users:", authError);
-        }
-        
-        console.log("Auth users found:", authData?.users?.length || 0);
-        
         // Create a map of roles by user_id for quick lookup
         const roleMap = new Map();
         if (userRoles) {
           userRoles.forEach(r => roleMap.set(r.user_id, r.role));
         }
         
-        // Create a map of emails by user_id
-        const emailMap = new Map();
-        if (authData?.users) {
-          authData.users.forEach((user: any) => emailMap.set(user.id, user.email));
-        }
-        
-        // Combine the data
-        const userData: User[] = profiles.map((profile) => {
+        // Combine the data - email now comes from profiles table
+        const userData: User[] = profiles.map((profile: any) => {
           const role = roleMap.get(profile.id) || 'customer';
-          const email = emailMap.get(profile.id) || `${profile.first_name?.toLowerCase() || 'user'}@foodbasket.com`;
+          // Use email from profiles, fallback to generated email for legacy users
+          const email = profile.email || `${profile.first_name?.toLowerCase() || 'user'}.${profile.id.slice(0, 8)}@example.com`;
           
           return {
             id: profile.id,
@@ -77,7 +61,7 @@ export const useUsersData = () => {
           };
         });
         
-        console.log("Final user data:", userData);
+        console.log("Final user data:", userData.length);
         return userData;
       } catch (error) {
         console.error("Error in users query:", error);
