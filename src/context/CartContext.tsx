@@ -140,17 +140,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await deductStock(items);
 
       try {
-        // Award loyalty points
-        try {
-          const { awardLoyaltyPoints } = await import('@/services/loyaltyPointsService');
-          await awardLoyaltyPoints(userId, order.total);
-          console.log(`Awarded ${loyaltyPointsEarned} loyalty points for order ${order.id}`);
-        } catch (error) {
-          console.error('Error awarding loyalty points:', error);
-        }
-
-        // Save order to Supabase
-        const { error } = await supabase
+        // Save order to Supabase and get the real order ID
+        const { data: createdOrder, error } = await supabase
           .from('orders')
           .insert({
             user_id: userId,
@@ -165,11 +156,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             estimated_delivery: order.estimatedDelivery,
             loyalty_points_earned: loyaltyPointsEarned,
             notes: notes || null
-          });
+          })
+          .select()
+          .single();
 
-        if (error) {
+        if (error || !createdOrder) {
           console.error('Error saving order:', error);
           throw new Error('Failed to save order');
+        }
+
+        // Update the order object with the real Supabase-generated ID
+        order.id = createdOrder.id;
+
+        // Award loyalty points
+        try {
+          const { awardLoyaltyPoints } = await import('@/services/loyaltyPointsService');
+          await awardLoyaltyPoints(userId, order.total);
+          console.log(`Awarded ${loyaltyPointsEarned} loyalty points for order ${order.id}`);
+        } catch (error) {
+          console.error('Error awarding loyalty points:', error);
         }
 
         // Generate receipt after successful order
