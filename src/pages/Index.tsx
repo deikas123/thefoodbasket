@@ -10,6 +10,7 @@ import Waitlist from "@/pages/Waitlist";
 import MaintenancePage from "@/pages/MaintenancePage";
 import PromoPage from "@/pages/PromoPage";
 import { getHomepageMode, HomepageMode } from "@/services/contentService";
+import NewYearFireworks from "@/components/NewYearFireworks";
 
 // Home page components
 import HeroBanner from "@/components/home/HeroBanner";
@@ -21,6 +22,7 @@ import DailyOffersSection from "@/components/home/DailyOffersSection";
 const Index = () => {
   const cartContext = useCart();
   const [homepageMode, setHomepageMode] = useState<HomepageMode | null>(null);
+  const [showFireworks, setShowFireworks] = useState(true);
   
   useEffect(() => {
     const checkHomepageMode = async () => {
@@ -28,6 +30,10 @@ const Index = () => {
       setHomepageMode(mode);
     };
     checkHomepageMode();
+    
+    // Hide fireworks after 15 seconds
+    const fireworksTimeout = setTimeout(() => setShowFireworks(false), 15000);
+    return () => clearTimeout(fireworksTimeout);
   }, []);
   
   if (!cartContext || homepageMode === null) {
@@ -54,6 +60,7 @@ const Index = () => {
   // Normal homepage
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
+      {showFireworks && <NewYearFireworks />}
       <Header />
       <main className="flex-grow">
         {/* Hero Banner with subscription */}
