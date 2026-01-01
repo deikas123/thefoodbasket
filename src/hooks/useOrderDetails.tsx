@@ -1,11 +1,14 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { getOrderById, cancelOrder } from "@/services/orderService";
 import { Order } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { convertToOrder } from "@/utils/typeConverters";
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
 
 export const useOrderDetails = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -18,54 +21,68 @@ export const useOrderDetails = () => {
 
   console.log("useOrderDetails hook", { orderId, user, isAuthenticated, authLoading });
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      if (!orderId) {
-        console.log("No orderId provided in URL params");
-        setError("No order ID provided");
-        setIsLoading(false);
-        return;
-      }
+  const fetchOrderWithRetry = useCallback(async (retryCount = 0): Promise<void> => {
+    if (!orderId) {
+      console.log("No orderId provided in URL params");
+      setError("No order ID provided");
+      setIsLoading(false);
+      return;
+    }
 
-      if (!user || !isAuthenticated) {
-        console.log("User not authenticated, waiting...");
-        return;
-      }
+    if (!user || !isAuthenticated) {
+      console.log("User not authenticated, waiting...");
+      return;
+    }
+    
+    try {
+      console.log(`Fetching order with ID: ${orderId} (attempt ${retryCount + 1})`);
+      setIsLoading(true);
+      setError(null);
       
-      try {
-        console.log("Fetching order with ID:", orderId);
-        setIsLoading(true);
-        setError(null);
-        
-        const orderData = await getOrderById(orderId);
-        console.log("Fetched order data:", orderData);
-        
-        if (orderData) {
-          const convertedOrder = convertToOrder(orderData);
-          console.log("Converted order:", convertedOrder);
-          setOrder(convertedOrder);
+      const orderData = await getOrderById(orderId);
+      console.log("Fetched order data:", orderData);
+      
+      if (orderData) {
+        const convertedOrder = convertToOrder(orderData);
+        console.log("Converted order:", convertedOrder);
+        setOrder(convertedOrder);
+        setIsLoading(false);
+      } else {
+        // Order not found - retry if we haven't exhausted retries
+        if (retryCount < MAX_RETRIES) {
+          console.log(`Order not found, retrying in ${RETRY_DELAY}ms...`);
+          setTimeout(() => fetchOrderWithRetry(retryCount + 1), RETRY_DELAY);
         } else {
-          console.log("No order data found for ID:", orderId);
+          console.log("No order data found after retries for ID:", orderId);
           setError("Order not found");
           setOrder(null);
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to fetch order:", error);
+      }
+    } catch (error) {
+      console.error("Failed to fetch order:", error);
+      
+      // Retry on error
+      if (retryCount < MAX_RETRIES) {
+        console.log(`Error fetching order, retrying in ${RETRY_DELAY}ms...`);
+        setTimeout(() => fetchOrderWithRetry(retryCount + 1), RETRY_DELAY);
+      } else {
         setError("Failed to fetch order details");
+        setIsLoading(false);
         toast({
           title: "Error fetching order",
           description: "We couldn't load your order details.",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    if (!authLoading) {
-      fetchOrder();
     }
-  }, [orderId, user, isAuthenticated, authLoading]);
+  }, [orderId, user, isAuthenticated]);
+
+  useEffect(() => {
+    if (!authLoading && user && isAuthenticated) {
+      fetchOrderWithRetry(0);
+    }
+  }, [authLoading, user, isAuthenticated, fetchOrderWithRetry]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
