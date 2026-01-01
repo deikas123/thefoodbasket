@@ -55,7 +55,9 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route path="/" element={<Waitlist />} />
+        {/* Root route is dynamically controlled by homepage mode inside Index */}
+        <Route path="/" element={<Home />} />
+        <Route path="/waitlist" element={<Waitlist />} />
         <Route path="/home" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/about" element={<About />} />
