@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -6,6 +5,7 @@ import { getOrderById, cancelOrder } from "@/services/orderService";
 import { Order } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { convertToOrder } from "@/utils/typeConverters";
+import { supabase } from "@/integrations/supabase/client";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
@@ -48,7 +48,6 @@ export const useOrderDetails = () => {
         setOrder(convertedOrder);
         setIsLoading(false);
       } else {
-        // Order not found - retry if we haven't exhausted retries
         if (retryCount < MAX_RETRIES) {
           console.log(`Order not found, retrying in ${RETRY_DELAY}ms...`);
           setTimeout(() => fetchOrderWithRetry(retryCount + 1), RETRY_DELAY);
@@ -62,7 +61,6 @@ export const useOrderDetails = () => {
     } catch (error) {
       console.error("Failed to fetch order:", error);
       
-      // Retry on error
       if (retryCount < MAX_RETRIES) {
         console.log(`Error fetching order, retrying in ${RETRY_DELAY}ms...`);
         setTimeout(() => fetchOrderWithRetry(retryCount + 1), RETRY_DELAY);
@@ -83,6 +81,56 @@ export const useOrderDetails = () => {
       fetchOrderWithRetry(0);
     }
   }, [authLoading, user, isAuthenticated, fetchOrderWithRetry]);
+
+  // Real-time subscription for order updates
+  useEffect(() => {
+    if (!orderId || !user || !isAuthenticated) return;
+
+    console.log("Setting up real-time subscription for order:", orderId);
+    
+    const channel = supabase
+      .channel(`order-${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`
+        },
+        async (payload) => {
+          console.log("Real-time order update received:", payload);
+          
+          if (payload.new) {
+            const updatedOrder = convertToOrder(payload.new as any);
+            setOrder(updatedOrder);
+            
+            // Show toast notification for status changes
+            if (payload.old && (payload.old as any).status !== (payload.new as any).status) {
+              const statusMessages: Record<string, string> = {
+                'processing': 'Your order is now being processed!',
+                'dispatched': 'Your order has been dispatched!',
+                'out_for_delivery': 'Your order is out for delivery!',
+                'delivered': 'Your order has been delivered!',
+                'cancelled': 'Your order has been cancelled.'
+              };
+              
+              const newStatus = (payload.new as any).status;
+              toast({
+                title: "Order Status Updated",
+                description: statusMessages[newStatus] || `Order status changed to: ${newStatus}`,
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("Cleaning up real-time subscription for order:", orderId);
+      supabase.removeChannel(channel);
+    };
+  }, [orderId, user, isAuthenticated]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
