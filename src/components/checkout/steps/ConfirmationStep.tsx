@@ -1,9 +1,10 @@
-
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Truck, Receipt, Download } from "lucide-react";
+import { CheckCircle, Truck, Receipt } from "lucide-react";
 import { Order } from "@/types";
 import { formatCurrency } from "@/utils/currencyFormatter";
+import confetti from "canvas-confetti";
 
 interface ConfirmationStepProps {
   completedOrder: Order;
@@ -16,6 +17,35 @@ const ConfirmationStep = ({
   onTrackOrder,
   onContinueShopping
 }: ConfirmationStepProps) => {
+  useEffect(() => {
+    // Trigger confetti on mount
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+
+    frame();
+  }, []);
+
   return (
     <div className="max-w-2xl mx-auto text-center">
       <div className="mb-8">

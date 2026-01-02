@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
@@ -60,7 +61,9 @@ const Index = () => {
   // Normal homepage
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
-      {showFireworks && <NewYearFireworks />}
+      <AnimatePresence>
+        {showFireworks && <NewYearFireworks onClose={() => setShowFireworks(false)} />}
+      </AnimatePresence>
       <Header />
       <main className="flex-grow">
         {/* Hero Banner with subscription */}
