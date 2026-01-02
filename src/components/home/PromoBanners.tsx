@@ -1,41 +1,64 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const banners = [
-  {
-    id: 1,
-    title: 'Everyday Fresh & Clean with Our Products',
-    image: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=400&h=300&fit=crop',
-    bgColor: 'bg-green-100 dark:bg-green-950/40',
-    link: '/shop'
-  },
-  {
-    id: 2,
-    title: 'Make your Breakfast Healthy and Easy',
-    image: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400&h=300&fit=crop',
-    bgColor: 'bg-pink-100 dark:bg-pink-950/40',
-    link: '/shop'
-  },
-  {
-    id: 3,
-    title: 'The best Organic Products Online',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=300&fit=crop',
-    bgColor: 'bg-yellow-100 dark:bg-yellow-950/40',
-    link: '/shop'
-  }
+const bgColors = [
+  'bg-green-100 dark:bg-green-950/40',
+  'bg-pink-100 dark:bg-pink-950/40',
+  'bg-yellow-100 dark:bg-yellow-950/40',
+  'bg-blue-100 dark:bg-blue-950/40',
+  'bg-purple-100 dark:bg-purple-950/40',
 ];
 
 const PromoBanners = () => {
+  const { data: banners, isLoading } = useQuery({
+    queryKey: ['promo-banners'],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('banners')
+        .select('*')
+        .eq('active', true)
+        .lte('start_date', now)
+        .gte('end_date', now)
+        .order('priority', { ascending: true })
+        .limit(3);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <section className="py-6 md:py-8">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-[200px] rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!banners || banners.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-6 md:py-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          {banners.map((banner) => (
+          {banners.map((banner, index) => (
             <Link
               key={banner.id}
-              to={banner.link}
-              className={`group relative rounded-2xl overflow-hidden ${banner.bgColor} p-5 md:p-6 min-h-[200px] flex flex-col justify-between transition-shadow hover:shadow-lg`}
+              to={banner.link || '/shop'}
+              className={`group relative rounded-2xl overflow-hidden ${bgColors[index % bgColors.length]} p-5 md:p-6 min-h-[200px] flex flex-col justify-between transition-shadow hover:shadow-lg`}
             >
               {/* Background Image */}
               <div className="absolute right-0 bottom-0 w-2/3 h-full">
@@ -52,6 +75,9 @@ const PromoBanners = () => {
                 <h3 className="text-base md:text-lg font-bold text-foreground leading-tight mb-4">
                   {banner.title}
                 </h3>
+                {banner.subtitle && (
+                  <p className="text-sm text-muted-foreground">{banner.subtitle}</p>
+                )}
               </div>
               
               <Button
