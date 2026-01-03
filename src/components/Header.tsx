@@ -50,15 +50,15 @@ const Header = () => {
     <header
       className={cn(
         "fixed top-0 w-full z-40 transition-all duration-300",
-        "bg-card border-b border-border shadow-sm",
-        isMobile ? "py-2" : "py-3"
+        "bg-background/95 backdrop-blur-md border-b border-border/50",
+        isScrolled && "shadow-sm"
       )}
     >
-      <div className="container mx-auto px-3 md:px-4">
+      <div className="container mx-auto px-4">
         {/* Mobile Layout */}
         {isMobile ? (
-          <div className="flex items-center justify-between h-12">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
               <MobileMenu />
               <Logo />
             </div>
@@ -66,8 +66,8 @@ const Header = () => {
             <div className="flex items-center gap-1">
               <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <span className="sr-only">Search</span>
@@ -88,23 +88,23 @@ const Header = () => {
           </div>
         ) : (
           /* Desktop Layout */
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-10">
               <Logo />
               <DesktopNavigation />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <EnhancedSearchBar />
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <LoyaltyPointsBadge />
                 
                 <Link to="/wishlist">
-                  <Button variant="ghost" size="icon" className="relative">
+                  <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-muted">
                     <Heart className="h-5 w-5" />
                     {itemCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full text-xs w-4 h-4 flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground rounded-full text-xs w-5 h-5 flex items-center justify-center font-medium">
                         {itemCount}
                       </span>
                     )}

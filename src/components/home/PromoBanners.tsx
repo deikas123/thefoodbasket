@@ -19,8 +19,14 @@ const bgColors = [
 
 const PromoBanners = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: true, align: 'start', slidesToScroll: 1 },
-    [Autoplay({ delay: 4000, stopOnInteraction: false })]
+    { 
+      loop: true, 
+      align: 'start', 
+      slidesToScroll: 1,
+      dragFree: false,
+      containScroll: 'trimSnaps',
+    },
+    [Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })]
   );
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);

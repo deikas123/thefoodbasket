@@ -18,7 +18,7 @@ const HeroBanner = () => {
   };
 
   return (
-    <section className="py-4 md:py-6">
+    <section className="pt-20 md:pt-24 pb-4 md:pb-6">
       <div className="container mx-auto px-4">
         <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-green-50 via-emerald-50 to-green-100 dark:from-green-950/40 dark:via-emerald-950/30 dark:to-green-900/40">
           <div className="grid md:grid-cols-2 gap-6 items-center p-6 md:p-10 lg:p-14">
