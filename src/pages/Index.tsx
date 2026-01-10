@@ -16,9 +16,11 @@ import NewYearFireworks from "@/components/NewYearFireworks";
 // Home page components
 import HeroBanner from "@/components/home/HeroBanner";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
+import TopStores from "@/components/home/TopStores";
 import PromoBanners from "@/components/home/PromoBanners";
 import PopularProducts from "@/components/home/PopularProducts";
 import DailyOffersSection from "@/components/home/DailyOffersSection";
+import BenefitsStrip from "@/components/home/BenefitsStrip";
 
 const Index = () => {
   const cartContext = useCart();
@@ -72,6 +74,9 @@ const Index = () => {
         {/* Featured Categories carousel */}
         <FeaturedCategories />
         
+        {/* Shop by Store */}
+        <TopStores />
+        
         {/* Three Promotional Banners */}
         <PromoBanners />
         
@@ -94,6 +99,9 @@ const Index = () => {
             <RecentlyViewedProducts />
           </div>
         </section>
+        
+        {/* Benefits/Trust Strip */}
+        <BenefitsStrip />
       </main>
       
       <Footer />
