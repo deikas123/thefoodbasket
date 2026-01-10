@@ -27,14 +27,14 @@ const getCategoryImage = (name: string, image?: string | null) => {
 };
 
 const categoryColors = [
-  'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800/50',
-  'bg-pink-50 border-pink-200 dark:bg-pink-950/30 dark:border-pink-800/50',
-  'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800/50',
-  'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800/50',
-  'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/50',
-  'bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800/50',
-  'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50',
-  'bg-teal-50 border-teal-200 dark:bg-teal-950/30 dark:border-teal-800/50',
+  'bg-green-500',
+  'bg-yellow-500',
+  'bg-orange-500',
+  'bg-pink-500',
+  'bg-blue-500',
+  'bg-purple-500',
+  'bg-red-500',
+  'bg-teal-500',
 ];
 
 const FeaturedCategories = () => {
@@ -124,32 +124,34 @@ const FeaturedCategories = () => {
           </div>
         </div>
 
-        {/* Categories Scroll */}
+        {/* Categories Scroll - Overlapping Style */}
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2"
+          className="flex -space-x-2 overflow-x-auto scrollbar-hide pb-2 pl-2"
         >
           {categories.map((category, index) => (
             <Link
               key={category.id}
               to={`/shop?category=${category.id}`}
-              className={`flex-shrink-0 flex flex-col items-center p-4 rounded-2xl border-2 transition-all hover:shadow-lg hover:-translate-y-1 group ${categoryColors[index % categoryColors.length]}`}
-              style={{ minWidth: '120px' }}
+              className="relative flex-shrink-0 group"
+              style={{ zIndex: categories.length - index }}
             >
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden mb-3 bg-background/50">
+              {/* Category Image Circle */}
+              <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-background shadow-lg hover:scale-105 transition-transform duration-300">
                 <img
                   src={getCategoryImage(category.name, category.image)}
                   alt={category.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <span className="text-sm font-medium text-foreground text-center line-clamp-1">
+              
+              {/* Category Label Badge */}
+              <div 
+                className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-white text-xs font-medium whitespace-nowrap shadow-md ${categoryColors[index % categoryColors.length]}`}
+              >
                 {category.name}
-              </span>
-              <span className="text-xs text-muted-foreground mt-1">
-                {Math.floor(Math.random() * 15) + 5} items
-              </span>
+              </div>
             </Link>
           ))}
         </div>

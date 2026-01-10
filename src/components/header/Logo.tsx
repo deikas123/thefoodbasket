@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/types";
-import { cn } from "@/lib/utils";
+import { ShoppingBasket } from "lucide-react";
 
 const Logo = () => {
   const { user } = useAuth();
@@ -13,15 +13,14 @@ const Logo = () => {
   return (
     <div className="flex items-center gap-2">
       <Link to="/" className="flex items-center gap-2">
-        <div className="relative h-8 w-8 md:h-10 md:w-10 flex items-center justify-center">
-          <span className="text-2xl md:text-3xl">🧺</span>
+        <div className="relative flex items-center justify-center bg-primary rounded-xl p-1.5 md:p-2">
+          <ShoppingBasket className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
         </div>
-        <span className={cn(
-          "font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent transition-all",
-          isMobile ? "text-lg" : "text-xl md:text-2xl"
-        )}>
-          {isMobile ? "Food Basket" : "The Food Basket"}
-        </span>
+        {!isMobile && (
+          <span className="font-bold text-lg text-foreground">
+            FoodBasket
+          </span>
+        )}
       </Link>
       
       {isAdmin && !isMobile && (
