@@ -21,6 +21,7 @@ const FoodBaskets = lazy(() => import("@/pages/FoodBaskets"));
 const AutoReplenish = lazy(() => import("@/pages/AutoReplenish"));
 const Notifications = lazy(() => import("@/pages/Notifications"));
 const Loyalty = lazy(() => import("@/pages/Loyalty"));
+const FlashSales = lazy(() => import("@/pages/FlashSales"));
 
 const PublicRoutes = () => {
   return (
@@ -108,6 +109,11 @@ const PublicRoutes = () => {
       <Route path="/loyalty" element={
         <Suspense fallback={<LoadingFallback />}>
           <Loyalty />
+        </Suspense>
+      } />
+      <Route path="/flash-sales" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <FlashSales />
         </Suspense>
       } />
     </>

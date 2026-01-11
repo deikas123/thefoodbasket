@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Product } from "@/types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FlashSaleWidget from "@/components/product/FlashSaleWidget";
 
 const ProductDetailsPage = () => {
   const { id: productId } = useParams<{ id: string }>();
@@ -259,6 +260,9 @@ const ProductDetailsPage = () => {
 
       {/* Product Info */}
       <div className="container mx-auto px-4 space-y-6">
+        {/* Flash Sale Widget */}
+        {productId && <FlashSaleWidget productId={productId} />}
+        
         {/* Title and Price */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border">
           <div className="flex items-start justify-between gap-4 mb-4">
