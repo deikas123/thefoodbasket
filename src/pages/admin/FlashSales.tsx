@@ -17,16 +17,18 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Eye, Plus, Trash2, Zap } from "lucide-react";
+import { Edit, Eye, Mail, Plus, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { 
   getFlashSales,
+  getFlashSaleById,
   createFlashSale,
   updateFlashSale,
   deleteFlashSale,
   FlashSale,
   FlashSaleFormData
 } from "@/services/flashSaleService";
+import { sendFlashSaleNotification } from "@/services/flashSaleNotificationService";
 import FlashSaleFormDialog from "@/components/admin/flashSales/FlashSaleFormDialog";
 import FlashSaleProductsDialog from "@/components/admin/flashSales/FlashSaleProductsDialog";
 
@@ -102,6 +104,50 @@ const FlashSalesPage = () => {
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this flash sale?")) {
       deleteMutation.mutate(id);
+    }
+  };
+  
+  const handleSendNotification = async (sale: FlashSale) => {
+    const confirmed = confirm(
+      `Send email notification to all customers about "${sale.name}"?\n\nThis will email all users who have opted in for promotional emails.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      toast.loading("Sending notifications...", { id: "flash-notification" });
+      
+      // Get product count
+      const saleWithProducts = await getFlashSaleById(sale.id);
+      const productCount = saleWithProducts?.products.length || 0;
+      
+      const result = await sendFlashSaleNotification({
+        flashSaleId: sale.id,
+        flashSaleName: sale.name,
+        discountPercentage: sale.discount_percentage,
+        endDate: sale.end_date,
+        productCount,
+      });
+      
+      if (result.success) {
+        toast.success(
+          `Notifications sent successfully!`,
+          { 
+            id: "flash-notification",
+            description: `Sent to ${result.successCount} of ${result.totalRecipients} recipients`
+          }
+        );
+      } else {
+        toast.error("Failed to send notifications", { 
+          id: "flash-notification",
+          description: result.error 
+        });
+      }
+    } catch (error: any) {
+      toast.error("Failed to send notifications", { 
+        id: "flash-notification",
+        description: error.message 
+      });
     }
   };
   
@@ -208,6 +254,15 @@ const FlashSalesPage = () => {
                               title="Manage Products"
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleSendNotification(sale)}
+                              title="Send Email Notification"
+                              disabled={status.label !== "Active"}
+                            >
+                              <Mail className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="ghost" 
