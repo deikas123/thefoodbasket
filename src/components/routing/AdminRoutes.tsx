@@ -11,6 +11,7 @@ const Stores = lazy(() => import("@/pages/admin/Stores"));
 const Categories = lazy(() => import("@/pages/admin/Categories"));
 const Banners = lazy(() => import("@/pages/admin/Banners"));
 const DailyOffers = lazy(() => import("@/pages/admin/DailyOffers"));
+const FlashSales = lazy(() => import("@/pages/admin/FlashSales"));
 const Tags = lazy(() => import("@/pages/admin/Tags"));
 const Deliveries = lazy(() => import("@/pages/admin/Deliveries"));
 const DeliveryOptions = lazy(() => import("@/pages/admin/DeliveryOptions"));
@@ -46,6 +47,7 @@ const AdminRoutes = () => {
           <Route path="stores" element={<Stores />} />
           <Route path="categories" element={<Categories />} />
           <Route path="banners" element={<Banners />} />
+          <Route path="flash-sales" element={<FlashSales />} />
           <Route path="daily-offers" element={<DailyOffers />} />
           <Route path="tags" element={<Tags />} />
           <Route path="deliveries" element={<Deliveries />} />

@@ -20,6 +20,7 @@ import TopStores from "@/components/home/TopStores";
 import PromoBanners from "@/components/home/PromoBanners";
 import PopularProducts from "@/components/home/PopularProducts";
 import DailyOffersSection from "@/components/home/DailyOffersSection";
+import FlashSaleSection from "@/components/home/FlashSaleSection";
 import BenefitsStrip from "@/components/home/BenefitsStrip";
 
 const Index = () => {
@@ -86,6 +87,9 @@ const Index = () => {
             <AdminBanner />
           </div>
         </section>
+        
+        {/* Flash Sale */}
+        <FlashSaleSection />
         
         {/* Daily Offers */}
         <DailyOffersSection />

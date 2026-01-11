@@ -23,6 +23,7 @@ import {
   UserPlus,
   Store,
   ClipboardList,
+  Zap,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -36,6 +37,7 @@ const AdminSidebar = () => {
     { icon: Package, label: "Products", path: "/admin/products" },
     { icon: Tag, label: "Categories", path: "/admin/categories" },
     { icon: Image, label: "Banners", path: "/admin/banners" },
+    { icon: Zap, label: "Flash Sales", path: "/admin/flash-sales" },
     { icon: Percent, label: "Daily Offers", path: "/admin/daily-offers" },
     { icon: Tags, label: "Tags", path: "/admin/tags" },
     { icon: Truck, label: "Deliveries", path: "/admin/deliveries" },
