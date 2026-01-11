@@ -563,6 +563,90 @@ export type Database = {
         }
         Relationships: []
       }
+      flash_sale_products: {
+        Row: {
+          created_at: string
+          flash_sale_id: string
+          id: string
+          product_id: string
+          sale_price: number | null
+          sold_count: number | null
+          stock_limit: number | null
+        }
+        Insert: {
+          created_at?: string
+          flash_sale_id: string
+          id?: string
+          product_id: string
+          sale_price?: number | null
+          sold_count?: number | null
+          stock_limit?: number | null
+        }
+        Update: {
+          created_at?: string
+          flash_sale_id?: string
+          id?: string
+          product_id?: string
+          sale_price?: number | null
+          sold_count?: number | null
+          stock_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flash_sale_products_flash_sale_id_fkey"
+            columns: ["flash_sale_id"]
+            isOneToOne: false
+            referencedRelation: "flash_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flash_sale_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flash_sales: {
+        Row: {
+          active: boolean
+          banner_color: string | null
+          created_at: string
+          description: string | null
+          discount_percentage: number
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          banner_color?: string | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          banner_color?: string | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       food_basket_items: {
         Row: {
           basket_id: string
