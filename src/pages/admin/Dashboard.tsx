@@ -17,6 +17,7 @@ import AdminProductsTable from "@/components/admin/ProductsTable";
 import AdminOrdersTable from "@/components/admin/OrdersTable";
 import AdminUsersTable from "@/components/admin/UsersTable";
 import AdminDeliveriesTable from "@/components/admin/DeliveriesTable";
+import FlashSaleAnalyticsWidget from "@/components/admin/flashSales/FlashSaleAnalyticsWidget";
 import { formatCurrency } from "@/utils/currencyFormatter";
 
 const AdminDashboard = () => {
@@ -273,6 +274,9 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Flash Sale Analytics Widget */}
+          <FlashSaleAnalyticsWidget />
         </TabsContent>
         
         <TabsContent value="products">
