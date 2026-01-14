@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Order, OrderStatus } from "@/types/order";
 import { updateOrderStatus } from "@/services/orderService";
 import { addTrackingEvent } from "@/services/orderTrackingService";
+import { startPacking, completePacking, startDelivery, completeDelivery } from "@/services/orderFlowService";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { MapPin, Package, User, Calendar, Clock, Phone, Mail } from "lucide-react";
+import { MapPin, Package, User, Calendar, Clock, Phone, Mail, Truck, CheckCircle } from "lucide-react";
 
 interface OrderManagementDialogProps {
   isOpen: boolean;
@@ -277,9 +278,105 @@ const OrderManagementDialog: React.FC<OrderManagementDialogProps> = ({
           {/* Status Update Form */}
           <div className="border-t pt-4">
             <h3 className="text-sm font-medium mb-4">Update Order Status</h3>
+            
+            {/* Quick Actions based on current status */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {order.status === 'pending' && (
+                <Button 
+                  size="sm" 
+                  onClick={async () => {
+                    setIsUpdating(true);
+                    try {
+                      await startPacking(order.id, 'admin');
+                      toast({ title: "Order packing started" });
+                      onOrderUpdate({ ...order, status: 'processing' as OrderStatus });
+                      onClose();
+                    } catch (error) {
+                      toast({ title: "Failed to start packing", variant: "destructive" });
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }}
+                  disabled={isUpdating}
+                >
+                  <Package className="h-4 w-4 mr-1" />
+                  Start Packing
+                </Button>
+              )}
+              {order.status === 'processing' && (
+                <Button 
+                  size="sm" 
+                  className="bg-purple-600 hover:bg-purple-700"
+                  onClick={async () => {
+                    setIsUpdating(true);
+                    try {
+                      await completePacking(order.id, 'admin');
+                      toast({ title: "Order ready for pickup. Inventory updated." });
+                      onOrderUpdate({ ...order, status: 'dispatched' as OrderStatus });
+                      onClose();
+                    } catch (error) {
+                      toast({ title: "Failed to complete packing", variant: "destructive" });
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }}
+                  disabled={isUpdating}
+                >
+                  <Truck className="h-4 w-4 mr-1" />
+                  Mark Ready for Pickup
+                </Button>
+              )}
+              {order.status === 'dispatched' && (
+                <Button 
+                  size="sm"
+                  className="bg-orange-600 hover:bg-orange-700" 
+                  onClick={async () => {
+                    setIsUpdating(true);
+                    try {
+                      await startDelivery(order.id, 'admin');
+                      toast({ title: "Delivery started" });
+                      onOrderUpdate({ ...order, status: 'out_for_delivery' as OrderStatus });
+                      onClose();
+                    } catch (error) {
+                      toast({ title: "Failed to start delivery", variant: "destructive" });
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }}
+                  disabled={isUpdating}
+                >
+                  <Truck className="h-4 w-4 mr-1" />
+                  Start Delivery
+                </Button>
+              )}
+              {order.status === 'out_for_delivery' && (
+                <Button 
+                  size="sm" 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={async () => {
+                    setIsUpdating(true);
+                    try {
+                      await completeDelivery(order.id, 'admin');
+                      toast({ title: "Delivery completed" });
+                      onOrderUpdate({ ...order, status: 'delivered' as OrderStatus });
+                      onClose();
+                    } catch (error) {
+                      toast({ title: "Failed to complete delivery", variant: "destructive" });
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }}
+                  disabled={isUpdating}
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Complete Delivery
+                </Button>
+              )}
+            </div>
+
             <div className="space-y-4">
               <div>
-                <Label htmlFor="status">New Status</Label>
+                <Label htmlFor="status">Manual Status Override</Label>
                 <Select value={newStatus} onValueChange={(value) => setNewStatus(value as OrderStatus)}>
                   <SelectTrigger>
                     <SelectValue />
