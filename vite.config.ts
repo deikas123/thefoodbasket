@@ -57,10 +57,13 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: 'The Food Basket',
         short_name: 'Food Basket',
-        description: 'Premium organic groceries and food delivery service',
+        description: 'Fresh organic groceries and food delivery',
         theme_color: '#10b981',
         background_color: '#ffffff',
         display: 'standalone',
+        orientation: 'portrait-primary',
+        scope: '/',
+        start_url: '/',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -74,7 +77,31 @@ export default defineConfig(({ mode }) => ({
             type: 'image/png',
             purpose: 'any maskable'
           }
-        ]
+        ],
+        shortcuts: [
+          {
+            name: 'Store App',
+            short_name: 'Store',
+            description: 'Manage inventory and orders',
+            url: '/store-app',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Rider App',
+            short_name: 'Rider',
+            description: 'Manage deliveries',
+            url: '/rider-app',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Packer App',
+            short_name: 'Packer',
+            description: 'Pack and prepare orders',
+            url: '/packer-app',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          }
+        ],
+        categories: ['food', 'shopping', 'lifestyle']
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
