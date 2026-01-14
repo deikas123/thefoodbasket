@@ -6,29 +6,29 @@ import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { ComparisonProvider } from "@/context/ComparisonContext";
 import { RecentlyViewedProvider } from "@/context/RecentlyViewedContext";
-import { useState, useEffect, lazy, Suspense } from "react";
-import Preloader from "@/components/Preloader";
+import { useState, useEffect, lazy, Suspense, memo, useCallback } from "react";
 import ScrollToTop from "@/components/ScrollToTop";
 import AppRoutes from "@/components/routing/AppRoutes";
-import BottomNavigation from "@/components/mobile/BottomNavigation";
 import { useIsMobile } from "@/types";
 import { queryClient, prefetchCriticalData } from "@/lib/queryClient";
-import Cart from "@/components/Cart";
-import { FloatingCompareButton } from "@/components/FloatingCompareButton";
 
-// Lazy load the initial setup component
+// Lazy load non-critical components for faster initial load
+const Preloader = lazy(() => import("@/components/Preloader"));
+const Cart = lazy(() => import("@/components/Cart"));
+const FloatingCompareButton = lazy(() => import("@/components/FloatingCompareButton").then(m => ({ default: m.FloatingCompareButton })));
+const BottomNavigation = lazy(() => import("@/components/mobile/BottomNavigation"));
 const InitialSetup = lazy(() => import("@/components/setup/InitialSetup"));
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Optimize initial loading
+    // Faster initial loading - reduced timeout
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 500);
     
-    // Prefetch critical data
+    // Prefetch critical data in parallel
     prefetchCriticalData();
     
     return () => clearTimeout(timer);
@@ -53,12 +53,17 @@ function App() {
   );
 }
 
-const MobileAwareLayout = ({ isLoading }: { isLoading: boolean }) => {
+// Memoized layout component to prevent unnecessary re-renders
+const MobileAwareLayout = memo(({ isLoading }: { isLoading: boolean }) => {
   const isMobile = useIsMobile();
 
   return (
     <>
-      {isLoading && <Preloader />}
+      {isLoading && (
+        <Suspense fallback={<div className="fixed inset-0 bg-background z-50" />}>
+          <Preloader />
+        </Suspense>
+      )}
       
       <ScrollToTop />
       
@@ -66,17 +71,22 @@ const MobileAwareLayout = ({ isLoading }: { isLoading: boolean }) => {
         <AppRoutes />
       </div>
       
-      {isMobile && <BottomNavigation />}
+      {isMobile && (
+        <Suspense fallback={null}>
+          <BottomNavigation />
+        </Suspense>
+      )}
       
-      <Cart />
-      <FloatingCompareButton />
-      
-      <Suspense fallback={<div />}>
+      <Suspense fallback={null}>
+        <Cart />
+        <FloatingCompareButton />
         <InitialSetup />
       </Suspense>
       <Toaster />
     </>
   );
-};
+});
+
+MobileAwareLayout.displayName = "MobileAwareLayout";
 
 export default App;
