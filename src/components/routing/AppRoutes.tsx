@@ -1,8 +1,8 @@
-
 import React, { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Lazy load all pages for code splitting
 const Waitlist = lazy(() => import("@/pages/Waitlist"));
 const Home = lazy(() => import("@/pages/Index"));
 const Shop = lazy(() => import("@/pages/Shop"));
@@ -26,8 +26,20 @@ const AdminRoutes = lazy(() => import("./AdminRoutes"));
 const DeliveryRoutes = lazy(() => import("./DeliveryRoutes"));
 const StaffRoutes = lazy(() => import("./StaffRoutes"));
 const LoyaltyPage = lazy(() => import("@/pages/Loyalty"));
+const FlashSales = lazy(() => import("@/pages/FlashSales"));
+const Timer = lazy(() => import("@/pages/Timer"));
 
-import Timer from "@/pages/Timer";
+// Standalone Apps - Lazy loaded for code splitting
+const StoreApp = lazy(() => import("@/apps/store/StoreApp"));
+const RiderApp = lazy(() => import("@/apps/rider/RiderApp"));
+const PackerApp = lazy(() => import("@/apps/packer/PackerApp"));
+
+// Minimal loading fallback for faster perceived load
+const MinimalLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+  </div>
+);
 
 const LoadingFallback = () => (
   <div className="flex flex-col min-h-screen">
@@ -77,6 +89,7 @@ const AppRoutes = () => {
         <Route path="/loyalty" element={<LoyaltyPage />} />
         <Route path="/pay-later" element={<PayLater />} />
         <Route path="/timer" element={<Timer />} />
+        <Route path="/flash-sales" element={<FlashSales />} />
         
         {/* Admin Routes */}
         <Route path="/admin/*" element={<AdminRoutes />} />
@@ -86,6 +99,32 @@ const AppRoutes = () => {
         
         {/* Staff Routes */}
         <Route path="/staff/*" element={<StaffRoutes />} />
+        
+        {/* Standalone Apps - Separate bundles for performance */}
+        <Route 
+          path="/store-app/*" 
+          element={
+            <Suspense fallback={<MinimalLoadingFallback />}>
+              <StoreApp />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/rider-app/*" 
+          element={
+            <Suspense fallback={<MinimalLoadingFallback />}>
+              <RiderApp />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/packer-app/*" 
+          element={
+            <Suspense fallback={<MinimalLoadingFallback />}>
+              <PackerApp />
+            </Suspense>
+          } 
+        />
         
         {/* Catch all route */}
         <Route path="*" element={<NotFound />} />
