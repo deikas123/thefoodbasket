@@ -18,6 +18,7 @@ import AdminOrdersTable from "@/components/admin/OrdersTable";
 import AdminUsersTable from "@/components/admin/UsersTable";
 import AdminDeliveriesTable from "@/components/admin/DeliveriesTable";
 import FlashSaleAnalyticsWidget from "@/components/admin/flashSales/FlashSaleAnalyticsWidget";
+import OrderFlowOverview from "@/components/admin/OrderFlowOverview";
 import { formatCurrency } from "@/utils/currencyFormatter";
 
 const AdminDashboard = () => {
@@ -167,6 +168,9 @@ const AdminDashboard = () => {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
+          {/* Order Flow Pipeline */}
+          <OrderFlowOverview />
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
