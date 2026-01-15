@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { addTrackingEvent } from "./orderTrackingService";
 import { OrderStatus, OrderItem } from "@/types/supabase";
 import { Json } from "@/types/database.types";
+import { generateOrderBarcode } from "@/utils/barcodeGenerator";
 
 export interface OrderFlowResult {
   success: boolean;
   message: string;
   orderId?: string;
+  barcode?: string;
 }
 
 // Status flow: pending → processing → dispatched → out_for_delivery → delivered
@@ -20,13 +22,34 @@ const statusDescriptions: Record<string, string> = {
   cancelled: "Order has been cancelled"
 };
 
-// Packer starts working on an order
+// Packer starts working on an order - generates barcode
 export const startPacking = async (orderId: string, packerId: string): Promise<OrderFlowResult> => {
   try {
+    // Generate unique barcode for this order
+    const barcode = generateOrderBarcode(orderId);
+    
+    // Get current tracking and add barcode
+    const { data: currentOrder, error: fetchError } = await supabase
+      .from("orders")
+      .select("tracking")
+      .eq("id", orderId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const currentTracking = (currentOrder?.tracking as Record<string, unknown>) || {};
+    const updatedTracking = {
+      ...currentTracking,
+      barcode,
+      packingStartedAt: new Date().toISOString(),
+      packerId
+    };
+
     const { error } = await supabase
       .from("orders")
       .update({ 
         status: "processing" as OrderStatus,
+        tracking: updatedTracking as unknown as Json,
         updated_at: new Date().toISOString()
       })
       .eq("id", orderId)
@@ -37,31 +60,46 @@ export const startPacking = async (orderId: string, packerId: string): Promise<O
     await addTrackingEvent(
       orderId, 
       "processing", 
-      "Order packing started",
+      `Order packing started. Barcode: ${barcode}`,
       "Fulfillment Center"
     );
 
     // Create customer notification
     await createOrderNotification(orderId, "processing");
 
-    return { success: true, message: "Order packing started", orderId };
+    return { success: true, message: "Order packing started", orderId, barcode };
   } catch (error) {
     console.error("Error starting packing:", error);
     return { success: false, message: "Failed to start packing" };
   }
 };
 
-// Packer completes packing - deducts inventory and marks ready for pickup
-export const completePacking = async (orderId: string, packerId: string): Promise<OrderFlowResult> => {
+// Packer completes packing - requires barcode scan verification
+export const completePacking = async (
+  orderId: string, 
+  packerId: string,
+  scannedBarcode?: string
+): Promise<OrderFlowResult> => {
   try {
-    // Get order items first
+    // Get order items and tracking (with barcode) first
     const { data: order, error: fetchError } = await supabase
       .from("orders")
-      .select("items")
+      .select("items, tracking")
       .eq("id", orderId)
       .single();
 
     if (fetchError) throw fetchError;
+
+    const tracking = order.tracking as Record<string, unknown>;
+    const expectedBarcode = tracking?.barcode as string;
+
+    // Verify barcode if provided
+    if (scannedBarcode && scannedBarcode !== expectedBarcode) {
+      return { 
+        success: false, 
+        message: "Barcode does not match! Please scan the correct package." 
+      };
+    }
 
     const items = order.items as unknown as OrderItem[];
 
@@ -74,15 +112,22 @@ export const completePacking = async (orderId: string, packerId: string): Promis
 
       if (stockError) {
         console.error(`Failed to deduct stock for product ${item.productId}:`, stockError);
-        // Continue anyway - stock might already be deducted or insufficient
       }
     }
+
+    // Update tracking with packing completion
+    const updatedTracking = {
+      ...tracking,
+      packingCompletedAt: new Date().toISOString(),
+      packingVerifiedByBarcode: !!scannedBarcode
+    };
 
     // Update order status
     const { error } = await supabase
       .from("orders")
       .update({ 
         status: "dispatched" as OrderStatus,
+        tracking: updatedTracking as unknown as Json,
         updated_at: new Date().toISOString()
       })
       .eq("id", orderId)
@@ -93,7 +138,7 @@ export const completePacking = async (orderId: string, packerId: string): Promis
     await addTrackingEvent(
       orderId, 
       "dispatched", 
-      "Order packed and ready for delivery pickup",
+      "Order packed and verified. Ready for delivery pickup",
       "Fulfillment Center"
     );
 
@@ -135,10 +180,11 @@ export const startDelivery = async (orderId: string, riderId: string): Promise<O
   }
 };
 
-// Rider completes delivery
+// Rider completes delivery - requires barcode scan verification
 export const completeDelivery = async (
   orderId: string, 
   riderId: string,
+  scannedBarcode?: string,
   signature?: string
 ): Promise<OrderFlowResult> => {
   try {
@@ -154,6 +200,16 @@ export const completeDelivery = async (
     if (fetchError) throw fetchError;
 
     const currentTracking = (currentOrder?.tracking as Record<string, unknown>) || { events: [] };
+    const expectedBarcode = currentTracking?.barcode as string;
+
+    // Verify barcode if provided
+    if (scannedBarcode && scannedBarcode !== expectedBarcode) {
+      return { 
+        success: false, 
+        message: "Barcode does not match! Please scan the correct package." 
+      };
+    }
+
     const updatedTracking = {
       ...currentTracking,
       events: [
@@ -161,10 +217,11 @@ export const completeDelivery = async (
         {
           status: "delivered",
           timestamp: deliveredAt,
-          description: "Order delivered successfully"
+          description: "Order delivered and verified by barcode scan"
         }
       ],
       deliveredAt,
+      deliveryVerifiedByBarcode: !!scannedBarcode,
       ...(signature ? { signature } : {})
     };
 
