@@ -1,4 +1,5 @@
 
+import { memo, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,17 +9,222 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { startDelivery, completeDelivery } from "@/services/orderFlowService";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { MapPin, Package, Navigation, CheckCircle, Truck, Clock, Phone } from "lucide-react";
+import { MapPin, Package, Navigation, Truck, Clock, Phone, QrCode, Route } from "lucide-react";
+import OrderBarcodeScanner from "@/components/packer/OrderBarcodeScanner";
+import { optimizeDeliveryRoute, OptimizedRoute } from "@/services/routeOptimizationService";
+
+interface DeliveryCardProps {
+  order: any;
+  onStartDelivery: (orderId: string) => void;
+  onCompleteDelivery: (orderId: string, barcode: string) => void;
+  isStarting: boolean;
+  isCompleting: boolean;
+  isMyDelivery: boolean;
+}
+
+const DeliveryCard = memo(({ 
+  order, 
+  onStartDelivery, 
+  onCompleteDelivery, 
+  isStarting, 
+  isCompleting,
+  isMyDelivery 
+}: DeliveryCardProps) => {
+  const address = order.delivery_address as any;
+  const items = order.items as any[];
+  const tracking = order.tracking as Record<string, unknown>;
+  const barcode = tracking?.barcode as string;
+  const isInTransit = order.status === "out_for_delivery";
+  const deliveryMethod = (order.delivery_method as any)?.name || "Standard";
+  const isExpress = deliveryMethod.toLowerCase().includes('express');
+
+  const openNavigation = useCallback(() => {
+    if (address?.location) {
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${address.location.lat},${address.location.lng}`,
+        "_blank"
+      );
+    } else {
+      const query = `${address?.street}, ${address?.city}`;
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, "_blank");
+    }
+  }, [address]);
+
+  const handleScanSuccess = useCallback(() => {
+    onCompleteDelivery(order.id, barcode);
+  }, [order.id, barcode, onCompleteDelivery]);
+
+  return (
+    <Card className={`overflow-hidden ${isMyDelivery ? '' : 'border-orange-200 dark:border-orange-900'}`}>
+      <div className={`h-2 ${
+        isInTransit ? "bg-green-500" : 
+        isMyDelivery ? "bg-blue-500" : 
+        "bg-orange-500"
+      }`} />
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-lg font-mono">#{order.id.slice(0, 8)}</CardTitle>
+            {barcode && (
+              <Badge variant="outline" className="font-mono text-xs">
+                <QrCode className="h-3 w-3 mr-1" />
+                {barcode}
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Badge variant={isExpress ? "destructive" : "secondary"}>
+              {deliveryMethod}
+            </Badge>
+            <Badge className={
+              isInTransit ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
+              isMyDelivery ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" :
+              "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+            }>
+              {isInTransit ? "In Transit" : isMyDelivery ? "Picked Up" : "Ready for Pickup"}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Customer Info */}
+        <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="font-medium">{address?.fullName || 'Customer'}</span>
+            </div>
+            {address?.phone && (
+              <a 
+                href={`tel:${address.phone}`}
+                className="flex items-center gap-1 text-sm text-primary hover:underline"
+              >
+                <Phone className="h-3 w-3" />
+                {address.phone}
+              </a>
+            )}
+          </div>
+          <div className="text-sm">
+            <p>{address?.street}</p>
+            <p className="text-muted-foreground">{address?.city}{address?.postalCode ? `, ${address.postalCode}` : ''}</p>
+          </div>
+          {address?.location && (
+            <p className="text-xs text-muted-foreground">
+              GPS: {address.location.lat.toFixed(4)}, {address.location.lng.toFixed(4)}
+            </p>
+          )}
+        </div>
+
+        {/* Order Details */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Items ({items?.length || 0}):</p>
+          <div className="text-sm text-muted-foreground">
+            {items?.slice(0, 3).map((item: any, idx: number) => (
+              <p key={idx}>• {item.name} x{item.quantity}</p>
+            ))}
+            {items?.length > 3 && <p className="text-xs">...and {items.length - 3} more</p>}
+          </div>
+          <p className="font-bold">{formatCurrency(order.total)}</p>
+        </div>
+
+        {/* Notes */}
+        {order.notes && (
+          <div className="text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded">
+            <span className="font-medium">Notes:</span> {order.notes}
+          </div>
+        )}
+
+        {/* Delivery instructions */}
+        {address?.instructions && (
+          <div className="text-sm bg-blue-50 dark:bg-blue-950/20 p-2 rounded">
+            <span className="font-medium">Instructions:</span> {address.instructions}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          {!isMyDelivery && (
+            <Button 
+              className="flex-1"
+              onClick={() => onStartDelivery(order.id)}
+              disabled={isStarting}
+            >
+              <Package className="h-4 w-4 mr-2" />
+              {isStarting ? "Starting..." : "Pick Up & Start Delivery"}
+            </Button>
+          )}
+          
+          {isMyDelivery && !isInTransit && (
+            <Button 
+              className="flex-1"
+              onClick={() => onStartDelivery(order.id)}
+              disabled={isStarting}
+            >
+              <Truck className="h-4 w-4 mr-2" />
+              {isStarting ? "Starting..." : "Start Delivery"}
+            </Button>
+          )}
+          
+          {isInTransit && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={openNavigation}
+                className="flex-1"
+              >
+                <Navigation className="h-4 w-4 mr-2" />
+                Navigate
+              </Button>
+              <OrderBarcodeScanner
+                expectedBarcode={barcode}
+                onScanSuccess={handleScanSuccess}
+                buttonText={isCompleting ? "Verifying..." : "Scan & Complete"}
+                buttonClassName="flex-1 bg-green-600 hover:bg-green-700"
+                disabled={isCompleting}
+              />
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
+DeliveryCard.displayName = "DeliveryCard";
+
+// Route optimization summary component
+const RouteOptimizationCard = memo(({ route }: { route: OptimizedRoute }) => (
+  <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+    <CardContent className="py-4">
+      <div className="flex items-center gap-4">
+        <div className="p-2 bg-primary/20 rounded-lg">
+          <Route className="h-6 w-6 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium">Optimized Route</p>
+          <p className="text-sm text-muted-foreground">
+            {route.stops.length} stops • {route.totalDistance} km • ~{route.totalTime} min
+          </p>
+        </div>
+        {route.efficiency > 0 && (
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            {route.efficiency}% more efficient
+          </Badge>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+));
+
+RouteOptimizationCard.displayName = "RouteOptimizationCard";
 
 const RiderDeliveries = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch both assigned deliveries and available pickups
   const { data: deliveries, isLoading } = useQuery({
     queryKey: ["rider-deliveries", user?.id],
     queryFn: async () => {
-      // Get orders assigned to this rider OR dispatched orders available for pickup
       const { data, error } = await supabase
         .from("orders")
         .select("*")
@@ -30,8 +236,19 @@ const RiderDeliveries = () => {
       return data;
     },
     enabled: !!user?.id,
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 15000,
+    staleTime: 10000,
   });
+
+  // Calculate optimized route for active deliveries
+  const optimizedRoute = useMemo(() => {
+    if (!deliveries?.length) return null;
+    const activeDeliveries = deliveries.filter(d => 
+      d.assigned_to === user?.id || d.status === "dispatched"
+    );
+    if (activeDeliveries.length < 2) return null;
+    return optimizeDeliveryRoute(activeDeliveries);
+  }, [deliveries, user?.id]);
 
   const startDeliveryMutation = useMutation({
     mutationFn: async (orderId: string) => {
@@ -50,8 +267,8 @@ const RiderDeliveries = () => {
   });
 
   const completeDeliveryMutation = useMutation({
-    mutationFn: async (orderId: string) => {
-      const result = await completeDelivery(orderId, user?.id || "");
+    mutationFn: async ({ orderId, barcode }: { orderId: string; barcode: string }) => {
+      const result = await completeDelivery(orderId, user?.id || "", barcode);
       if (!result.success) throw new Error(result.message);
       return result;
     },
@@ -59,18 +276,25 @@ const RiderDeliveries = () => {
       queryClient.invalidateQueries({ queryKey: ["rider-deliveries"] });
       queryClient.invalidateQueries({ queryKey: ["rider-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["rider-history"] });
-      toast.success("Delivery completed! Great job!");
+      toast.success("Delivery verified and completed! Great job!");
     },
     onError: (error: Error) => {
       toast.error(error.message);
     },
   });
 
-  const openNavigation = (address: any) => {
-    const query = `${address.street}, ${address.city}`;
-    const encodedQuery = encodeURIComponent(query);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodedQuery}`, "_blank");
-  };
+  const handleStartDelivery = useCallback((orderId: string) => {
+    startDeliveryMutation.mutate(orderId);
+  }, [startDeliveryMutation]);
+
+  const handleCompleteDelivery = useCallback((orderId: string, barcode: string) => {
+    completeDeliveryMutation.mutate({ orderId, barcode });
+  }, [completeDeliveryMutation]);
+
+  const { availablePickups, myDeliveries } = useMemo(() => ({
+    availablePickups: deliveries?.filter(d => d.status === "dispatched" && !d.assigned_to) || [],
+    myDeliveries: deliveries?.filter(d => d.assigned_to === user?.id) || []
+  }), [deliveries, user?.id]);
 
   if (isLoading) {
     return (
@@ -85,9 +309,6 @@ const RiderDeliveries = () => {
       </div>
     );
   }
-
-  const availablePickups = deliveries?.filter(d => d.status === "dispatched" && !d.assigned_to) || [];
-  const myDeliveries = deliveries?.filter(d => d.assigned_to === user?.id) || [];
 
   return (
     <div className="space-y-6">
@@ -104,6 +325,9 @@ const RiderDeliveries = () => {
           </Badge>
         </div>
       </div>
+
+      {/* Route Optimization */}
+      {optimizedRoute && <RouteOptimizationCard route={optimizedRoute} />}
 
       {!deliveries?.length ? (
         <Card>
@@ -122,47 +346,17 @@ const RiderDeliveries = () => {
                 <Clock className="h-5 w-5 text-orange-500" />
                 Available for Pickup
               </h2>
-              {availablePickups.map((order) => {
-                const address = order.delivery_address as any;
-                const items = order.items as any[];
-                
-                return (
-                  <Card key={order.id} className="overflow-hidden border-orange-200 dark:border-orange-900">
-                    <div className="h-2 bg-orange-500" />
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg font-mono">#{order.id.slice(0, 8)}</CardTitle>
-                        <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
-                          Ready for Pickup
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                        <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                        <div className="flex-1">
-                          <p className="font-medium">{address?.street}</p>
-                          <p className="text-sm text-muted-foreground">{address?.city}, {address?.state}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">{items?.length || 0} items</span>
-                        <span className="font-bold">{formatCurrency(order.total)}</span>
-                      </div>
-
-                      <Button 
-                        className="w-full"
-                        onClick={() => startDeliveryMutation.mutate(order.id)}
-                        disabled={startDeliveryMutation.isPending}
-                      >
-                        <Package className="h-4 w-4 mr-2" />
-                        {startDeliveryMutation.isPending ? "Starting..." : "Pick Up & Start Delivery"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {availablePickups.map((order) => (
+                <DeliveryCard
+                  key={order.id}
+                  order={order}
+                  onStartDelivery={handleStartDelivery}
+                  onCompleteDelivery={handleCompleteDelivery}
+                  isStarting={startDeliveryMutation.isPending}
+                  isCompleting={completeDeliveryMutation.isPending}
+                  isMyDelivery={false}
+                />
+              ))}
             </div>
           )}
 
@@ -173,85 +367,17 @@ const RiderDeliveries = () => {
                 <Truck className="h-5 w-5 text-green-500" />
                 My Active Deliveries
               </h2>
-              {myDeliveries.map((order) => {
-                const address = order.delivery_address as any;
-                const items = order.items as any[];
-                const isInTransit = order.status === "out_for_delivery";
-                
-                return (
-                  <Card key={order.id} className="overflow-hidden">
-                    <div className={`h-2 ${isInTransit ? "bg-green-500" : "bg-blue-500"}`} />
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg font-mono">#{order.id.slice(0, 8)}</CardTitle>
-                        <Badge className={isInTransit 
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" 
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                        }>
-                          {isInTransit ? "In Transit" : "Picked Up"}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Address with navigation */}
-                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                        <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                        <div className="flex-1">
-                          <p className="font-medium">{address?.street}</p>
-                          <p className="text-sm text-muted-foreground">{address?.city}, {address?.state}</p>
-                        </div>
-                        <Button size="sm" variant="outline" onClick={() => openNavigation(address)}>
-                          <Navigation className="h-4 w-4 mr-1" />
-                          Navigate
-                        </Button>
-                      </div>
-
-                      {/* Order Details */}
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Items ({items?.length || 0}):</p>
-                        <div className="text-sm text-muted-foreground">
-                          {items?.slice(0, 3).map((item: any, idx: number) => (
-                            <p key={idx}>• {item.name} x{item.quantity}</p>
-                          ))}
-                          {items?.length > 3 && <p className="text-xs">...and {items.length - 3} more</p>}
-                        </div>
-                        <p className="font-bold">{formatCurrency(order.total)}</p>
-                      </div>
-
-                      {/* Notes */}
-                      {order.notes && (
-                        <div className="text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded">
-                          <span className="font-medium">Notes:</span> {order.notes}
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex gap-2 pt-2">
-                        {order.status === "dispatched" && (
-                          <Button 
-                            className="flex-1"
-                            onClick={() => startDeliveryMutation.mutate(order.id)}
-                            disabled={startDeliveryMutation.isPending}
-                          >
-                            <Truck className="h-4 w-4 mr-2" />
-                            {startDeliveryMutation.isPending ? "Starting..." : "Start Delivery"}
-                          </Button>
-                        )}
-                        {order.status === "out_for_delivery" && (
-                          <Button 
-                            className="flex-1 bg-green-600 hover:bg-green-700"
-                            onClick={() => completeDeliveryMutation.mutate(order.id)}
-                            disabled={completeDeliveryMutation.isPending}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            {completeDeliveryMutation.isPending ? "Completing..." : "Complete Delivery"}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {myDeliveries.map((order) => (
+                <DeliveryCard
+                  key={order.id}
+                  order={order}
+                  onStartDelivery={handleStartDelivery}
+                  onCompleteDelivery={handleCompleteDelivery}
+                  isStarting={startDeliveryMutation.isPending}
+                  isCompleting={completeDeliveryMutation.isPending}
+                  isMyDelivery={true}
+                />
+              ))}
             </div>
           )}
         </div>
