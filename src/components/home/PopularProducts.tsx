@@ -21,14 +21,10 @@ const PopularProducts = () => {
     queryFn: getCategories
   });
 
-  // Find selected category name for filtering
-  const selectedCategoryName = selectedCategory === 'all' 
-    ? null 
-    : categories.find(c => c.id === selectedCategory)?.name;
-
+  // The category.id is actually the slug in the Category type from categoryService
   const filteredProducts = selectedCategory === 'all'
     ? products.slice(0, 10)
-    : products.filter(p => p.category === selectedCategoryName).slice(0, 10);
+    : products.filter(p => p.category === selectedCategory).slice(0, 10);
 
   const displayCategories = categories.slice(0, 5);
 

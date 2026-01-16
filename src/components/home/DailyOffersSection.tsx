@@ -19,37 +19,8 @@ interface TimeLeft {
 const DailyOffersSection = memo(() => {
   const [productsWithDiscount, setProductsWithDiscount] = useState<ProductType[]>([]);
   
-  // Set end time to midnight
-  const calculateEndTime = () => {
-    const now = new Date();
-    const endTime = new Date(now);
-    endTime.setHours(23, 59, 59, 999);
-    return endTime;
-  };
-  
-  // Calculate time left until end of day
-  const calculateTimeLeft = () => {
-    const difference = calculateEndTime().getTime() - new Date().getTime();
-    
-    if (difference <= 0) {
-      // It's a new day, reset the deals
-      fetchDeals();
-      return { hours: "00", minutes: "00", seconds: "00" };
-    }
-    
-    const hours = Math.floor(difference / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-    
-    return {
-      hours: hours.toString().padStart(2, "0"),
-      minutes: minutes.toString().padStart(2, "0"),
-      seconds: seconds.toString().padStart(2, "0"),
-    };
-  };
-  
   // Initial state for the countdown
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: "00", minutes: "00", seconds: "00" });
   
   // Fetch deals from the product service
   const { data: dailyOffers = [], isLoading, error, refetch } = useQuery({
@@ -64,11 +35,6 @@ const DailyOffersSection = memo(() => {
       }
     }
   });
-  
-  // Helper function to fetch deals
-  const fetchDeals = () => {
-    refetch();
-  };
   
   useEffect(() => {
     // Convert the offers to products with the discount applied
@@ -92,13 +58,44 @@ const DailyOffersSection = memo(() => {
   }, [dailyOffers]);
   
   useEffect(() => {
+    // Calculate time left until end of day
+    const calculateTimeLeft = (): TimeLeft => {
+      const now = new Date();
+      const endTime = new Date(now);
+      endTime.setHours(23, 59, 59, 999);
+      const difference = endTime.getTime() - now.getTime();
+      
+      if (difference <= 0) {
+        return { hours: "00", minutes: "00", seconds: "00" };
+      }
+      
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      
+      return {
+        hours: hours.toString().padStart(2, "0"),
+        minutes: minutes.toString().padStart(2, "0"),
+        seconds: seconds.toString().padStart(2, "0"),
+      };
+    };
+    
+    // Set initial time
+    setTimeLeft(calculateTimeLeft());
+    
     // Update countdown timer every second
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      const updated = calculateTimeLeft();
+      setTimeLeft(updated);
+      
+      // Refetch when day ends
+      if (updated.hours === "00" && updated.minutes === "00" && updated.seconds === "00") {
+        refetch();
+      }
     }, 1000);
     
     return () => clearInterval(timer);
-  }, []);
+  }, [refetch]);
   
   if (error) {
     return (
