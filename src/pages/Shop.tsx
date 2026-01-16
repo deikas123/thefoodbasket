@@ -4,14 +4,17 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getProducts, getCategories } from "@/services/productService";
 import { supabase } from "@/integrations/supabase/client";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import TopGroceryStores from "@/components/home/TopGroceryStores";
+import ShopNavbar from "@/components/shop/ShopNavbar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductType } from "@/types/supabase";
 import { Badge } from "@/components/ui/badge";
+import BottomNavigation from "@/components/mobile/BottomNavigation";
 
 const Shop = () => {
   const navigate = useNavigate();
@@ -105,9 +108,14 @@ const Shop = () => {
   const activeFiltersCount = [selectedCategory, sortOption, selectedStore].filter(Boolean).length;
   
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-20">
-      {/* Header with back button and search */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+    <div className="flex flex-col min-h-screen bg-background pb-20 md:pb-0">
+      {/* Desktop Header */}
+      <div className="hidden md:block">
+        <Header />
+      </div>
+      
+      {/* Mobile Header with back button and search */}
+      <header className="md:hidden sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
@@ -132,6 +140,9 @@ const Shop = () => {
           </div>
         </div>
       </header>
+      
+      {/* Desktop Shop Navbar */}
+      <ShopNavbar />
 
       <main className="flex-grow">
         {/* Top Grocery Stores */}
@@ -178,6 +189,7 @@ const Shop = () => {
       </main>
       
       <Footer />
+      <BottomNavigation />
     </div>
   );
 };

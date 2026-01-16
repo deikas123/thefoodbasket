@@ -65,13 +65,12 @@ const FlashSaleSection = memo(() => {
   useEffect(() => {
     if (!currentSale) return;
     
-    const calculateTimeLeft = () => {
+    const calculateTimeLeft = (): TimeLeft => {
       const endTime = new Date(currentSale.end_date).getTime();
       const now = new Date().getTime();
       const difference = endTime - now;
       
       if (difference <= 0) {
-        refetch();
         return { hours: "00", minutes: "00", seconds: "00" };
       }
       
@@ -86,14 +85,27 @@ const FlashSaleSection = memo(() => {
       };
     };
     
-    setTimeLeft(calculateTimeLeft());
+    const newTimeLeft = calculateTimeLeft();
+    setTimeLeft(newTimeLeft);
+    
+    // Check if sale ended and refetch only once
+    if (newTimeLeft.hours === "00" && newTimeLeft.minutes === "00" && newTimeLeft.seconds === "00") {
+      refetch();
+      return;
+    }
     
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      const updated = calculateTimeLeft();
+      setTimeLeft(updated);
+      
+      // Refetch when sale ends
+      if (updated.hours === "00" && updated.minutes === "00" && updated.seconds === "00") {
+        refetch();
+      }
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [currentSale, refetch]);
+  }, [currentSale?.end_date, refetch]);
   
   if (error) {
     return null;
