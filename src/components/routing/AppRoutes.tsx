@@ -27,7 +27,6 @@ const DeliveryRoutes = lazy(() => import("./DeliveryRoutes"));
 const StaffRoutes = lazy(() => import("./StaffRoutes"));
 const LoyaltyPage = lazy(() => import("@/pages/Loyalty"));
 const FlashSales = lazy(() => import("@/pages/FlashSales"));
-const Timer = lazy(() => import("@/pages/Timer"));
 
 // Standalone Apps - Lazy loaded for code splitting
 const StoreApp = lazy(() => import("@/apps/store/StoreApp"));
@@ -88,7 +87,7 @@ const AppRoutes = () => {
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/loyalty" element={<LoyaltyPage />} />
         <Route path="/pay-later" element={<PayLater />} />
-        <Route path="/timer" element={<Timer />} />
+        
         <Route path="/flash-sales" element={<FlashSales />} />
         
         {/* Admin Routes */}

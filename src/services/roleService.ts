@@ -1,6 +1,19 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/supabase";
+
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string | null;
+  permissions: string[];
+  is_system_role: boolean;
+  color: string;
+  icon: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export const getUserRole = async (userId: string): Promise<UserRole | null> => {
   console.log("getRoleService - Fetching role for user:", userId);
@@ -18,7 +31,6 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
     }
     
     if (!data) {
-      // Role not found, user is a regular customer
       console.log("getRoleService - No specific role found for user, defaulting to customer");
       return 'customer';
     }
@@ -27,7 +39,6 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
     return data.role as UserRole;
   } catch (error) {
     console.error("getRoleService - Unexpected error:", error);
-    // Default to customer role if there's any error
     return 'customer';
   }
 };
@@ -40,7 +51,6 @@ export const assignUserRole = async (userId: string, role: UserRole): Promise<vo
   }
   
   try {
-    // Check if user already has a role
     const { data: existingRole, error: fetchError } = await supabase
       .from('user_roles')
       .select('*')
@@ -53,7 +63,6 @@ export const assignUserRole = async (userId: string, role: UserRole): Promise<vo
     }
     
     if (existingRole) {
-      // Update existing role
       console.log("assignUserRole - Updating existing role");
       const { error } = await supabase
         .from('user_roles')
@@ -65,7 +74,6 @@ export const assignUserRole = async (userId: string, role: UserRole): Promise<vo
         throw error;
       }
     } else {
-      // Create new role
       console.log("assignUserRole - Creating new role");
       const { error } = await supabase
         .from('user_roles')
@@ -108,4 +116,135 @@ export const getAllUserRoles = async (): Promise<{userId: string, role: UserRole
     console.error("getAllUserRoles - Unexpected error:", error);
     return [];
   }
+};
+
+// Role Definitions Management
+export const getAllRoles = async (): Promise<RoleDefinition[]> => {
+  const { data, error } = await supabase
+    .from('role_definitions')
+    .select('*')
+    .order('is_system_role', { ascending: false })
+    .order('display_name');
+    
+  if (error) {
+    console.error('Error fetching roles:', error);
+    return [];
+  }
+  
+  return (data || []) as RoleDefinition[];
+};
+
+export const getActiveRoles = async (): Promise<RoleDefinition[]> => {
+  const { data, error } = await supabase
+    .from('role_definitions')
+    .select('*')
+    .eq('active', true)
+    .order('display_name');
+    
+  if (error) {
+    console.error('Error fetching active roles:', error);
+    return [];
+  }
+  
+  return (data || []) as RoleDefinition[];
+};
+
+export const createRole = async (role: Partial<RoleDefinition>): Promise<RoleDefinition | null> => {
+  const { data, error } = await supabase
+    .from('role_definitions')
+    .insert({
+      name: role.name,
+      display_name: role.display_name,
+      description: role.description,
+      permissions: role.permissions || [],
+      color: role.color || '#6B7280',
+      icon: role.icon || 'user',
+      is_system_role: false,
+      active: true
+    })
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating role:', error);
+    return null;
+  }
+  
+  return data as RoleDefinition;
+};
+
+export const updateRole = async (id: string, updates: Partial<RoleDefinition>): Promise<boolean> => {
+  const { error } = await supabase
+    .from('role_definitions')
+    .update(updates)
+    .eq('id', id);
+    
+  if (error) {
+    console.error('Error updating role:', error);
+    return false;
+  }
+  
+  return true;
+};
+
+export const deleteRole = async (id: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('role_definitions')
+    .update({ active: false })
+    .eq('id', id)
+    .eq('is_system_role', false);
+    
+  if (error) {
+    console.error('Error deleting role:', error);
+    return false;
+  }
+  
+  return true;
+};
+
+export const assignRoleToUser = async (userId: string, roleName: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('user_roles')
+    .upsert({
+      user_id: userId,
+      role: roleName
+    }, {
+      onConflict: 'user_id,role'
+    });
+    
+  if (error) {
+    console.error('Error assigning role:', error);
+    return false;
+  }
+  
+  return true;
+};
+
+export const removeRoleFromUser = async (userId: string, roleName: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('user_roles')
+    .delete()
+    .eq('user_id', userId)
+    .eq('role', roleName);
+    
+  if (error) {
+    console.error('Error removing role:', error);
+    return false;
+  }
+  
+  return true;
+};
+
+export const getUserRoles = async (userId: string): Promise<string[]> => {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId);
+    
+  if (error) {
+    console.error('Error fetching user roles:', error);
+    return [];
+  }
+  
+  return data?.map(r => r.role) || [];
 };
