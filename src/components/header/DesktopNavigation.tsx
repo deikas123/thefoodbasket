@@ -23,12 +23,6 @@ const DesktopNavigation = () => {
         Food Baskets
       </Link>
       <Link 
-        to="/timer" 
-        className="text-foreground hover:text-primary transition-colors"
-      >
-        Timer
-      </Link>
-      <Link 
         to="/auto-replenish" 
         className="text-foreground hover:text-primary transition-colors"
       >
