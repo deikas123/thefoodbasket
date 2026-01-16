@@ -95,7 +95,7 @@ const FoodBasketCard = ({
                 <Badge className="mb-2 text-xs">Recipe Included</Badge>
               )}
               <p className="text-xl sm:text-2xl font-bold">
-                {formatCurrency(basket.totalPrice)}
+                {formatCurrency(basket.totalPrice ?? basket.total_price ?? 0)}
               </p>
             </div>
             <div className="flex gap-2">
