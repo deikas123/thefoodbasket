@@ -16,24 +16,35 @@ export const getProducts = async (
   offset: number = 0
 ): Promise<ProductType[]> => {
   try {
-    // Build a simpler, more efficient query
+    // Build a simpler, more efficient query - use left join (default) for categories
     let query = supabase
       .from('products')
-      .select('id, name, description, price, image, stock, featured, rating, num_reviews, discount_percentage, created_at, updated_at, category_id, categories!inner(name, slug)');
+      .select('id, name, description, price, image, stock, featured, rating, num_reviews, discount_percentage, created_at, updated_at, category_id, categories(name, slug)');
     
-    // Apply filters
-    if (searchTerm && searchTerm.trim()) {
-      const term = `%${searchTerm.trim().toLowerCase()}%`;
-      query = query.or(`name.ilike.${term},description.ilike.${term}`);
-    } else if (categoryId && categoryId.trim()) {
+    // Apply category filter if provided
+    if (categoryId && categoryId.trim()) {
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       
       if (uuidRegex.test(categoryId)) {
         query = query.eq('category_id', categoryId);
       } else {
-        // Filter by category slug through the join
-        query = query.eq('categories.slug', categoryId);
+        // Get category ID from slug first
+        const { data: catData } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', categoryId)
+          .maybeSingle();
+        
+        if (catData) {
+          query = query.eq('category_id', catData.id);
+        }
       }
+    }
+    
+    // Apply search filter
+    if (searchTerm && searchTerm.trim()) {
+      const term = `%${searchTerm.trim().toLowerCase()}%`;
+      query = query.or(`name.ilike.${term},description.ilike.${term}`);
     }
     
     if (typeof minPrice === 'number' && minPrice > 0) {
