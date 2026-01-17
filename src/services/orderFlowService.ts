@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { addTrackingEvent } from "./orderTrackingService";
+import { addTrackingEvent, TRACKING_LOCATIONS, updateOrderTrackingJson } from "./orderTrackingService";
 import { OrderStatus, OrderItem } from "@/types/supabase";
 import { Json } from "@/types/database.types";
 import { generateOrderBarcode } from "@/utils/barcodeGenerator";
@@ -20,6 +20,42 @@ const statusDescriptions: Record<string, string> = {
   out_for_delivery: "Order is on its way",
   delivered: "Order has been delivered",
   cancelled: "Order has been cancelled"
+};
+
+// Get regional hub based on delivery address
+const getRegionalHub = (deliveryAddress: any): string => {
+  const city = deliveryAddress?.city?.toLowerCase() || '';
+  const street = deliveryAddress?.street?.toLowerCase() || '';
+  
+  if (city.includes('ruiru') || street.includes('ruiru')) {
+    return TRACKING_LOCATIONS.REGIONAL_HUB_RUIRU;
+  }
+  if (city.includes('thika') || street.includes('thika')) {
+    return TRACKING_LOCATIONS.REGIONAL_HUB_THIKA;
+  }
+  if (city.includes('karen') || street.includes('karen')) {
+    return TRACKING_LOCATIONS.REGIONAL_HUB_KAREN;
+  }
+  if (city.includes('kiambu') || street.includes('kiambu')) {
+    return TRACKING_LOCATIONS.REGIONAL_HUB_KIAMBU;
+  }
+  // Default to Ruiru for now
+  return TRACKING_LOCATIONS.REGIONAL_HUB_RUIRU;
+};
+
+// Create initial order tracking when order is placed
+export const initializeOrderTracking = async (orderId: string): Promise<void> => {
+  try {
+    await addTrackingEvent(
+      orderId,
+      "pending",
+      "Order received and confirmed",
+      TRACKING_LOCATIONS.MAIN_WAREHOUSE,
+      "warehouse"
+    );
+  } catch (error) {
+    console.error("Error initializing order tracking:", error);
+  }
 };
 
 // Packer starts working on an order - generates barcode
@@ -57,15 +93,17 @@ export const startPacking = async (orderId: string, packerId: string): Promise<O
 
     if (error) throw error;
 
+    // Add detailed tracking event
     await addTrackingEvent(
       orderId, 
       "processing", 
-      `Order packing started. Barcode: ${barcode}`,
-      "Fulfillment Center"
+      "Order packing started by fulfillment team",
+      TRACKING_LOCATIONS.MAIN_WAREHOUSE,
+      "warehouse"
     );
 
     // Create customer notification
-    await createOrderNotification(orderId, "processing");
+    await createOrderNotification(orderId, "processing", "Your order is now being prepared at our warehouse.");
 
     return { success: true, message: "Order packing started", orderId, barcode };
   } catch (error) {
@@ -84,7 +122,7 @@ export const completePacking = async (
     // Get order items and tracking (with barcode) first
     const { data: order, error: fetchError } = await supabase
       .from("orders")
-      .select("items, tracking")
+      .select("items, tracking, delivery_address")
       .eq("id", orderId)
       .single();
 
@@ -119,7 +157,8 @@ export const completePacking = async (
     const updatedTracking = {
       ...tracking,
       packingCompletedAt: new Date().toISOString(),
-      packingVerifiedByBarcode: !!scannedBarcode
+      packingVerifiedByBarcode: !!scannedBarcode,
+      regionalHub: getRegionalHub(order.delivery_address)
     };
 
     // Update order status
@@ -135,14 +174,29 @@ export const completePacking = async (
 
     if (error) throw error;
 
+    // Add packing completed event
+    await addTrackingEvent(
+      orderId, 
+      "processing", 
+      "Order packed and quality checked",
+      TRACKING_LOCATIONS.MAIN_WAREHOUSE,
+      "warehouse"
+    );
+
+    // Add dispatch event
     await addTrackingEvent(
       orderId, 
       "dispatched", 
-      "Order packed and verified. Ready for delivery pickup",
-      "Fulfillment Center"
+      `Order left ${TRACKING_LOCATIONS.MAIN_WAREHOUSE}`,
+      TRACKING_LOCATIONS.MAIN_WAREHOUSE,
+      "warehouse"
     );
 
-    await createOrderNotification(orderId, "dispatched");
+    await createOrderNotification(
+      orderId, 
+      "dispatched", 
+      "Great news! Your order has been packed and is on its way to a distribution center near you."
+    );
 
     return { success: true, message: "Order packed and ready for pickup", orderId };
   } catch (error) {
@@ -151,14 +205,90 @@ export const completePacking = async (
   }
 };
 
-// Rider picks up order and starts delivery
-export const startDelivery = async (orderId: string, riderId: string): Promise<OrderFlowResult> => {
+// Add transit tracking events (for simulation/admin use)
+export const addTransitEvent = async (
+  orderId: string,
+  eventType: 'arrived_sorting' | 'left_sorting' | 'arrived_hub' | 'left_hub',
+  hubLocation?: string
+): Promise<OrderFlowResult> => {
   try {
+    const { data: order, error: fetchError } = await supabase
+      .from("orders")
+      .select("tracking, delivery_address")
+      .eq("id", orderId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const tracking = order.tracking as Record<string, unknown>;
+    const regionalHub = hubLocation || (tracking?.regionalHub as string) || getRegionalHub(order.delivery_address);
+
+    let description = '';
+    let location = '';
+
+    switch (eventType) {
+      case 'arrived_sorting':
+        description = `Order arrived at ${TRACKING_LOCATIONS.SORTING_CENTER}`;
+        location = TRACKING_LOCATIONS.SORTING_CENTER;
+        break;
+      case 'left_sorting':
+        description = `Order departed ${TRACKING_LOCATIONS.SORTING_CENTER}`;
+        location = TRACKING_LOCATIONS.SORTING_CENTER;
+        break;
+      case 'arrived_hub':
+        description = `Order arrived at ${regionalHub}`;
+        location = regionalHub;
+        break;
+      case 'left_hub':
+        description = `Order departed ${regionalHub} for delivery`;
+        location = regionalHub;
+        break;
+    }
+
+    await addTrackingEvent(orderId, "dispatched", description, location, "transit");
+
+    return { success: true, message: "Transit event added", orderId };
+  } catch (error) {
+    console.error("Error adding transit event:", error);
+    return { success: false, message: "Failed to add transit event" };
+  }
+};
+
+// Rider picks up order and starts delivery
+export const startDelivery = async (
+  orderId: string, 
+  riderId: string,
+  driverInfo?: { name: string; phone: string; photo: string }
+): Promise<OrderFlowResult> => {
+  try {
+    // Get current tracking
+    const { data: currentOrder, error: fetchError } = await supabase
+      .from("orders")
+      .select("tracking, delivery_address")
+      .eq("id", orderId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const currentTracking = (currentOrder?.tracking as Record<string, unknown>) || {};
+    const regionalHub = (currentTracking?.regionalHub as string) || getRegionalHub(currentOrder.delivery_address);
+
+    // Update tracking with driver info
+    const updatedTracking = {
+      ...currentTracking,
+      deliveryStartedAt: new Date().toISOString(),
+      driver: driverInfo ? {
+        id: riderId,
+        ...driverInfo
+      } : undefined
+    };
+
     const { error } = await supabase
       .from("orders")
       .update({ 
         status: "out_for_delivery" as OrderStatus,
         assigned_to: riderId,
+        tracking: updatedTracking as unknown as Json,
         updated_at: new Date().toISOString()
       })
       .eq("id", orderId);
@@ -168,10 +298,24 @@ export const startDelivery = async (orderId: string, riderId: string): Promise<O
     await addTrackingEvent(
       orderId, 
       "out_for_delivery", 
-      "Order picked up and out for delivery"
+      "Order picked up by delivery driver",
+      regionalHub,
+      "delivery"
     );
 
-    await createOrderNotification(orderId, "out_for_delivery");
+    await addTrackingEvent(
+      orderId, 
+      "out_for_delivery", 
+      "Order is out for delivery",
+      TRACKING_LOCATIONS.EN_ROUTE,
+      "delivery"
+    );
+
+    await createOrderNotification(
+      orderId, 
+      "out_for_delivery", 
+      "Your order is on its way! Your delivery driver is heading to your location now."
+    );
 
     return { success: true, message: "Delivery started", orderId };
   } catch (error) {
@@ -212,16 +356,9 @@ export const completeDelivery = async (
 
     const updatedTracking = {
       ...currentTracking,
-      events: [
-        ...(Array.isArray(currentTracking?.events) ? currentTracking.events : []),
-        {
-          status: "delivered",
-          timestamp: deliveredAt,
-          description: "Order delivered and verified by barcode scan"
-        }
-      ],
       deliveredAt,
       deliveryVerifiedByBarcode: !!scannedBarcode,
+      deliveryCompletedBy: riderId,
       ...(signature ? { signature } : {})
     };
 
@@ -236,7 +373,19 @@ export const completeDelivery = async (
 
     if (error) throw error;
 
-    await createOrderNotification(orderId, "delivered");
+    await addTrackingEvent(
+      orderId, 
+      "delivered", 
+      "Order delivered successfully",
+      TRACKING_LOCATIONS.DELIVERED,
+      "customer"
+    );
+
+    await createOrderNotification(
+      orderId, 
+      "delivered", 
+      "Your order has been delivered! Thank you for shopping with us. Enjoy your purchase!"
+    );
 
     return { success: true, message: "Delivery completed", orderId };
   } catch (error) {
@@ -261,7 +410,9 @@ export const assignOrderToRider = async (orderId: string, riderId: string): Prom
     await addTrackingEvent(
       orderId, 
       "dispatched", 
-      "Rider assigned for delivery"
+      "Delivery driver assigned to your order",
+      undefined,
+      "transit"
     );
 
     return { success: true, message: "Rider assigned", orderId };
@@ -272,7 +423,7 @@ export const assignOrderToRider = async (orderId: string, riderId: string): Prom
 };
 
 // Helper to create customer notifications
-const createOrderNotification = async (orderId: string, status: string) => {
+const createOrderNotification = async (orderId: string, status: string, customMessage?: string) => {
   try {
     // Get order to find user_id
     const { data: order, error: fetchError } = await supabase
@@ -284,16 +435,16 @@ const createOrderNotification = async (orderId: string, status: string) => {
     if (fetchError || !order) return;
 
     const titles: Record<string, string> = {
-      processing: "Order Being Packed",
-      dispatched: "Order Ready for Delivery",
-      out_for_delivery: "Order On Its Way",
-      delivered: "Order Delivered"
+      processing: "Order Being Packed 📦",
+      dispatched: "Order Dispatched 🚚",
+      out_for_delivery: "Out for Delivery 🏃",
+      delivered: "Order Delivered ✅"
     };
 
-    const messages: Record<string, string> = {
+    const defaultMessages: Record<string, string> = {
       processing: "Your order is now being packed by our team.",
-      dispatched: "Your order has been packed and is waiting for pickup.",
-      out_for_delivery: "Your order is on its way! Track it in real-time.",
+      dispatched: "Your order has been packed and is on its way!",
+      out_for_delivery: "Your order is out for delivery! Track it in real-time.",
       delivered: "Your order has been delivered. Enjoy!"
     };
 
@@ -301,7 +452,7 @@ const createOrderNotification = async (orderId: string, status: string) => {
       user_id: order.user_id,
       order_id: orderId,
       title: titles[status] || "Order Update",
-      message: messages[status] || statusDescriptions[status],
+      message: customMessage || defaultMessages[status] || statusDescriptions[status],
       type: "order_status"
     });
   } catch (error) {
@@ -339,5 +490,46 @@ export const getOrderFlowStats = async () => {
   } catch (error) {
     console.error("Error getting flow stats:", error);
     return null;
+  }
+};
+
+// Simulate full tracking journey (for demo/testing)
+export const simulateOrderJourney = async (orderId: string): Promise<OrderFlowResult> => {
+  try {
+    const { data: order, error } = await supabase
+      .from("orders")
+      .select("delivery_address")
+      .eq("id", orderId)
+      .single();
+
+    if (error) throw error;
+
+    const regionalHub = getRegionalHub(order.delivery_address);
+    const now = new Date();
+
+    // Add series of tracking events with timestamps
+    const events = [
+      { status: "processing", description: "Order packing started", location: TRACKING_LOCATIONS.MAIN_WAREHOUSE, timestamp: new Date(now.getTime() - 180 * 60000).toISOString() },
+      { status: "processing", description: "Order packed and quality checked", location: TRACKING_LOCATIONS.MAIN_WAREHOUSE, timestamp: new Date(now.getTime() - 150 * 60000).toISOString() },
+      { status: "dispatched", description: `Order left ${TRACKING_LOCATIONS.MAIN_WAREHOUSE}`, location: TRACKING_LOCATIONS.MAIN_WAREHOUSE, timestamp: new Date(now.getTime() - 120 * 60000).toISOString() },
+      { status: "dispatched", description: `Order arrived at ${TRACKING_LOCATIONS.SORTING_CENTER}`, location: TRACKING_LOCATIONS.SORTING_CENTER, timestamp: new Date(now.getTime() - 90 * 60000).toISOString() },
+      { status: "dispatched", description: `Order departed ${TRACKING_LOCATIONS.SORTING_CENTER}`, location: TRACKING_LOCATIONS.SORTING_CENTER, timestamp: new Date(now.getTime() - 60 * 60000).toISOString() },
+      { status: "dispatched", description: `Order arrived at ${regionalHub}`, location: regionalHub, timestamp: new Date(now.getTime() - 30 * 60000).toISOString() },
+    ];
+
+    for (const event of events) {
+      await supabase.from("order_tracking_events").insert({
+        order_id: orderId,
+        status: event.status,
+        description: event.description,
+        location: event.location,
+        timestamp: event.timestamp
+      });
+    }
+
+    return { success: true, message: "Order journey simulated", orderId };
+  } catch (error) {
+    console.error("Error simulating journey:", error);
+    return { success: false, message: "Failed to simulate journey" };
   }
 };
