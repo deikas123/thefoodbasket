@@ -1,5 +1,4 @@
-
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -8,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductType } from '@/types/supabase';
 import { getDailyOffersWithProducts } from '@/services/product/offerService';
-import { toast } from '@/components/ui/use-toast';
 
 interface TimeLeft {
   hours: string;
@@ -18,32 +16,24 @@ interface TimeLeft {
 
 const DailyOffersSection = memo(() => {
   const [productsWithDiscount, setProductsWithDiscount] = useState<ProductType[]>([]);
-  
-  // Initial state for the countdown
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: "00", minutes: "00", seconds: "00" });
+  const hasRefetchedRef = useRef(false);
+  const currentDayRef = useRef(new Date().getDate());
   
-  // Fetch deals from the product service
   const { data: dailyOffers = [], isLoading, error, refetch } = useQuery({
     queryKey: ['daily-offers-active'],
     queryFn: getDailyOffersWithProducts,
-    staleTime: 1000 * 60 * 15, // 15 minutes
-    gcTime: 1000 * 60 * 30,    // 30 minutes
+    staleTime: 1000 * 60 * 15,
+    gcTime: 1000 * 60 * 30,
     retry: 2,
-    meta: {
-      onError: (error) => {
-        console.error('Failed to fetch daily offers:', error);
-      }
-    }
   });
   
   useEffect(() => {
-    // Convert the offers to products with the discount applied
     if (dailyOffers.length > 0) {
       const mapped = dailyOffers
-        .filter(offer => offer.product) // filter out offers without products
+        .filter(offer => offer.product)
         .map(offer => {
           if (!offer.product) return null;
-          // Apply discount to product
           return {
             ...offer.product,
             discountPercentage: offer.discount_percentage
@@ -51,51 +41,57 @@ const DailyOffersSection = memo(() => {
         })
         .filter(Boolean) as ProductType[];
       
-      setProductsWithDiscount(mapped.slice(0, 4)); // Take up to 4 products
+      setProductsWithDiscount(mapped.slice(0, 4));
     } else {
       setProductsWithDiscount([]);
     }
   }, [dailyOffers]);
   
-  useEffect(() => {
-    // Calculate time left until end of day
-    const calculateTimeLeft = (): TimeLeft => {
-      const now = new Date();
-      const endTime = new Date(now);
-      endTime.setHours(23, 59, 59, 999);
-      const difference = endTime.getTime() - now.getTime();
-      
-      if (difference <= 0) {
-        return { hours: "00", minutes: "00", seconds: "00" };
-      }
-      
-      const hours = Math.floor(difference / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-      
-      return {
-        hours: hours.toString().padStart(2, "0"),
-        minutes: minutes.toString().padStart(2, "0"),
-        seconds: seconds.toString().padStart(2, "0"),
-      };
-    };
+  // Stable time calculation function
+  const calculateTimeLeft = useCallback((): TimeLeft => {
+    const now = new Date();
+    const endTime = new Date(now);
+    endTime.setHours(23, 59, 59, 999);
+    const difference = endTime.getTime() - now.getTime();
     
-    // Set initial time
+    if (difference <= 0) {
+      return { hours: "00", minutes: "00", seconds: "00" };
+    }
+    
+    const hours = Math.floor(difference / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+    
+    return {
+      hours: hours.toString().padStart(2, "0"),
+      minutes: minutes.toString().padStart(2, "0"),
+      seconds: seconds.toString().padStart(2, "0"),
+    };
+  }, []);
+  
+  // Timer effect - runs once on mount
+  useEffect(() => {
     setTimeLeft(calculateTimeLeft());
     
-    // Update countdown timer every second
     const timer = setInterval(() => {
       const updated = calculateTimeLeft();
       setTimeLeft(updated);
       
-      // Refetch when day ends
-      if (updated.hours === "00" && updated.minutes === "00" && updated.seconds === "00") {
+      // Check if day changed (new day started)
+      const today = new Date().getDate();
+      if (today !== currentDayRef.current && !hasRefetchedRef.current) {
+        hasRefetchedRef.current = true;
+        currentDayRef.current = today;
         refetch();
+        // Reset the refetch flag after a delay
+        setTimeout(() => {
+          hasRefetchedRef.current = false;
+        }, 5000);
       }
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [refetch]);
+  }, [calculateTimeLeft, refetch]);
   
   if (error) {
     return (
@@ -132,7 +128,7 @@ const DailyOffersSection = memo(() => {
   }
   
   if (productsWithDiscount.length === 0) {
-    return null; // Don't show the section if there are no offers
+    return null;
   }
   
   return (
