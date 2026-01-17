@@ -1,20 +1,24 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ProductType } from "@/types/supabase";
 import { getProductTags } from "./tagService";
 
-// Get all products with optional filtering
+// Default limit for initial page load - optimized for performance
+const DEFAULT_LIMIT = 24;
+
+// Get all products with optional filtering and pagination
 export const getProducts = async (
   categoryId?: string,
   searchTerm?: string,
   minPrice?: number,
   maxPrice?: number,
-  inStockOnly?: boolean
+  inStockOnly?: boolean,
+  limit: number = DEFAULT_LIMIT,
+  offset: number = 0
 ): Promise<ProductType[]> => {
   try {
     let query = supabase
       .from('products')
-      .select('*, categories(name, slug)');
+      .select('id, name, description, price, image, stock, featured, rating, num_reviews, discount_percentage, created_at, updated_at, category_id, categories(name, slug)');
     
     // If there's a search term, search across ALL products (ignore category filter)
     if (searchTerm) {
@@ -25,7 +29,6 @@ export const getProducts = async (
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       
       if (uuidRegex.test(categoryId)) {
-        // It's a UUID, use it directly
         query = query.eq('category_id', categoryId);
       } else {
         // It might be a slug, first get the category ID
@@ -33,7 +36,7 @@ export const getProducts = async (
           .from('categories')
           .select('id')
           .eq('slug', categoryId)
-          .single();
+          .maybeSingle();
         
         if (!categoryError && categoryData) {
           query = query.eq('category_id', categoryData.id);
@@ -53,6 +56,11 @@ export const getProducts = async (
       query = query.gt('stock', 0);
     }
     
+    // Add pagination and ordering for consistent results
+    query = query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    
     const { data, error } = await query;
     
     if (error) {
@@ -64,23 +72,28 @@ export const getProducts = async (
       return [];
     }
     
-    // Map the data to our ProductType, ensure we handle potential null values
-    return data.map(item => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      image: item.image,
-      category: item.categories?.slug || '',
-      stock: item.stock,
-      featured: item.featured,
-      rating: item.rating,
-      num_reviews: item.num_reviews,
-      numReviews: item.num_reviews,
-      discountPercentage: item.discount_percentage,
-      created_at: item.created_at,
-      updated_at: item.updated_at
-    }));
+    // Map the data to our ProductType
+    return data.map(item => {
+      // Handle categories - could be object or array depending on relation
+      const cat = item.categories;
+      const categorySlug = Array.isArray(cat) ? cat[0]?.slug : (cat as { slug?: string })?.slug || '';
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image,
+        category: categorySlug,
+        stock: item.stock,
+        featured: item.featured,
+        rating: item.rating,
+        num_reviews: item.num_reviews,
+        numReviews: item.num_reviews,
+        discountPercentage: item.discount_percentage,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      };
+    });
   } catch (error) {
     console.error("Error fetching products:", error);
     return [];
