@@ -16,10 +16,10 @@ export const getProducts = async (
   offset: number = 0
 ): Promise<ProductType[]> => {
   try {
-    // Build a simpler, more efficient query - use left join (default) for categories
+    // Simpler query without nested joins for better performance
     let query = supabase
       .from('products')
-      .select('id, name, description, price, image, stock, featured, rating, num_reviews, discount_percentage, created_at, updated_at, category_id, categories(name, slug)');
+      .select('*');
     
     // Apply category filter if provided
     if (categoryId && categoryId.trim()) {
@@ -69,37 +69,36 @@ export const getProducts = async (
     
     if (error) {
       console.error("Error fetching products:", error);
-      return [];
+      throw error;
     }
     
     if (!data || data.length === 0) {
+      console.log("No products found in database");
       return [];
     }
     
+    console.log(`Fetched ${data.length} products`);
+    
     // Map the data to our ProductType
-    return data.map(item => {
-      const cat = item.categories;
-      const categorySlug = Array.isArray(cat) ? cat[0]?.slug : (cat as { slug?: string })?.slug || '';
-      return {
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        image: item.image,
-        category: categorySlug,
-        stock: item.stock,
-        featured: item.featured,
-        rating: item.rating,
-        num_reviews: item.num_reviews,
-        numReviews: item.num_reviews,
-        discountPercentage: item.discount_percentage,
-        created_at: item.created_at,
-        updated_at: item.updated_at
-      };
-    });
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      image: item.image,
+      category: '',
+      stock: item.stock,
+      featured: item.featured,
+      rating: item.rating,
+      num_reviews: item.num_reviews,
+      numReviews: item.num_reviews,
+      discountPercentage: item.discount_percentage,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
   } catch (error) {
     console.error("Error fetching products:", error);
-    return [];
+    throw error;
   }
 };
 
