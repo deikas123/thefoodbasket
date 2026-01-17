@@ -16,39 +16,31 @@ export const getProducts = async (
   offset: number = 0
 ): Promise<ProductType[]> => {
   try {
+    // Build a simpler, more efficient query
     let query = supabase
       .from('products')
-      .select('id, name, description, price, image, stock, featured, rating, num_reviews, discount_percentage, created_at, updated_at, category_id, categories(name, slug)');
+      .select('id, name, description, price, image, stock, featured, rating, num_reviews, discount_percentage, created_at, updated_at, category_id, categories!inner(name, slug)');
     
-    // If there's a search term, search across ALL products (ignore category filter)
-    if (searchTerm) {
-      const term = `%${searchTerm.toLowerCase()}%`;
+    // Apply filters
+    if (searchTerm && searchTerm.trim()) {
+      const term = `%${searchTerm.trim().toLowerCase()}%`;
       query = query.or(`name.ilike.${term},description.ilike.${term}`);
-    } else if (categoryId) {
-      // Only apply category filter if there's NO search term
+    } else if (categoryId && categoryId.trim()) {
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       
       if (uuidRegex.test(categoryId)) {
         query = query.eq('category_id', categoryId);
       } else {
-        // It might be a slug, first get the category ID
-        const { data: categoryData, error: categoryError } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('slug', categoryId)
-          .maybeSingle();
-        
-        if (!categoryError && categoryData) {
-          query = query.eq('category_id', categoryData.id);
-        }
+        // Filter by category slug through the join
+        query = query.eq('categories.slug', categoryId);
       }
     }
     
-    if (typeof minPrice === 'number') {
+    if (typeof minPrice === 'number' && minPrice > 0) {
       query = query.gte('price', minPrice);
     }
     
-    if (typeof maxPrice === 'number') {
+    if (typeof maxPrice === 'number' && maxPrice < 50000) {
       query = query.lte('price', maxPrice);
     }
     
@@ -56,8 +48,9 @@ export const getProducts = async (
       query = query.gt('stock', 0);
     }
     
-    // Add pagination and ordering for consistent results
+    // Add pagination and ordering
     query = query
+      .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
     
@@ -68,13 +61,12 @@ export const getProducts = async (
       return [];
     }
     
-    if (!data) {
+    if (!data || data.length === 0) {
       return [];
     }
     
     // Map the data to our ProductType
     return data.map(item => {
-      // Handle categories - could be object or array depending on relation
       const cat = item.categories;
       const categorySlug = Array.isArray(cat) ? cat[0]?.slug : (cat as { slug?: string })?.slug || '';
       return {
