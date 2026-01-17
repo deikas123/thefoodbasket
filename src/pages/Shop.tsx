@@ -1,7 +1,6 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { getProducts, getCategories } from "@/services/productService";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -10,11 +9,12 @@ import ProductCard from "@/components/ProductCard";
 import TopGroceryStores from "@/components/home/TopGroceryStores";
 import ShopNavbar from "@/components/shop/ShopNavbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeft, Search, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductType } from "@/types/supabase";
-import { Badge } from "@/components/ui/badge";
 import BottomNavigation from "@/components/mobile/BottomNavigation";
+
+const PRODUCTS_PER_PAGE = 24;
 
 const Shop = () => {
   const navigate = useNavigate();
@@ -31,41 +31,64 @@ const Shop = () => {
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [sortOption, setSortOption] = useState(initialSort);
   const [selectedStore, setSelectedStore] = useState(initialStore);
-  const [showFilters, setShowFilters] = useState(false);
   
-  // Fetch categories
+  // Fetch categories with caching
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
-    queryFn: getCategories
+    queryFn: getCategories,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    gcTime: 1000 * 60 * 30,
   });
 
-  // Fetch stores
+  // Fetch stores with caching
   const storesQuery = useQuery({
     queryKey: ["stores"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stores")
-        .select("*")
+        .select("id, name, logo")
         .eq("active", true)
         .order("name");
       if (error) throw error;
       return data;
-    }
+    },
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
   });
   
-  // Fetch products with filters
-  const productsQuery = useQuery({
-    queryKey: ["products", selectedCategory, searchTerm, selectedStore],
-    queryFn: async () => {
-      return getProducts(
+  // Infinite query for products with pagination
+  const {
+    data: productsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isProductsLoading,
+    isError: isProductsError,
+  } = useInfiniteQuery({
+    queryKey: ["products-paginated", selectedCategory, searchTerm, selectedStore],
+    queryFn: async ({ pageParam = 0 }) => {
+      const products = await getProducts(
         selectedCategory || undefined,
         searchTerm || undefined,
         0,
         50000,
-        false
+        false,
+        PRODUCTS_PER_PAGE,
+        pageParam
       );
-    }
+      return {
+        products,
+        nextOffset: products.length === PRODUCTS_PER_PAGE ? pageParam + PRODUCTS_PER_PAGE : undefined,
+      };
+    },
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    initialPageParam: 0,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
   });
+  
+  // Flatten all pages of products
+  const allProducts = productsData?.pages.flatMap(page => page.products) || [];
   
   // Update URL params when filters change
   useEffect(() => {
@@ -74,7 +97,7 @@ const Shop = () => {
     if (searchTerm) params.set("search", searchTerm);
     if (sortOption) params.set("sort", sortOption);
     if (selectedStore) params.set("store", selectedStore);
-    setSearchParams(params);
+    setSearchParams(params, { replace: true });
   }, [selectedCategory, searchTerm, sortOption, selectedStore, setSearchParams]);
   
   // Update search term when URL changes
@@ -83,7 +106,7 @@ const Shop = () => {
     if (urlSearchTerm !== searchTerm) {
       setSearchTerm(urlSearchTerm);
     }
-  }, [searchParams, searchTerm]);
+  }, [searchParams]);
   
   // Handle clearing all filters
   const clearFilters = () => {
@@ -93,19 +116,16 @@ const Shop = () => {
     setSelectedStore("");
   };
   
-  // Filter and sort products
-  const filteredProducts = productsQuery.data || [];
-
-  const sortProducts = (products: ProductType[]) => {
+  // Sort products client-side
+  const sortProducts = useCallback((products: ProductType[]) => {
+    if (!sortOption) return products;
     const sorted = [...products];
     if (sortOption === "price_asc") return sorted.sort((a, b) => a.price - b.price);
     if (sortOption === "price_desc") return sorted.sort((a, b) => b.price - a.price);
     return sorted;
-  };
+  }, [sortOption]);
   
-  const sortedProducts = sortProducts(filteredProducts);
-  
-  const activeFiltersCount = [selectedCategory, sortOption, selectedStore].filter(Boolean).length;
+  const sortedProducts = sortProducts(allProducts);
   
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20 md:pb-0">
@@ -154,11 +174,13 @@ const Shop = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold mb-1">Top Items 2025</h2>
-                <p className="text-sm text-muted-foreground">{sortedProducts.length} products available</p>
+                <p className="text-sm text-muted-foreground">
+                  {sortedProducts.length} products{hasNextPage ? '+' : ''} available
+                </p>
               </div>
             </div>
             
-            {productsQuery.isLoading ? (
+            {isProductsLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="bg-card rounded-2xl p-4 shadow-sm">
@@ -170,11 +192,34 @@ const Shop = () => {
                 ))}
               </div>
             ) : sortedProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {sortedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {sortedProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+                
+                {/* Load More Button */}
+                {hasNextPage && (
+                  <div className="flex justify-center mt-8">
+                    <Button
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      size="lg"
+                      className="rounded-full px-8"
+                    >
+                      {isFetchingNextPage ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        "Load More Products"
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-16 bg-muted/30 rounded-2xl">
                 <p className="text-muted-foreground text-lg mb-2">No products found</p>
