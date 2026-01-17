@@ -29,8 +29,9 @@ const HeroBanner = () => {
             <div className="absolute inset-0">
               <img
                 src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=1200&auto=format&fit=crop&q=80"
-                alt="Fresh vegetables"
+                alt="Fresh organic vegetables and fruits for grocery delivery in Nairobi, Kenya"
                 className="w-full h-full object-cover mix-blend-overlay opacity-60"
+                loading="eager"
               />
             </div>
             

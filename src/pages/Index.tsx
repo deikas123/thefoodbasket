@@ -20,6 +20,11 @@ import PopularProducts from "@/components/home/PopularProducts";
 import DailyOffersSection from "@/components/home/DailyOffersSection";
 import FlashSaleSection from "@/components/home/FlashSaleSection";
 import BenefitsStrip from "@/components/home/BenefitsStrip";
+import AboutSection from "@/components/home/AboutSection";
+import HowItWorksSection from "@/components/home/HowItWorksSection";
+import WhyChooseUsSection from "@/components/home/WhyChooseUsSection";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
+import ContactStrip from "@/components/home/ContactStrip";
 
 const Index = () => {
   const cartContext = useCart();
@@ -93,6 +98,21 @@ const Index = () => {
             <RecentlyViewedProducts />
           </div>
         </section>
+        
+        {/* How It Works - SEO Content */}
+        <HowItWorksSection />
+        
+        {/* Why Choose Us - SEO Content */}
+        <WhyChooseUsSection />
+        
+        {/* Testimonials - Social Proof */}
+        <TestimonialsSection />
+        
+        {/* About Section - Trust & SEO */}
+        <AboutSection />
+        
+        {/* Contact Strip with WhatsApp */}
+        <ContactStrip />
         
         {/* Benefits/Trust Strip */}
         <BenefitsStrip />
