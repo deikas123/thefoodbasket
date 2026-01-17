@@ -97,13 +97,18 @@ export const useCheckout = () => {
     setIsProcessing(true);
     
     try {
-      // Convert delivery address to Address format for checkout
-      const addressForCheckout: Address = {
+      // Convert delivery address to Address format for checkout - include all customer details
+      const addressForCheckout = {
         id: selectedAddress?.id || "temp",
+        fullName: deliveryAddress.fullName,
+        phone: deliveryAddress.phone,
         street: deliveryAddress.street,
         city: deliveryAddress.city,
         state: "Kenya",
-        zipCode: deliveryAddress.postalCode,
+        zipCode: deliveryAddress.postalCode || "",
+        postalCode: deliveryAddress.postalCode,
+        instructions: deliveryAddress.instructions,
+        location: deliveryAddress.location,
         isDefault: false
       };
 

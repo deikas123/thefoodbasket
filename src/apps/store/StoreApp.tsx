@@ -1,8 +1,6 @@
 
-import { useEffect, useState } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { useStoreAccess } from "@/hooks/useRoleAccess";
 import StoreLayout from "./components/StoreLayout";
 import StoreDashboard from "./pages/StoreDashboard";
 import StoreInventory from "./pages/StoreInventory";
@@ -11,46 +9,10 @@ import StoreAnalytics from "./pages/StoreAnalytics";
 import StorePricing from "./pages/StorePricing";
 
 const StoreApp = () => {
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [hasStoreAccess, setHasStoreAccess] = useState<boolean | null>(null);
-  const [storeId, setStoreId] = useState<string | null>(null);
+  const { user, hasAccess, storeId, isLoading } = useStoreAccess();
 
-  useEffect(() => {
-    const checkStoreAccess = async () => {
-      if (!user) {
-        setHasStoreAccess(false);
-        return;
-      }
-
-      // Check if user is a store admin
-      const { data: storeAdmin } = await supabase
-        .from("store_admins")
-        .select("store_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (storeAdmin) {
-        setStoreId(storeAdmin.store_id);
-        setHasStoreAccess(true);
-        return;
-      }
-
-      // Also check if user has store_admin role
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .in("role", ["admin", "store_admin"])
-        .single();
-
-      setHasStoreAccess(!!userRole);
-    };
-
-    checkStoreAccess();
-  }, [user]);
-
-  if (loading || hasStoreAccess === null) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full" />
@@ -58,7 +20,7 @@ const StoreApp = () => {
     );
   }
 
-  if (!user || !hasStoreAccess) {
+  if (!user || !hasAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center p-8 max-w-md">
