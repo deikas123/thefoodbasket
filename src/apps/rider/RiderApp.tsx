@@ -1,8 +1,6 @@
 
-import { useEffect, useState } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
 import RiderLayout from "./components/RiderLayout";
 import RiderDashboard from "./pages/RiderDashboard";
 import RiderDeliveries from "./pages/RiderDeliveries";
@@ -10,31 +8,12 @@ import RiderHistory from "./pages/RiderHistory";
 import RiderProfile from "./pages/RiderProfile";
 
 const RiderApp = () => {
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const { user, hasAccess, isLoading } = useRoleAccess({
+    allowedRoles: ["admin", "delivery", "rider"]
+  });
 
-  useEffect(() => {
-    const checkAccess = async () => {
-      if (!user) {
-        setHasAccess(false);
-        return;
-      }
-
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .in("role", ["admin", "delivery", "rider"])
-        .single();
-
-      setHasAccess(!!userRole);
-    };
-
-    checkAccess();
-  }, [user]);
-
-  if (loading || hasAccess === null) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full" />
