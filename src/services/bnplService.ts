@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface BNPLTransaction {
   id: string;
@@ -52,12 +53,33 @@ export const getUserCreditInfo = async (): Promise<CreditInfo | null> => {
   }
   
   return {
-    credit_limit: data.credit_limit || 0,
+    credit_limit: data.credit_limit || 10000,
     credit_used: data.credit_used || 0,
-    credit_available: (data.credit_limit || 0) - (data.credit_used || 0),
+    credit_available: (data.credit_limit || 10000) - (data.credit_used || 0),
     credit_score: data.credit_score,
     status: data.status
   };
+};
+
+export const checkBNPLEligibility = async (amount: number): Promise<{ eligible: boolean; reason?: string }> => {
+  const creditInfo = await getUserCreditInfo();
+  
+  if (!creditInfo) {
+    return { eligible: false, reason: 'Please complete KYC verification to use Buy Now, Pay Later' };
+  }
+  
+  if (creditInfo.status !== 'approved') {
+    return { eligible: false, reason: 'Your KYC verification is pending or was rejected' };
+  }
+  
+  if (amount > creditInfo.credit_available) {
+    return { 
+      eligible: false, 
+      reason: `Amount exceeds your available credit (KES ${creditInfo.credit_available.toLocaleString()})` 
+    };
+  }
+  
+  return { eligible: true };
 };
 
 export const createBNPLTransaction = async (
@@ -66,7 +88,17 @@ export const createBNPLTransaction = async (
   installments: number = 4
 ): Promise<BNPLTransaction | null> => {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) {
+    toast.error('Please login to use Buy Now, Pay Later');
+    return null;
+  }
+  
+  // Check eligibility
+  const eligibility = await checkBNPLEligibility(amount);
+  if (!eligibility.eligible) {
+    toast.error(eligibility.reason);
+    return null;
+  }
   
   // Calculate installment details
   const interestRate = 0; // No interest for now
@@ -76,10 +108,10 @@ export const createBNPLTransaction = async (
   // Calculate due dates
   const today = new Date();
   const nextPaymentDate = new Date(today);
-  nextPaymentDate.setDate(nextPaymentDate.getDate() + 7); // First payment in 7 days
+  nextPaymentDate.setDate(nextPaymentDate.getDate() + 7);
   
   const dueDate = new Date(today);
-  dueDate.setDate(dueDate.getDate() + (7 * installments)); // Final due date
+  dueDate.setDate(dueDate.getDate() + (7 * installments));
   
   const { data, error } = await supabase
     .from('bnpl_transactions')
@@ -93,45 +125,59 @@ export const createBNPLTransaction = async (
       installment_amount: installmentAmount,
       next_payment_date: nextPaymentDate.toISOString().split('T')[0],
       due_date: dueDate.toISOString().split('T')[0],
-      status: 'active'
+      status: 'active',
+      paid_amount: 0
     })
     .select()
     .single();
     
   if (error) {
     console.error('Error creating BNPL transaction:', error);
+    toast.error('Failed to create payment plan');
     return null;
   }
   
   // Create installment records
+  const installmentPromises = [];
   for (let i = 1; i <= installments; i++) {
     const installmentDueDate = new Date(today);
     installmentDueDate.setDate(installmentDueDate.getDate() + (7 * i));
     
-    await supabase
-      .from('bnpl_installments')
-      .insert({
+    installmentPromises.push(
+      supabase.from('bnpl_installments').insert({
         transaction_id: data.id,
         installment_number: i,
         amount: installmentAmount,
         due_date: installmentDueDate.toISOString().split('T')[0],
         status: 'pending'
-      });
+      })
+    );
   }
   
+  await Promise.all(installmentPromises);
+  
   // Update credit used
-  await supabase
-    .from('kyc_verifications')
-    .update({ credit_used: supabase.rpc('increment_credit_used', { amount }) })
-    .eq('user_id', user.id);
+  const creditInfo = await getUserCreditInfo();
+  if (creditInfo) {
+    await supabase
+      .from('kyc_verifications')
+      .update({ credit_used: (creditInfo.credit_used || 0) + amount })
+      .eq('user_id', user.id);
+  }
+  
+  toast.success(`Payment plan created! Pay KES ${installmentAmount.toLocaleString()} weekly for ${installments} weeks`);
   
   return data;
 };
 
 export const getUserBNPLTransactions = async (): Promise<BNPLTransaction[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  
   const { data, error } = await supabase
     .from('bnpl_transactions')
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
     
   if (error) {
@@ -161,16 +207,29 @@ export const getTransactionInstallments = async (
 
 export const payInstallment = async (
   installmentId: string,
-  paymentMethod: string
+  paymentMethod: string = 'mpesa'
 ): Promise<boolean> => {
   const { data: installment, error: fetchError } = await supabase
     .from('bnpl_installments')
-    .select('*, bnpl_transactions(*)')
+    .select('*')
     .eq('id', installmentId)
     .single();
     
   if (fetchError || !installment) {
     console.error('Error fetching installment:', fetchError);
+    toast.error('Installment not found');
+    return false;
+  }
+  
+  // Get transaction
+  const { data: transaction, error: transError } = await supabase
+    .from('bnpl_transactions')
+    .select('*')
+    .eq('id', installment.transaction_id)
+    .single();
+    
+  if (transError || !transaction) {
+    toast.error('Transaction not found');
     return false;
   }
   
@@ -186,25 +245,56 @@ export const payInstallment = async (
     
   if (updateError) {
     console.error('Error updating installment:', updateError);
+    toast.error('Payment failed');
     return false;
   }
   
   // Update transaction paid amount
-  const transaction = installment.bnpl_transactions;
   const newPaidAmount = (transaction.paid_amount || 0) + installment.amount;
+  const isComplete = newPaidAmount >= transaction.total_amount;
   
   const { error: transactionError } = await supabase
     .from('bnpl_transactions')
     .update({
       paid_amount: newPaidAmount,
-      status: newPaidAmount >= transaction.total_amount ? 'completed' : 'active'
+      status: isComplete ? 'completed' : 'active',
+      next_payment_date: isComplete ? null : getNextPaymentDate(installment.transaction_id)
     })
     .eq('id', transaction.id);
     
   if (transactionError) {
     console.error('Error updating transaction:', transactionError);
-    return false;
+  }
+  
+  // Release credit if completed
+  if (isComplete) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const creditInfo = await getUserCreditInfo();
+      if (creditInfo) {
+        await supabase
+          .from('kyc_verifications')
+          .update({ credit_used: Math.max(0, (creditInfo.credit_used || 0) - transaction.principal_amount) })
+          .eq('user_id', user.id);
+      }
+    }
+    toast.success('Congratulations! You have fully paid off this order!');
+  } else {
+    toast.success('Payment successful!');
   }
   
   return true;
+};
+
+const getNextPaymentDate = async (transactionId: string): Promise<string | null> => {
+  const { data } = await supabase
+    .from('bnpl_installments')
+    .select('due_date')
+    .eq('transaction_id', transactionId)
+    .eq('status', 'pending')
+    .order('installment_number')
+    .limit(1)
+    .single();
+    
+  return data?.due_date || null;
 };
