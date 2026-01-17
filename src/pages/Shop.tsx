@@ -64,14 +64,15 @@ const Shop = () => {
     isFetchingNextPage,
     isLoading: isProductsLoading,
     isError: isProductsError,
+    refetch,
   } = useInfiniteQuery({
     queryKey: ["products-paginated", selectedCategory, searchTerm, selectedStore],
     queryFn: async ({ pageParam = 0 }) => {
       const products = await getProducts(
         selectedCategory || undefined,
         searchTerm || undefined,
-        0,
-        50000,
+        undefined,
+        undefined,
         false,
         PRODUCTS_PER_PAGE,
         pageParam
@@ -85,6 +86,8 @@ const Shop = () => {
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
+    retry: 2,
+    retryDelay: 1000,
   });
   
   // Flatten all pages of products
@@ -191,7 +194,23 @@ const Shop = () => {
                   </div>
                 ))}
               </div>
-            ) : sortedProducts.length > 0 ? (
+            ) : isProductsError ? (
+              <div className="text-center py-16 bg-destructive/10 rounded-2xl">
+                <p className="text-destructive text-lg mb-2">Failed to load products</p>
+                <p className="text-sm text-muted-foreground mb-4">There was an error loading products. Please try again.</p>
+                <Button onClick={() => refetch()} size="lg" className="rounded-full">
+                  Try Again
+                </Button>
+              </div>
+            ) : sortedProducts.length === 0 ? (
+              <div className="text-center py-16 bg-muted/30 rounded-2xl">
+                <p className="text-muted-foreground text-lg mb-2">No products found</p>
+                <p className="text-sm text-muted-foreground mb-4">Try adjusting your search or filters</p>
+                <Button onClick={clearFilters} size="lg" className="rounded-full">
+                  Clear All Filters
+                </Button>
+              </div>
+            ) : (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {sortedProducts.map((product) => (
@@ -220,14 +239,6 @@ const Shop = () => {
                   </div>
                 )}
               </>
-            ) : (
-              <div className="text-center py-16 bg-muted/30 rounded-2xl">
-                <p className="text-muted-foreground text-lg mb-2">No products found</p>
-                <p className="text-sm text-muted-foreground mb-4">Try adjusting your search or filters</p>
-                <Button onClick={clearFilters} size="lg" className="rounded-full">
-                  Clear All Filters
-                </Button>
-              </div>
             )}
           </div>
         </section>
