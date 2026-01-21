@@ -1,20 +1,35 @@
 
 import { useEffect, useState } from 'react';
 import { seedProducts, checkAndAssignRoleIfFirstUser } from '@/services/seedService';
-import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const InitialSetup = () => {
-  const { user } = useAuth();
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [didSeed, setDidSeed] = useState(false);
   const location = useLocation();
 
   // Skip setup on login and register pages
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
+  // Get user directly from Supabase to avoid AuthContext dependency
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Don't run setup if we're on auth pages or if user isn't logged in
@@ -68,7 +83,6 @@ const InitialSetup = () => {
         <AlertTitle>Store Setup Complete</AlertTitle>
         <AlertDescription>
           Your store has been set up with sample products.
-          {user?.role === 'admin' && " You have admin privileges."}
         </AlertDescription>
       </Alert>
     );
