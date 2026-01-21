@@ -8,11 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { startPacking, completePacking } from "@/services/orderFlowService";
-import { Package, CheckCircle, Truck, Clock, AlertCircle, Printer, QrCode, Loader2, RefreshCw } from "lucide-react";
+import { Package, CheckCircle, Truck, Clock, AlertCircle, Printer, QrCode, Loader2, RefreshCw, Wifi } from "lucide-react";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import DeliveryStickerPreview from "@/components/packer/DeliveryStickerPreview";
 import OrderBarcodeScanner from "@/components/packer/OrderBarcodeScanner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.98 },
@@ -187,6 +188,16 @@ const PackerOrders = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
+  // Subscribe to real-time order updates
+  useOrderRealtime({
+    queryKeys: [["packer-orders"], ["packer-dashboard"]],
+    statuses: ["pending", "processing", "dispatched"],
+    showToasts: true,
+    toastMessages: {
+      insert: "New order received!",
+    }
+  });
+  
   const { data: orders, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ["packer-orders"],
     queryFn: async () => {
@@ -197,8 +208,8 @@ const PackerOrders = () => {
         .order("created_at", { ascending: true });
       return data;
     },
-    refetchInterval: 15000,
-    staleTime: 10000,
+    refetchInterval: 30000, // Reduced frequency since we have realtime
+    staleTime: 15000,
   });
 
   const startPackingMutation = useMutation({
@@ -264,6 +275,10 @@ const PackerOrders = () => {
           <p className="text-muted-foreground text-sm mt-1">Pack and prepare orders for delivery</p>
         </div>
         <div className="flex gap-2 items-center">
+          <Badge variant="outline" className="gap-1 text-green-600 border-green-300">
+            <Wifi className="h-3 w-3 animate-pulse" />
+            Live
+          </Badge>
           <Button
             variant="outline"
             size="sm"
