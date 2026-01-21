@@ -33,21 +33,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<void> => {
     setAuthState(prev => ({ ...prev, loading: true }));
     try {
       const user = await signInUser(email, password);
       if (user) {
         const { userData } = await updateAuthProfile(user);
+        setAuthState(prev => ({ ...prev, loading: false }));
         if (userData) {
+          // Handle role-based redirect synchronously after auth completes
           handleRoleBasedRedirect(userData.role);
         }
       }
     } catch (error: any) {
+      setAuthState(prev => ({ ...prev, loading: false }));
       console.error('Error signing in:', error.message);
       throw error;
-    } finally {
-      setAuthState(prev => ({ ...prev, loading: false }));
     }
   };
 
