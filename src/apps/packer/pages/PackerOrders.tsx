@@ -8,10 +8,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { startPacking, completePacking } from "@/services/orderFlowService";
-import { Package, CheckCircle, Truck, Clock, AlertCircle, Printer, QrCode } from "lucide-react";
+import { Package, CheckCircle, Truck, Clock, AlertCircle, Printer, QrCode, Loader2, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import DeliveryStickerPreview from "@/components/packer/DeliveryStickerPreview";
 import OrderBarcodeScanner from "@/components/packer/OrderBarcodeScanner";
+import { motion, AnimatePresence } from "framer-motion";
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.98 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: { duration: 0.3, ease: "easeOut" }
+  },
+  exit: { 
+    opacity: 0, 
+    x: 100, 
+    scale: 0.95,
+    transition: { duration: 0.25 }
+  }
+};
 
 interface OrderCardProps {
   order: any;
@@ -170,7 +187,7 @@ const PackerOrders = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ["packer-orders"],
     queryFn: async () => {
       const { data } = await supabase
@@ -180,7 +197,7 @@ const PackerOrders = () => {
         .order("created_at", { ascending: true });
       return data;
     },
-    refetchInterval: 15000, // Increased to 15 seconds for better performance
+    refetchInterval: 15000,
     staleTime: 10000,
   });
 
@@ -242,40 +259,73 @@ const PackerOrders = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Order Queue</h1>
-        <div className="flex gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">Order Queue</h1>
+          <p className="text-muted-foreground text-sm mt-1">Pack and prepare orders for delivery</p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Badge variant="outline" className="gap-1">
             <Clock className="h-3 w-3" />
-            Pending: {pendingOrders.length}
+            {pendingOrders.length}
           </Badge>
-          <Badge variant="outline" className="gap-1 bg-blue-50 dark:bg-blue-950">
+          <Badge variant="secondary" className="gap-1">
             <Package className="h-3 w-3" />
-            Packing: {processingOrders.length}
+            {processingOrders.length}
           </Badge>
         </div>
       </div>
 
       {!orders?.length ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="font-medium">No orders to pack</p>
-            <p className="text-sm">New orders will appear here</p>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <Card>
+            <CardContent className="py-16 text-center text-muted-foreground">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Package className="h-8 w-8 opacity-50" />
+              </div>
+              <p className="font-medium">No orders to pack</p>
+              <p className="text-sm mt-1">New orders will appear here automatically</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       ) : (
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onStartPacking={handleStartPacking}
-              onCompletePacking={handleCompletePacking}
-              isStarting={startPackingMutation.isPending}
-              isCompleting={completePackingMutation.isPending}
-            />
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-4"
+        >
+          <AnimatePresence mode="popLayout">
+            {orders.map((order) => (
+              <motion.div
+                key={order.id}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                layout
+              >
+                <OrderCard
+                  order={order}
+                  onStartPacking={handleStartPacking}
+                  onCompletePacking={handleCompletePacking}
+                  isStarting={startPackingMutation.isPending && startPackingMutation.variables === order.id}
+                  isCompleting={completePackingMutation.isPending}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
     </div>
   );
