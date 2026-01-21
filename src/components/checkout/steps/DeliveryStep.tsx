@@ -81,6 +81,7 @@ const DeliveryStep = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      {/* Left column - Delivery forms (shown first on mobile, first on desktop) */}
       <div className="lg:col-span-2 space-y-6 lg:space-y-8">
         <Card>
           <CardContent className="pt-4 sm:pt-6">
@@ -113,7 +114,8 @@ const DeliveryStep = ({
         </Card>
       </div>
       
-      <div className="order-first lg:order-last">
+      {/* Right column - Order summary (shown last on mobile, sticky on desktop) */}
+      <div className="lg:sticky lg:top-24 lg:self-start">
         <OrderSummary 
           items={items}
           subtotal={total}

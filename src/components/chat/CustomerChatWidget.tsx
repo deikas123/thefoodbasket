@@ -204,9 +204,9 @@ const CustomerChatWidget = () => {
 
   return (
     <>
-      {/* Chat Button */}
+      {/* Chat Button - Hidden on mobile since bottom nav has chat */}
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 right-6 z-50 hidden md:block">
           <Button
             onClick={() => setIsOpen(true)}
             size="lg"
@@ -217,14 +217,14 @@ const CustomerChatWidget = () => {
         </div>
       )}
 
-      {/* Chat Window */}
+      {/* Chat Window - Full screen on mobile, positioned on desktop */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <Card className={`w-80 shadow-xl transition-all duration-200 ${
-            isMinimized ? 'h-14' : 'h-96'
+        <div className="fixed inset-0 md:inset-auto md:bottom-6 md:right-6 z-50 bg-background md:bg-transparent">
+          <Card className={`w-full h-full md:w-80 shadow-xl transition-all duration-200 rounded-none md:rounded-lg ${
+            isMinimized ? 'md:h-14' : 'md:h-96'
           }`}>
             {/* Header */}
-            <CardHeader className="pb-2 px-4 py-3 bg-primary text-primary-foreground rounded-t-lg">
+            <CardHeader className="pb-2 px-4 py-3 bg-primary text-primary-foreground md:rounded-t-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <MessageSquare className="h-4 w-4" />
@@ -238,7 +238,7 @@ const CustomerChatWidget = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsMinimized(!isMinimized)}
-                    className="h-6 w-6 p-0 text-primary-foreground hover:bg-primary/20"
+                    className="h-6 w-6 p-0 text-primary-foreground hover:bg-primary/20 hidden md:flex"
                   >
                     <Minimize2 className="h-3 w-3" />
                   </Button>
@@ -255,7 +255,7 @@ const CustomerChatWidget = () => {
             </CardHeader>
 
             {!isMinimized && (
-              <CardContent className="p-0 flex flex-col h-80">
+              <CardContent className="p-0 flex flex-col h-[calc(100%-56px)] md:h-80">
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-3">
@@ -272,7 +272,7 @@ const CustomerChatWidget = () => {
                             message.sender_type === 'customer' ? 'justify-end' : 'justify-start'
                           }`}
                         >
-                          <div className={`flex space-x-2 max-w-[70%] ${
+                          <div className={`flex space-x-2 max-w-[80%] md:max-w-[70%] ${
                             message.sender_type === 'customer' ? 'flex-row-reverse space-x-reverse' : ''
                           }`}>
                             <Avatar className="h-6 w-6">
@@ -323,7 +323,7 @@ const CustomerChatWidget = () => {
                 </ScrollArea>
 
                 {/* Input */}
-                <div className="border-t p-3">
+                <div className="border-t p-3 pb-safe">
                   <div className="flex space-x-2">
                     <Input
                       placeholder="Type your message..."
