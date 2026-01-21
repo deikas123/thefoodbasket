@@ -2245,6 +2245,10 @@ export type Database = {
           recommendation_score: number
         }[]
       }
+      increment_discount_code_usage: {
+        Args: { code_id: string }
+        Returns: undefined
+      }
       process_auto_replenish_orders: { Args: never; Returns: undefined }
       process_loyalty_redemption: {
         Args: { p_ksh_value: number; p_points: number; p_user_id: string }

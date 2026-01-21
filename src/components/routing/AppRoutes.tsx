@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Lazy load all pages for code splitting
 const Waitlist = lazy(() => import("@/pages/Waitlist"));
@@ -33,10 +34,41 @@ const StoreApp = lazy(() => import("@/apps/store/StoreApp"));
 const RiderApp = lazy(() => import("@/apps/rider/RiderApp"));
 const PackerApp = lazy(() => import("@/apps/packer/PackerApp"));
 
+// Page transition variants
+const pageTransition = {
+  initial: { opacity: 0, y: 8 },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.25, ease: "easeOut" }
+  },
+  exit: { 
+    opacity: 0, 
+    y: -8,
+    transition: { duration: 0.15, ease: "easeIn" }
+  }
+};
+
+// Animated page wrapper
+const AnimatedPage = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial="initial"
+    animate="animate"
+    exit="exit"
+    variants={pageTransition}
+  >
+    {children}
+  </motion.div>
+);
+
 // Minimal loading fallback for faster perceived load
 const MinimalLoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    <motion.div
+      className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full"
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+    />
   </div>
 );
 
@@ -62,33 +94,35 @@ const LoadingFallback = () => (
   </div>
 );
 
-const AppRoutes = () => {
+const AnimatedRoutes = () => {
+  const location = useLocation();
+
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         {/* Root route is dynamically controlled by homepage mode inside Index */}
-        <Route path="/" element={<Home />} />
-        <Route path="/waitlist" element={<Waitlist />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/categories/:slug" element={<Category />} />
-        <Route path="/food-baskets" element={<FoodBaskets />} />
-        <Route path="/auto-replenish" element={<AutoReplenish />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/orders/:orderId" element={<OrderDetails />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/wallet" element={<Wallet />} />
-        <Route path="/loyalty" element={<LoyaltyPage />} />
-        <Route path="/pay-later" element={<PayLater />} />
+        <Route path="/" element={<AnimatedPage><Home /></AnimatedPage>} />
+        <Route path="/waitlist" element={<AnimatedPage><Waitlist /></AnimatedPage>} />
+        <Route path="/home" element={<AnimatedPage><Home /></AnimatedPage>} />
+        <Route path="/shop" element={<AnimatedPage><Shop /></AnimatedPage>} />
+        <Route path="/about" element={<AnimatedPage><About /></AnimatedPage>} />
+        <Route path="/product/:id" element={<AnimatedPage><ProductDetails /></AnimatedPage>} />
+        <Route path="/categories/:slug" element={<AnimatedPage><Category /></AnimatedPage>} />
+        <Route path="/food-baskets" element={<AnimatedPage><FoodBaskets /></AnimatedPage>} />
+        <Route path="/auto-replenish" element={<AnimatedPage><AutoReplenish /></AnimatedPage>} />
+        <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />
+        <Route path="/register" element={<AnimatedPage><Register /></AnimatedPage>} />
+        <Route path="/profile" element={<AnimatedPage><Profile /></AnimatedPage>} />
+        <Route path="/checkout" element={<AnimatedPage><Checkout /></AnimatedPage>} />
+        <Route path="/orders" element={<AnimatedPage><Orders /></AnimatedPage>} />
+        <Route path="/orders/:orderId" element={<AnimatedPage><OrderDetails /></AnimatedPage>} />
+        <Route path="/notifications" element={<AnimatedPage><Notifications /></AnimatedPage>} />
+        <Route path="/wishlist" element={<AnimatedPage><Wishlist /></AnimatedPage>} />
+        <Route path="/wallet" element={<AnimatedPage><Wallet /></AnimatedPage>} />
+        <Route path="/loyalty" element={<AnimatedPage><LoyaltyPage /></AnimatedPage>} />
+        <Route path="/pay-later" element={<AnimatedPage><PayLater /></AnimatedPage>} />
         
-        <Route path="/flash-sales" element={<FlashSales />} />
+        <Route path="/flash-sales" element={<AnimatedPage><FlashSales /></AnimatedPage>} />
         
         {/* Admin Routes */}
         <Route path="/admin/*" element={<AdminRoutes />} />
@@ -126,8 +160,16 @@ const AppRoutes = () => {
         />
         
         {/* Catch all route */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<AnimatedPage><NotFound /></AnimatedPage>} />
       </Routes>
+    </AnimatePresence>
+  );
+};
+
+const AppRoutes = () => {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <AnimatedRoutes />
     </Suspense>
   );
 };

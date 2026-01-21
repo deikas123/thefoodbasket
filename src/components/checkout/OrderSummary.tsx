@@ -11,6 +11,8 @@ import { calculateDeliveryFee } from "@/services/deliveryCalculationService";
 import OrderItems from "./orderSummary/OrderItems";
 import OrderTotals from "./orderSummary/OrderTotals";
 import AutoReplenishDialog from "./orderSummary/AutoReplenishDialog";
+import PromoCodeInput from "./PromoCodeInput";
+import { DiscountCode } from "@/services/discountService";
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -23,6 +25,8 @@ interface OrderSummaryProps {
   onNext?: () => void;
   isProcessing?: boolean;
   buttonText?: string;
+  showPromoCode?: boolean;
+  onApplyPromo?: (discount: number, code?: DiscountCode) => void;
 }
 
 const OrderSummary = ({ 
@@ -35,9 +39,12 @@ const OrderSummary = ({
   children,
   onNext,
   isProcessing = false,
-  buttonText = "Continue"
+  buttonText = "Continue",
+  showPromoCode = true,
+  onApplyPromo
 }: OrderSummaryProps) => {
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(deliveryFee);
+  const [promoDiscount, setPromoDiscount] = useState(0);
   const { isAuthenticated } = useAuth();
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
 
@@ -70,8 +77,17 @@ const OrderSummary = ({
     calculateFee();
   }, [selectedDelivery, deliveryAddress, subtotal, deliveryFee]);
 
-  // Calculate total using the calculated delivery fee
-  const total = subtotal + calculatedDeliveryFee - discount;
+  // Handle promo code application
+  const handleApplyPromo = (discountAmount: number, code?: DiscountCode) => {
+    setPromoDiscount(discountAmount);
+    if (onApplyPromo) {
+      onApplyPromo(discountAmount, code);
+    }
+  };
+
+  // Calculate total using the calculated delivery fee and promo discount
+  const totalDiscount = discount + promoDiscount;
+  const total = subtotal + calculatedDeliveryFee - totalDiscount;
   
   const openAutoReplenishDialog = (item: CartItem) => {
     if (!isAuthenticated) {
@@ -104,10 +120,20 @@ const OrderSummary = ({
           onAutoReplenishClick={openAutoReplenishDialog}
         />
         
+        {/* Promo Code Section */}
+        {showPromoCode && (
+          <div className="mb-4 pt-4 border-t">
+            <PromoCodeInput 
+              onApplyPromo={handleApplyPromo}
+              purchaseAmount={subtotal}
+            />
+          </div>
+        )}
+
         <OrderTotals 
           subtotal={subtotal}
           deliveryFee={calculatedDeliveryFee}
-          discount={discount}
+          discount={totalDiscount}
           total={total}
         />
 

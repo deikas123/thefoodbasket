@@ -3,26 +3,23 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { Tag, CheckCircle2, XCircle } from "lucide-react";
+import { Tag, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { validateDiscountCode, applyDiscountCode, DiscountCode } from "@/services/discountService";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 interface PromoCodeInputProps {
-  onApplyPromo: (discount: number) => void;
+  onApplyPromo: (discount: number, code?: DiscountCode) => void;
+  purchaseAmount: number;
 }
 
-// Mock promo codes for demonstration
-const VALID_PROMO_CODES = {
-  "WELCOME10": { discount: 10, type: "percentage" },
-  "FRESH20": { discount: 20, type: "percentage" },
-  "FREE5": { discount: 5, type: "fixed" }
-};
-
-const PromoCodeInput = ({ onApplyPromo }: PromoCodeInputProps) => {
+const PromoCodeInput = ({ onApplyPromo, purchaseAmount }: PromoCodeInputProps) => {
   const [promoCode, setPromoCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   
-  const handleApplyPromo = () => {
+  const handleApplyPromo = async () => {
     if (!promoCode.trim()) {
       setError("Please enter a promo code");
       return;
@@ -31,46 +28,43 @@ const PromoCodeInput = ({ onApplyPromo }: PromoCodeInputProps) => {
     setIsLoading(true);
     setError(null);
     
-    // Simulate API call
-    setTimeout(() => {
-      const normalizedCode = promoCode.trim().toUpperCase();
-      const promoInfo = (VALID_PROMO_CODES as any)[normalizedCode];
+    try {
+      const result = await validateDiscountCode(promoCode.trim().toUpperCase(), purchaseAmount);
       
-      if (promoInfo) {
-        // Valid promo code
-        setAppliedCode(normalizedCode);
-        
-        // Calculate discount amount
-        const discountAmount = promoInfo.type === "percentage" 
-          ? promoInfo.discount
-          : promoInfo.discount;
-        
-        onApplyPromo(discountAmount);
+      if (result.valid && result.discountCode && result.discountAmount) {
+        setAppliedCode(result.discountCode);
+        setDiscountAmount(result.discountAmount);
+        onApplyPromo(result.discountAmount, result.discountCode);
         
         toast({
           title: "Promo code applied!",
-          description: `${promoInfo.type === "percentage" 
-            ? `${promoInfo.discount}% discount` 
-            : `$${promoInfo.discount} discount`} has been applied to your order.`,
+          description: `You saved ${formatCurrency(result.discountAmount)}!`,
         });
       } else {
-        // Invalid promo code
-        setError("Invalid or expired promo code");
-        onApplyPromo(0); // Reset any previously applied discount
+        setError(result.message || "Invalid promo code");
+        onApplyPromo(0);
         
         toast({
           title: "Invalid promo code",
-          description: "The promo code you entered is invalid or has expired.",
+          description: result.message || "The promo code you entered is invalid.",
           variant: "destructive",
         });
       }
-      
+    } catch (err) {
+      setError("Error validating promo code");
+      toast({
+        title: "Error",
+        description: "Could not validate promo code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
   
   const handleRemovePromo = () => {
     setAppliedCode(null);
+    setDiscountAmount(0);
     setPromoCode("");
     onApplyPromo(0);
     
@@ -78,6 +72,13 @@ const PromoCodeInput = ({ onApplyPromo }: PromoCodeInputProps) => {
       title: "Promo code removed",
       description: "The discount has been removed from your order.",
     });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleApplyPromo();
+    }
   };
   
   return (
@@ -105,30 +106,48 @@ const PromoCodeInput = ({ onApplyPromo }: PromoCodeInputProps) => {
             </div>
             <Input
               value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              onKeyDown={handleKeyDown}
               placeholder="Enter promo code"
-              className="pl-10"
+              className="pl-10 uppercase"
+              disabled={isLoading}
             />
           </div>
           <Button 
             onClick={handleApplyPromo} 
-            disabled={isLoading}
+            disabled={isLoading || !promoCode.trim()}
             size="sm"
           >
-            Apply
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Apply"
+            )}
           </Button>
         </div>
       ) : (
-        <div className="flex items-center p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900 rounded-md">
-          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mr-2" />
-          <span className="text-sm font-medium text-green-800 dark:text-green-200">
-            {appliedCode} applied
+        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900 rounded-md">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div>
+              <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                {appliedCode.code}
+              </span>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                {appliedCode.type === 'percentage' 
+                  ? `${appliedCode.value}% off` 
+                  : `${formatCurrency(appliedCode.value)} off`}
+              </p>
+            </div>
+          </div>
+          <span className="text-sm font-bold text-green-700 dark:text-green-300">
+            -{formatCurrency(discountAmount)}
           </span>
         </div>
       )}
       
       {error && (
-        <div className="flex items-center text-sm text-red-600">
+        <div className="flex items-center text-sm text-red-600 dark:text-red-400">
           <XCircle className="h-4 w-4 mr-1" />
           {error}
         </div>

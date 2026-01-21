@@ -9,9 +9,26 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { startDelivery, completeDelivery } from "@/services/orderFlowService";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { MapPin, Package, Navigation, Truck, Clock, Phone, QrCode, Route } from "lucide-react";
+import { MapPin, Package, Navigation, Truck, Clock, Phone, QrCode, Route, RefreshCw, Loader2 } from "lucide-react";
 import OrderBarcodeScanner from "@/components/packer/OrderBarcodeScanner";
 import { optimizeDeliveryRoute, OptimizedRoute } from "@/services/routeOptimizationService";
+import { motion, AnimatePresence } from "framer-motion";
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.98 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: { duration: 0.3, ease: "easeOut" }
+  },
+  exit: { 
+    opacity: 0, 
+    x: 100, 
+    scale: 0.95,
+    transition: { duration: 0.25 }
+  }
+};
 
 interface DeliveryCardProps {
   order: any;
@@ -222,7 +239,7 @@ const RiderDeliveries = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: deliveries, isLoading } = useQuery({
+  const { data: deliveries, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ["rider-deliveries", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -313,15 +330,27 @@ const RiderDeliveries = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Deliveries</h1>
-        <div className="flex gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">Deliveries</h1>
+          <p className="text-muted-foreground text-sm mt-1">Pick up and deliver orders to customers</p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Badge variant="outline" className="gap-1">
             <Package className="h-3 w-3" />
-            Available: {availablePickups.length}
+            {availablePickups.length}
           </Badge>
-          <Badge variant="outline" className="gap-1 bg-green-50 dark:bg-green-950">
+          <Badge variant="secondary" className="gap-1">
             <Truck className="h-3 w-3" />
-            Active: {myDeliveries.length}
+            {myDeliveries.length}
           </Badge>
         </div>
       </div>
@@ -330,15 +359,26 @@ const RiderDeliveries = () => {
       {optimizedRoute && <RouteOptimizationCard route={optimizedRoute} />}
 
       {!deliveries?.length ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="font-medium text-muted-foreground">No deliveries available</p>
-            <p className="text-sm text-muted-foreground">Check back later for new assignments</p>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <Card>
+            <CardContent className="py-16 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Package className="h-8 w-8 text-muted-foreground opacity-50" />
+              </div>
+              <p className="font-medium text-muted-foreground">No deliveries available</p>
+              <p className="text-sm text-muted-foreground mt-1">Check back later for new assignments</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       ) : (
-        <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-6"
+        >
           {/* Available Pickups Section */}
           {availablePickups.length > 0 && (
             <div className="space-y-3">
@@ -346,17 +386,27 @@ const RiderDeliveries = () => {
                 <Clock className="h-5 w-5 text-orange-500" />
                 Available for Pickup
               </h2>
-              {availablePickups.map((order) => (
-                <DeliveryCard
-                  key={order.id}
-                  order={order}
-                  onStartDelivery={handleStartDelivery}
-                  onCompleteDelivery={handleCompleteDelivery}
-                  isStarting={startDeliveryMutation.isPending}
-                  isCompleting={completeDeliveryMutation.isPending}
-                  isMyDelivery={false}
-                />
-              ))}
+              <AnimatePresence mode="popLayout">
+                {availablePickups.map((order) => (
+                  <motion.div
+                    key={order.id}
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                  >
+                    <DeliveryCard
+                      order={order}
+                      onStartDelivery={handleStartDelivery}
+                      onCompleteDelivery={handleCompleteDelivery}
+                      isStarting={startDeliveryMutation.isPending && startDeliveryMutation.variables === order.id}
+                      isCompleting={completeDeliveryMutation.isPending}
+                      isMyDelivery={false}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
 
@@ -364,23 +414,33 @@ const RiderDeliveries = () => {
           {myDeliveries.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Truck className="h-5 w-5 text-green-500" />
+                <Truck className="h-5 w-5 text-emerald-500" />
                 My Active Deliveries
               </h2>
-              {myDeliveries.map((order) => (
-                <DeliveryCard
-                  key={order.id}
-                  order={order}
-                  onStartDelivery={handleStartDelivery}
-                  onCompleteDelivery={handleCompleteDelivery}
-                  isStarting={startDeliveryMutation.isPending}
-                  isCompleting={completeDeliveryMutation.isPending}
-                  isMyDelivery={true}
-                />
-              ))}
+              <AnimatePresence mode="popLayout">
+                {myDeliveries.map((order) => (
+                  <motion.div
+                    key={order.id}
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                  >
+                    <DeliveryCard
+                      order={order}
+                      onStartDelivery={handleStartDelivery}
+                      onCompleteDelivery={handleCompleteDelivery}
+                      isStarting={startDeliveryMutation.isPending}
+                      isCompleting={completeDeliveryMutation.isPending && completeDeliveryMutation.variables?.orderId === order.id}
+                      isMyDelivery={true}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
     </div>
   );
