@@ -9,10 +9,11 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { startDelivery, completeDelivery } from "@/services/orderFlowService";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { MapPin, Package, Navigation, Truck, Clock, Phone, QrCode, Route, RefreshCw, Loader2 } from "lucide-react";
+import { MapPin, Package, Navigation, Truck, Clock, Phone, QrCode, Route, RefreshCw, Loader2, Wifi } from "lucide-react";
 import OrderBarcodeScanner from "@/components/packer/OrderBarcodeScanner";
 import { optimizeDeliveryRoute, OptimizedRoute } from "@/services/routeOptimizationService";
 import { motion, AnimatePresence } from "framer-motion";
+import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.98 },
@@ -239,6 +240,17 @@ const RiderDeliveries = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Subscribe to real-time order updates for riders
+  useOrderRealtime({
+    queryKeys: [["rider-deliveries", user?.id || ""], ["rider-dashboard", user?.id || ""], ["rider-history", user?.id || ""]],
+    statuses: ["dispatched", "out_for_delivery", "delivered"],
+    assignedTo: user?.id,
+    showToasts: true,
+    toastMessages: {
+      insert: "New delivery available!",
+    }
+  });
+
   const { data: deliveries, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ["rider-deliveries", user?.id],
     queryFn: async () => {
@@ -253,8 +265,8 @@ const RiderDeliveries = () => {
       return data;
     },
     enabled: !!user?.id,
-    refetchInterval: 15000,
-    staleTime: 10000,
+    refetchInterval: 30000, // Reduced frequency since we have realtime
+    staleTime: 15000,
   });
 
   // Calculate optimized route for active deliveries
@@ -335,6 +347,10 @@ const RiderDeliveries = () => {
           <p className="text-muted-foreground text-sm mt-1">Pick up and deliver orders to customers</p>
         </div>
         <div className="flex gap-2 items-center">
+          <Badge variant="outline" className="gap-1 text-green-600 border-green-300">
+            <Wifi className="h-3 w-3 animate-pulse" />
+            Live
+          </Badge>
           <Button
             variant="outline"
             size="sm"

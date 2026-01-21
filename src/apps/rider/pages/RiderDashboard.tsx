@@ -1,16 +1,29 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { formatCurrency } from "@/utils/currencyFormatter";
-import { Package, CheckCircle, Clock, TrendingUp, MapPin } from "lucide-react";
+import { Package, CheckCircle, Clock, TrendingUp, MapPin, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 
 const RiderDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Subscribe to real-time order updates
+  useOrderRealtime({
+    queryKeys: [["rider-dashboard", user?.id || ""], ["rider-deliveries", user?.id || ""]],
+    statuses: ["dispatched", "out_for_delivery", "delivered"],
+    assignedTo: user?.id,
+    showToasts: true,
+    toastMessages: {
+      insert: "New delivery available!",
+    }
+  });
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["rider-dashboard", user?.id],
@@ -66,7 +79,13 @@ const RiderDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Welcome Back, Rider!</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Welcome Back, Rider!</h1>
+        <Badge variant="outline" className="gap-1 text-green-600 border-green-300">
+          <Wifi className="h-3 w-3 animate-pulse" />
+          Live Updates
+        </Badge>
+      </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
