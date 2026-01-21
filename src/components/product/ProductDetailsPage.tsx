@@ -21,6 +21,7 @@ import { Product } from "@/types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FlashSaleWidget from "@/components/product/FlashSaleWidget";
+import { AutoReplenishButton } from "@/components/product/autoReplenish";
 
 const ProductDetailsPage = () => {
   const { id: productId } = useParams<{ id: string }>();
@@ -349,6 +350,15 @@ const ProductDetailsPage = () => {
             </Button>
           </div>
         </div>
+
+        {/* Auto-Replenish Section */}
+        <AutoReplenishButton
+          productId={productId || ""}
+          productName={product.name}
+          productImage={getImageUrl(product.image)}
+          productPrice={getDiscountedPrice()}
+          variant="full"
+        />
 
         {/* Store Info */}
         {store && (
