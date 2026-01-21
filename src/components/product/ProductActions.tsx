@@ -1,10 +1,11 @@
-
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingCart, Heart, MessageCircle, Zap } from "lucide-react";
 import { ProductType } from "@/types/supabase";
 import { formatCurrency } from "@/utils/currencyFormatter";
 import { AutoReplenishButton } from "@/components/product/autoReplenish";
+import { useFlyingCart } from "@/hooks/useFlyingCart";
 
 interface ProductActionsProps {
   product: ProductType;
@@ -37,12 +38,37 @@ const ProductActions = ({
     window.open(whatsappUrl, '_blank');
   };
 
+  const { flyToCart } = useFlyingCart();
+  const addToCartRef = useRef<HTMLButtonElement>(null);
+
+  const getImageUrl = () => {
+    const imageData = product.image?.split(',')[0]?.trim() || '';
+    if (!imageData || imageData === '/placeholder.svg') return '/placeholder.svg';
+    if (imageData.startsWith('data:')) return imageData;
+    if (imageData.startsWith('http')) return imageData;
+    return imageData;
+  };
+
+  const handleAddToCartWithAnimation = () => {
+    if (addToCartRef.current) {
+      const rect = addToCartRef.current.getBoundingClientRect();
+      flyToCart({
+        imageUrl: getImageUrl(),
+        startX: rect.left + rect.width / 2 - 40,
+        startY: rect.top - 80,
+        targetSelector: '[data-cart-button]',
+      });
+    }
+    onAddToCart();
+  };
+
   return (
     <div className="space-y-4">
       {/* Main Action Buttons */}
       <div className="grid grid-cols-2 gap-3">
         <Button
-          onClick={onAddToCart}
+          ref={addToCartRef}
+          onClick={handleAddToCartWithAnimation}
           className="w-full"
           disabled={product.stock === 0}
         >
