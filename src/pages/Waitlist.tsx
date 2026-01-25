@@ -1,32 +1,253 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Leaf, ShoppingBasket, Truck, Gift, Sparkles, Users, Star, ArrowDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { 
+  CheckCircle2, Leaf, ShoppingBasket, Truck, Gift, Sparkles, Users, Star, 
+  ArrowDown, Play, ChevronLeft, ChevronRight, Smartphone, Clock, MapPin, CreditCard,
+  Heart, Bell, Search, Home, User, ShoppingCart, Zap, Shield, Timer
+} from "lucide-react";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+
+// Animated counter component
+const AnimatedCounter = ({ value, duration = 2 }: { value: number; duration?: number }) => {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, Math.round);
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const animation = animate(count, value, { duration });
+    const unsubscribe = rounded.on("change", (v) => setDisplayValue(v));
+    return () => {
+      animation.stop();
+      unsubscribe();
+    };
+  }, [value, duration, count, rounded]);
+
+  return <span>{displayValue.toLocaleString()}</span>;
+};
+
+// Mock phone screen component for app preview
+const PhoneScreen = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`relative bg-background rounded-[2.5rem] p-2 shadow-2xl border-4 border-foreground/10 ${className}`}>
+    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-foreground/10 rounded-b-xl" />
+    <div className="bg-background rounded-[2rem] overflow-hidden h-full">
+      {children}
+    </div>
+  </div>
+);
+
+// App preview screens
+const appScreens = [
+  {
+    id: "home",
+    title: "Browse Fresh Products",
+    content: (
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <ShoppingBasket className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="font-semibold text-sm">The Food Basket</span>
+          </div>
+          <div className="flex gap-2">
+            <Bell className="w-5 h-5 text-muted-foreground" />
+            <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+          </div>
+        </div>
+        <div className="bg-muted rounded-xl p-3 flex items-center gap-2">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Search fresh produce...</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { name: "Avocados", price: "KSh 50", img: "🥑", discount: "-20%" },
+            { name: "Tomatoes", price: "KSh 30", img: "🍅", discount: null },
+            { name: "Spinach", price: "KSh 40", img: "🥬", discount: "-15%" },
+            { name: "Mangoes", price: "KSh 80", img: "🥭", discount: null },
+          ].map((item, i) => (
+            <motion.div 
+              key={i} 
+              className="bg-card rounded-xl p-3 border relative"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              {item.discount && (
+                <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full">
+                  {item.discount}
+                </span>
+              )}
+              <div className="text-3xl mb-2">{item.img}</div>
+              <p className="text-xs font-medium truncate">{item.name}</p>
+              <p className="text-xs text-primary font-bold">{item.price}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "cart",
+    title: "Easy Checkout",
+    content: (
+      <div className="p-4 space-y-4">
+        <h3 className="font-semibold">Your Cart</h3>
+        <div className="space-y-3">
+          {[
+            { name: "Fresh Avocados (6pc)", price: "KSh 300", img: "🥑" },
+            { name: "Organic Tomatoes (1kg)", price: "KSh 120", img: "🍅" },
+            { name: "Farm Eggs (Tray)", price: "KSh 450", img: "🥚" },
+          ].map((item, i) => (
+            <motion.div 
+              key={i} 
+              className="flex items-center gap-3 bg-card rounded-xl p-3 border"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.15 }}
+            >
+              <span className="text-2xl">{item.img}</span>
+              <div className="flex-1">
+                <p className="text-xs font-medium">{item.name}</p>
+                <p className="text-xs text-primary font-bold">{item.price}</p>
+              </div>
+              <div className="flex items-center gap-2 bg-muted rounded-full px-2 py-1">
+                <span className="text-xs">-</span>
+                <span className="text-xs font-medium">2</span>
+                <span className="text-xs">+</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        <div className="bg-primary/10 rounded-xl p-3 space-y-2">
+          <div className="flex justify-between text-xs">
+            <span>Subtotal</span>
+            <span>KSh 870</span>
+          </div>
+          <div className="flex justify-between text-xs text-green-600">
+            <span>Delivery</span>
+            <span>FREE</span>
+          </div>
+          <div className="flex justify-between font-bold text-sm pt-2 border-t">
+            <span>Total</span>
+            <span className="text-primary">KSh 870</span>
+          </div>
+        </div>
+        <Button className="w-full text-xs h-10" size="sm">
+          Checkout Now →
+        </Button>
+      </div>
+    ),
+  },
+  {
+    id: "tracking",
+    title: "Real-time Tracking",
+    content: (
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+            <Truck className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold">Order #FBK-2847</p>
+            <p className="text-[10px] text-green-600">On the way!</p>
+          </div>
+        </div>
+        <div className="bg-muted rounded-xl p-3 h-32 flex items-center justify-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/20 dark:to-green-800/10" />
+          <motion.div 
+            className="relative z-10"
+            animate={{ x: [-20, 20, -20] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Truck className="w-10 h-10 text-primary" />
+          </motion.div>
+          <motion.div
+            className="absolute bottom-2 left-4 right-4 h-1 bg-muted-foreground/20 rounded-full"
+          >
+            <motion.div 
+              className="h-full bg-primary rounded-full"
+              animate={{ width: ["30%", "70%", "30%"] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
+        </div>
+        <div className="space-y-3">
+          {[
+            { status: "Order Confirmed", time: "10:30 AM", done: true },
+            { status: "Being Prepared", time: "10:45 AM", done: true },
+            { status: "Out for Delivery", time: "11:15 AM", done: true },
+            { status: "Arriving Soon", time: "~5 mins", done: false },
+          ].map((step, i) => (
+            <motion.div 
+              key={i} 
+              className="flex items-center gap-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.2 }}
+            >
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${step.done ? 'bg-green-500' : 'bg-muted border-2 border-primary'}`}>
+                {step.done && <CheckCircle2 className="w-3 h-3 text-white" />}
+              </div>
+              <div className="flex-1">
+                <p className={`text-xs ${step.done ? 'text-muted-foreground' : 'font-semibold'}`}>{step.status}</p>
+              </div>
+              <span className="text-[10px] text-muted-foreground">{step.time}</span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+];
 
 const Waitlist = () => {
-  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [referralSource, setReferralSource] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
-  const [productTypes, setProductTypes] = useState<string[]>([]);
-  const [shoppingFrequency, setShoppingFrequency] = useState("");
-  const [preferredDeliveryTime, setPreferredDeliveryTime] = useState("");
-  const [groceryChallenges, setGroceryChallenges] = useState("");
-  const [valueProposition, setValueProposition] = useState("");
   const [wantsEarlyAccess, setWantsEarlyAccess] = useState(true);
   const [wantsBetaTesting, setWantsBetaTesting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState(0);
+  const [showForm, setShowForm] = useState(false);
+  
+  // Launch countdown (set to 30 days from now for demo)
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  
+  useEffect(() => {
+    const launchDate = new Date();
+    launchDate.setDate(launchDate.getDate() + 30);
+    
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = launchDate.getTime() - now;
+      
+      setTimeLeft({
+        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((distance % (1000 * 60)) / 1000),
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
+  // Auto-rotate screens
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentScreen((prev) => (prev + 1) % appScreens.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,11 +262,6 @@ const Waitlist = () => {
           location: location || null,
           referral_source: referralSource || null,
           interests,
-          product_types: productTypes,
-          shopping_frequency: shoppingFrequency || null,
-          preferred_delivery_time: preferredDeliveryTime || null,
-          grocery_challenges: groceryChallenges || null,
-          value_proposition: valueProposition || null,
           wants_early_access: wantsEarlyAccess,
           wants_beta_testing: wantsBetaTesting,
         },
@@ -70,466 +286,443 @@ const Waitlist = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.2 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
-  };
-
-  const floatingAnimation = {
-    y: [0, -10, 0],
-    transition: { duration: 3, repeat: Infinity, ease: "easeInOut" }
-  };
-
-  const pulseAnimation = {
-    scale: [1, 1.05, 1],
-    transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-  };
-
-  const valueProps = [
-    { icon: Gift, title: "10% Off First Order", description: "Early access members get exclusive launch discount", color: "from-pink-500 to-rose-500" },
-    { icon: Leaf, title: "Farm-Fresh Produce", description: "Sourced directly from local farmers", color: "from-green-500 to-emerald-500" },
-    { icon: Truck, title: "Free Delivery", description: "No delivery fees for our waitlist members", color: "from-blue-500 to-cyan-500" },
-    { icon: ShoppingBasket, title: "Customizable Baskets", description: "Choose what you want, when you want it", color: "from-orange-500 to-amber-500" },
+  const stats = [
+    { value: 2847, label: "People Waiting", icon: Users },
+    { value: 50, label: "Local Farms", icon: Leaf },
+    { value: 99, label: "Launch Ready", suffix: "%", icon: Zap },
   ];
 
-  const stats = [
-    { value: "2,500+", label: "On Waitlist", icon: Users },
-    { value: "50+", label: "Local Farmers", icon: Leaf },
-    { value: "4.9", label: "Rating", icon: Star },
+  const features = [
+    { icon: Truck, title: "Free Delivery", desc: "No fees on your first 5 orders" },
+    { icon: Clock, title: "30-Min Express", desc: "Lightning-fast delivery" },
+    { icon: Shield, title: "Quality Promise", desc: "100% freshness guaranteed" },
+    { icon: Gift, title: "VIP Rewards", desc: "Earn points on every order" },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-secondary/10 to-background overflow-hidden">
-      {/* Animated Background Elements */}
+    <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background overflow-hidden">
+      {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
-          animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl"
-          animate={{ x: [0, -30, 0], y: [0, -50, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/10 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-primary/10"
+            style={{
+              width: 100 + i * 80,
+              height: 100 + i * 80,
+              left: `${10 + i * 15}%`,
+              top: `${20 + (i % 3) * 30}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, 20, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 5 + i,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.5,
+            }}
+          />
+        ))}
       </div>
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-16 md:pt-28 md:pb-24">
-        <div className="container mx-auto px-4">
+      {/* Header */}
+      <header className="relative z-20 py-6 px-4">
+        <div className="container mx-auto flex items-center justify-between">
           <motion.div 
-            className="grid md:grid-cols-2 gap-12 items-center"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+            className="flex items-center gap-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
           >
-            <motion.div className="space-y-6" variants={itemVariants}>
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
+              <ShoppingBasket className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="font-bold text-xl">The Food Basket</span>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <Button 
+              variant="outline" 
+              className="rounded-full"
+              onClick={() => setShowForm(true)}
+            >
+              Join Waitlist
+            </Button>
+          </motion.div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative z-10 pt-8 pb-16 md:pt-16 md:pb-24">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Content */}
+            <motion.div 
+              className="space-y-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               <motion.div
                 className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium"
-                animate={pulseAnimation}
+                animate={{ scale: [1, 1.02, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
               >
-                <Sparkles className="w-4 h-4" />
-                Coming Soon to Your Area
-              </motion.div>
-              
-              <motion.h1 
-                className="text-4xl md:text-6xl font-bold text-foreground leading-tight"
-                variants={itemVariants}
-              >
-                <span className="inline-block">🥦</span> Fresh. Local. 
-                <span className="block bg-gradient-to-r from-primary to-green-400 bg-clip-text text-transparent">
-                  Delivered.
-                </span>
-              </motion.h1>
-              
-              <motion.p 
-                className="text-xl md:text-2xl text-muted-foreground"
-                variants={itemVariants}
-              >
-                Get your Food Basket first!
-              </motion.p>
-              
-              <motion.p 
-                className="text-lg text-muted-foreground"
-                variants={itemVariants}
-              >
-                Join our waitlist for early access to our farm-fresh baskets — straight from local growers.
-              </motion.p>
-              
-              <motion.div variants={itemVariants}>
-                <Button 
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  onClick={() => document.getElementById('signup-form')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  Join the Waitlist
-                  <motion.span
-                    className="ml-2"
-                    animate={{ y: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                    <ArrowDown className="w-5 h-5" />
-                  </motion.span>
-                </Button>
+                <Timer className="w-4 h-4" />
+                Launching Soon
               </motion.div>
 
-              {/* Stats */}
-              <motion.div 
-                className="flex gap-8 pt-6"
-                variants={itemVariants}
-              >
-                {stats.map((stat, idx) => (
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1]">
+                Fresh groceries,
+                <span className="block bg-gradient-to-r from-primary via-green-500 to-emerald-500 bg-clip-text text-transparent">
+                  delivered fast.
+                </span>
+              </h1>
+
+              <p className="text-xl text-muted-foreground max-w-lg">
+                From local farms to your doorstep in 30 minutes. Join the waitlist and be first to experience the future of grocery shopping in Kenya.
+              </p>
+
+              {/* Countdown Timer */}
+              <div className="flex gap-4 md:gap-6">
+                {[
+                  { value: timeLeft.days, label: "Days" },
+                  { value: timeLeft.hours, label: "Hours" },
+                  { value: timeLeft.minutes, label: "Mins" },
+                  { value: timeLeft.seconds, label: "Secs" },
+                ].map((item, i) => (
                   <motion.div 
-                    key={idx}
+                    key={i}
                     className="text-center"
-                    whileHover={{ scale: 1.1 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + i * 0.1 }}
                   >
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="w-16 h-16 md:w-20 md:h-20 bg-card rounded-2xl shadow-lg border flex items-center justify-center mb-2">
+                      <span className="text-2xl md:text-3xl font-bold text-primary">
+                        {String(item.value).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{item.label}</span>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap gap-4">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    size="lg" 
+                    className="rounded-full px-8 text-lg h-14 shadow-xl shadow-primary/25"
+                    onClick={() => setShowForm(true)}
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Get Early Access
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="rounded-full px-8 text-lg h-14"
+                    onClick={() => document.getElementById('preview')?.scrollIntoView({ behavior: 'smooth' })}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    See Preview
+                  </Button>
+                </motion.div>
+              </div>
+
+              {/* Live Stats */}
+              <div className="flex flex-wrap gap-8 pt-4">
+                {stats.map((stat, i) => (
+                  <motion.div 
+                    key={i}
+                    className="text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 + i * 0.1 }}
+                  >
+                    <div className="flex items-center gap-1 justify-center">
                       <stat.icon className="w-4 h-4 text-primary" />
-                      <span className="text-2xl font-bold text-foreground">{stat.value}</span>
+                      <span className="text-2xl font-bold">
+                        <AnimatedCounter value={stat.value} />
+                        {stat.suffix}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground">{stat.label}</span>
                   </motion.div>
                 ))}
-              </motion.div>
+              </div>
             </motion.div>
 
+            {/* Right: Phone Mockup */}
             <motion.div 
-              className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl"
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
+              className="relative flex justify-center"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
             >
-              <motion.img
-                src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&auto=format&fit=crop&q=80"
-                alt="Fresh Food Basket"
-                className="w-full h-full object-cover"
-                animate={floatingAnimation}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-              
-              {/* Floating badges */}
-              <motion.div
-                className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg"
-                animate={{ y: [0, -5, 0], rotate: [0, 2, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <span className="text-sm font-medium text-green-600">🌿 100% Organic</span>
-              </motion.div>
-              
-              <motion.div
-                className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg"
-                animate={{ y: [0, 5, 0], rotate: [0, -2, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              >
-                <span className="text-sm font-medium text-primary">🚚 Free Delivery</span>
-              </motion.div>
+              <div className="relative">
+                {/* Glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-green-500/30 blur-3xl scale-150" />
+                
+                <PhoneScreen className="relative z-10 w-[280px] h-[560px] md:w-[320px] md:h-[640px]">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentScreen}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="h-full"
+                    >
+                      {appScreens[currentScreen].content}
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/80 to-transparent">
+                        <div className="flex justify-around">
+                          {[Home, Search, ShoppingCart, Heart, User].map((Icon, i) => (
+                            <div key={i} className={`p-2 rounded-full ${i === 0 ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+                              <Icon className="w-5 h-5" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </PhoneScreen>
+
+                {/* Screen indicators */}
+                <div className="flex gap-2 justify-center mt-6">
+                  {appScreens.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentScreen(i)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        i === currentScreen ? 'w-6 bg-primary' : 'bg-muted-foreground/30'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-center text-sm text-muted-foreground mt-2">
+                  {appScreens[currentScreen].title}
+                </p>
+              </div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Value Proposition Section */}
-      <section className="py-20 bg-secondary/5 relative">
+      {/* Features Strip */}
+      <section className="relative z-10 py-12 bg-card/50 backdrop-blur-sm border-y">
         <div className="container mx-auto px-4">
-          <motion.h2 
-            className="text-3xl md:text-4xl font-bold text-center mb-4 text-foreground"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            Why Join Our Waitlist?
-          </motion.h2>
-          <motion.p
-            className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-          >
-            Exclusive benefits for our early supporters
-          </motion.p>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {valueProps.map((prop, idx) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {features.map((feature, i) => (
               <motion.div
-                key={idx}
-                className="relative group"
-                initial={{ opacity: 0, y: 30 }}
+                key={i}
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -8 }}
+                transition={{ delay: i * 0.1 }}
               >
-                <div className="bg-background rounded-2xl p-6 shadow-lg border border-border/50 h-full transition-all duration-300 group-hover:shadow-2xl group-hover:border-primary/20">
-                  <motion.div 
-                    className={`w-14 h-14 rounded-xl bg-gradient-to-br ${prop.color} flex items-center justify-center mb-4 shadow-lg`}
-                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <prop.icon className="w-7 h-7 text-white" />
-                  </motion.div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">{prop.title}</h3>
-                  <p className="text-muted-foreground">{prop.description}</p>
+                <div className="w-12 h-12 mx-auto mb-3 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <feature.icon className="w-6 h-6 text-primary" />
                 </div>
+                <h3 className="font-semibold text-sm mb-1">{feature.title}</h3>
+                <p className="text-xs text-muted-foreground">{feature.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Signup Form Section */}
-      <section id="signup-form" className="py-20 bg-gradient-to-br from-primary via-primary/90 to-green-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1920&auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10" />
-        
-        {/* Animated shapes */}
-        <motion.div
-          className="absolute top-10 left-10 w-20 h-20 border-2 border-white/20 rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        />
-        <motion.div
-          className="absolute bottom-10 right-10 w-32 h-32 border-2 border-white/10 rounded-xl"
-          animate={{ rotate: -360 }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-2xl mx-auto">
-            <AnimatePresence mode="wait">
-              {!submitted ? (
-                <motion.div 
-                  key="form"
-                  className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 md:p-12 shadow-2xl border border-white/20"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.5 }}
+      {/* App Preview Section */}
+      <section id="preview" className="relative z-10 py-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">
+              A sneak peek inside
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              We've been building something special. Here's what you can expect.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {appScreens.map((screen, i) => (
+              <motion.div
+                key={screen.id}
+                className="relative"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.2 }}
+              >
+                <motion.div
+                  className="bg-card rounded-3xl p-6 shadow-xl border cursor-pointer"
+                  whileHover={{ y: -10, shadow: "0 20px 40px rgba(0,0,0,0.1)" }}
                 >
-                  <motion.h2 
-                    className="text-3xl md:text-4xl font-bold text-white mb-6 text-center"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    Join the Waitlist
-                  </motion.h2>
-                  <motion.p 
-                    className="text-white/80 text-center mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    Be the first to experience fresh, local produce delivered to your door
-                  </motion.p>
-                  
-                  <motion.form 
-                    onSubmit={handleSubmit} 
-                    className="space-y-6"
+                  <div className="aspect-[9/16] bg-muted rounded-2xl overflow-hidden mb-4">
+                    <div className="transform scale-90 origin-top">
+                      {screen.content}
+                    </div>
+                  </div>
+                  <h3 className="font-semibold text-lg">{screen.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {i === 0 && "Browse hundreds of fresh products from local farms"}
+                    {i === 1 && "Simple checkout with M-Pesa and card payments"}
+                    {i === 2 && "Track your delivery in real-time"}
+                  </p>
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Signup Form Modal */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowForm(false)}
+            />
+            <motion.div
+              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-background rounded-3xl shadow-2xl"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25 }}
+            >
+              <AnimatePresence mode="wait">
+                {!submitted ? (
+                  <motion.div 
+                    key="form"
+                    className="p-8"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
+                    exit={{ opacity: 0 }}
                   >
-                    {/* Form fields */}
-                    <motion.input
-                      type="text"
-                      placeholder="Your Name *"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all"
-                      whileFocus={{ scale: 1.02 }}
-                    />
-                    <motion.input
-                      type="email"
-                      placeholder="Your Email *"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all"
-                      whileFocus={{ scale: 1.02 }}
-                    />
-                    <motion.input
-                      type="tel"
-                      placeholder="Phone Number (optional)"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all"
-                      whileFocus={{ scale: 1.02 }}
-                    />
-                    <motion.input
-                      type="text"
-                      placeholder="City/Town Location"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all"
-                      whileFocus={{ scale: 1.02 }}
-                    />
-                    
-                    <div className="space-y-3">
-                      <Label className="text-white text-sm font-medium">How did you hear about us?</Label>
-                      <RadioGroup value={referralSource} onValueChange={setReferralSource}>
-                        {["Social media", "Friend/Referral", "Online search", "Other"].map((source) => (
-                          <motion.div 
-                            key={source} 
-                            className="flex items-center space-x-2"
-                            whileHover={{ x: 5 }}
-                          >
-                            <RadioGroupItem value={source} id={source} className="border-white/40 text-white" />
-                            <Label htmlFor={source} className="text-white/90 cursor-pointer font-normal">{source}</Label>
-                          </motion.div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-white text-sm font-medium">What interests you most?</Label>
-                      {["Fresh & organic produce", "Affordable food prices", "Convenience of home delivery", "Supporting local farmers"].map((interest) => (
-                        <motion.div 
-                          key={interest} 
-                          className="flex items-center space-x-2"
-                          whileHover={{ x: 5 }}
-                        >
-                          <Checkbox
-                            id={interest}
-                            checked={interests.includes(interest)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setInterests([...interests, interest]);
-                              } else {
-                                setInterests(interests.filter((i) => i !== interest));
-                              }
-                            }}
-                            className="border-white/40 data-[state=checked]:bg-white data-[state=checked]:text-primary"
-                          />
-                          <Label htmlFor={interest} className="text-white/90 cursor-pointer font-normal">{interest}</Label>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-white text-sm font-medium">Products you buy most often?</Label>
-                      {["Fruits", "Vegetables", "Grains & cereals", "Meat & poultry", "Dairy & eggs", "Household essentials"].map((product) => (
-                        <motion.div 
-                          key={product} 
-                          className="flex items-center space-x-2"
-                          whileHover={{ x: 5 }}
-                        >
-                          <Checkbox
-                            id={product}
-                            checked={productTypes.includes(product)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setProductTypes([...productTypes, product]);
-                              } else {
-                                setProductTypes(productTypes.filter((p) => p !== product));
-                              }
-                            }}
-                            className="border-white/40 data-[state=checked]:bg-white data-[state=checked]:text-primary"
-                          />
-                          <Label htmlFor={product} className="text-white/90 cursor-pointer font-normal">{product}</Label>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-white text-sm font-medium">How often do you shop for groceries?</Label>
-                      <RadioGroup value={shoppingFrequency} onValueChange={setShoppingFrequency}>
-                        {["Daily", "Weekly", "Every two weeks", "Monthly"].map((freq) => (
-                          <motion.div 
-                            key={freq} 
-                            className="flex items-center space-x-2"
-                            whileHover={{ x: 5 }}
-                          >
-                            <RadioGroupItem value={freq} id={freq} className="border-white/40 text-white" />
-                            <Label htmlFor={freq} className="text-white/90 cursor-pointer font-normal">{freq}</Label>
-                          </motion.div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-white text-sm font-medium">Preferred delivery time:</Label>
-                      <RadioGroup value={preferredDeliveryTime} onValueChange={setPreferredDeliveryTime}>
-                        {["Morning", "Afternoon", "Evening"].map((time) => (
-                          <motion.div 
-                            key={time} 
-                            className="flex items-center space-x-2"
-                            whileHover={{ x: 5 }}
-                          >
-                            <RadioGroupItem value={time} id={time} className="border-white/40 text-white" />
-                            <Label htmlFor={time} className="text-white/90 cursor-pointer font-normal">{time}</Label>
-                          </motion.div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-
-                    <Textarea
-                      placeholder="What challenge do you currently face when buying groceries?"
-                      value={groceryChallenges}
-                      onChange={(e) => setGroceryChallenges(e.target.value)}
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all min-h-[100px] resize-none"
-                    />
-
-                    <Textarea
-                      placeholder="What would make The Food Basket most valuable to you?"
-                      value={valueProposition}
-                      onChange={(e) => setValueProposition(e.target.value)}
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all min-h-[100px] resize-none"
-                    />
-
-                    <div className="space-y-3">
-                      <motion.div 
-                        className="flex items-center space-x-2"
-                        whileHover={{ x: 5 }}
-                      >
-                        <Checkbox
-                          id="earlyAccess"
-                          checked={wantsEarlyAccess}
-                          onCheckedChange={(checked) => setWantsEarlyAccess(checked as boolean)}
-                          className="border-white/40 data-[state=checked]:bg-white data-[state=checked]:text-primary"
-                        />
-                        <Label htmlFor="earlyAccess" className="text-white/90 cursor-pointer font-normal">
-                          I want early access to offers and discounts
-                        </Label>
-                      </motion.div>
-                      <motion.div 
-                        className="flex items-center space-x-2"
-                        whileHover={{ x: 5 }}
-                      >
-                        <Checkbox
-                          id="betaTesting"
-                          checked={wantsBetaTesting}
-                          onCheckedChange={(checked) => setWantsBetaTesting(checked as boolean)}
-                          className="border-white/40 data-[state=checked]:bg-white data-[state=checked]:text-primary"
-                        />
-                        <Label htmlFor="betaTesting" className="text-white/90 cursor-pointer font-normal">
-                          I'm interested in being a beta tester for new features
-                        </Label>
-                      </motion.div>
-                    </div>
-                    
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                    <button 
+                      onClick={() => setShowForm(false)}
+                      className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
                     >
+                      ✕
+                    </button>
+                    
+                    <div className="text-center mb-6">
+                      <motion.div
+                        className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center"
+                        animate={{ rotate: [0, 5, -5, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Gift className="w-8 h-8 text-primary" />
+                      </motion.div>
+                      <h2 className="text-2xl font-bold">Join the Waitlist</h2>
+                      <p className="text-muted-foreground mt-2">
+                        Get 10% off your first order + free delivery
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          placeholder="Your Name *"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required
+                          className="col-span-2 px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Email Address *"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          className="col-span-2 px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all"
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Phone (optional)"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all"
+                        />
+                        <input
+                          type="text"
+                          placeholder="City/Town"
+                          value={location}
+                          onChange={(e) => setLocation(e.target.value)}
+                          className="px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">What excites you most?</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {["Fresh produce", "Fast delivery", "Local farms", "Great prices"].map((interest) => (
+                            <label
+                              key={interest}
+                              className={`flex items-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${
+                                interests.includes(interest) 
+                                  ? 'bg-primary/10 border-2 border-primary' 
+                                  : 'bg-muted border-2 border-transparent'
+                              }`}
+                            >
+                              <Checkbox
+                                checked={interests.includes(interest)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setInterests([...interests, interest]);
+                                  } else {
+                                    setInterests(interests.filter((i) => i !== interest));
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                              <span className="text-sm">{interest}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-3 p-3 bg-muted rounded-xl cursor-pointer">
+                          <Checkbox
+                            checked={wantsEarlyAccess}
+                            onCheckedChange={(checked) => setWantsEarlyAccess(checked as boolean)}
+                          />
+                          <span className="text-sm">I want early access to offers and discounts</span>
+                        </label>
+                        <label className="flex items-center gap-3 p-3 bg-muted rounded-xl cursor-pointer">
+                          <Checkbox
+                            checked={wantsBetaTesting}
+                            onCheckedChange={(checked) => setWantsBetaTesting(checked as boolean)}
+                          />
+                          <span className="text-sm">I'd like to be a beta tester</span>
+                        </label>
+                      </div>
+
                       <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-white text-primary hover:bg-white/90 rounded-full py-6 text-lg font-semibold shadow-lg"
+                        className="w-full h-12 rounded-xl text-lg font-semibold"
                       >
                         {loading ? (
                           <motion.span
@@ -539,115 +732,106 @@ const Waitlist = () => {
                             ⏳
                           </motion.span>
                         ) : (
-                          "Get Early Access 🎉"
+                          <>
+                            <Sparkles className="w-5 h-5 mr-2" />
+                            Join the Waitlist
+                          </>
                         )}
                       </Button>
-                    </motion.div>
-                  </motion.form>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="success"
-                  className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 text-center shadow-2xl border border-white/20"
-                  initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  transition={{ duration: 0.6, type: "spring" }}
-                >
+
+                      <p className="text-center text-xs text-muted-foreground">
+                        By joining, you agree to receive updates about The Food Basket. Unsubscribe anytime.
+                      </p>
+                    </form>
+                  </motion.div>
+                ) : (
                   <motion.div 
-                    className="flex justify-center mb-6"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                    key="success"
+                    className="p-8 text-center"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
                   >
                     <motion.div
-                      animate={{ 
-                        rotate: [0, 10, -10, 0],
-                        scale: [1, 1.1, 1]
-                      }}
-                      transition={{ duration: 0.5, delay: 0.5 }}
+                      className="w-20 h-20 mx-auto mb-6 bg-green-500 rounded-full flex items-center justify-center"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", delay: 0.2 }}
                     >
-                      <CheckCircle2 className="w-24 h-24 text-white" />
+                      <CheckCircle2 className="w-10 h-10 text-white" />
                     </motion.div>
-                  </motion.div>
-                  
-                  <motion.h2 
-                    className="text-3xl md:text-4xl font-bold text-white mb-4"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    You're In! 🎉
-                  </motion.h2>
-                  
-                  <motion.p 
-                    className="text-xl text-white/90 mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    Check your email for confirmation and your exclusive 10% discount code
-                  </motion.p>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      onClick={() => navigate("/")}
-                      className="bg-white text-primary hover:bg-white/90 rounded-full px-8 py-3 text-lg font-semibold shadow-lg"
-                    >
-                      Explore Our Platform
+                    <h2 className="text-2xl font-bold mb-2">You're In! 🎉</h2>
+                    <p className="text-muted-foreground mb-6">
+                      Check your email for confirmation and your exclusive 10% discount code.
+                    </p>
+                    <div className="bg-muted p-4 rounded-xl mb-6">
+                      <p className="text-sm text-muted-foreground mb-1">Your position:</p>
+                      <p className="text-3xl font-bold text-primary">#2,848</p>
+                    </div>
+                    <Button onClick={() => setShowForm(false)} className="w-full rounded-xl">
+                      Close
                     </Button>
                   </motion.div>
-                  
-                  {/* Confetti effect */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {[...Array(20)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute w-3 h-3 rounded-full"
-                        style={{
-                          background: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'][i % 5],
-                          left: `${Math.random() * 100}%`,
-                          top: -10,
-                        }}
-                        animate={{
-                          y: [0, 500],
-                          x: [0, (Math.random() - 0.5) * 200],
-                          rotate: [0, 360],
-                          opacity: [1, 0],
-                        }}
-                        transition={{
-                          duration: 2 + Math.random() * 2,
-                          delay: Math.random() * 0.5,
-                          ease: "easeOut",
-                        }}
-                      />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Footer CTA */}
+      <section className="relative z-10 py-20 bg-gradient-to-r from-primary to-green-600">
+        <div className="container mx-auto px-4 text-center">
+          <motion.h2
+            className="text-3xl md:text-5xl font-bold text-white mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            Don't miss the launch
+          </motion.h2>
+          <motion.p
+            className="text-xl text-white/80 mb-8 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            Join {2847}+ people already on the waitlist. Get exclusive early access, discounts, and more.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button
+              size="lg"
+              className="bg-white text-primary hover:bg-white/90 rounded-full px-10 h-14 text-lg font-semibold shadow-xl"
+              onClick={() => setShowForm(true)}
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Join the Waitlist
+            </Button>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <motion.section 
-        className="py-12 bg-background"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-      >
+      <footer className="relative z-10 py-8 bg-background border-t">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <ShoppingBasket className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="font-semibold">The Food Basket</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
             © 2025 The Food Basket. All rights reserved.
           </p>
         </div>
-      </motion.section>
+      </footer>
     </div>
   );
 };
