@@ -8,7 +8,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   CheckCircle2, Leaf, ShoppingBasket, Truck, Gift, Sparkles, Users, Star, 
   ArrowDown, Play, ChevronLeft, ChevronRight, Smartphone, Clock, MapPin, CreditCard,
-  Heart, Bell, Search, Home, User, ShoppingCart, Zap, Shield, Timer
+  Heart, Bell, Search, Home, User, ShoppingCart, Zap, Shield, Timer, MousePointer2,
+  Hand, ArrowRight, Eye, Plus
 } from "lucide-react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 
@@ -40,12 +41,80 @@ const PhoneScreen = ({ children, className = "" }: { children: React.ReactNode; 
   </div>
 );
 
-// App preview screens
-const appScreens = [
-  {
-    id: "home",
-    title: "Browse Fresh Products",
-    content: (
+// Interactive product card for preview
+const InteractiveProductCard = ({ item, index, onAdd }: { 
+  item: { name: string; price: string; img: string; discount: string | null }; 
+  index: number;
+  onAdd: () => void;
+}) => {
+  const [isAdded, setIsAdded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const handleAdd = () => {
+    setIsAdded(true);
+    onAdd();
+    setTimeout(() => setIsAdded(false), 1500);
+  };
+  
+  return (
+    <motion.div 
+      className="bg-card rounded-xl p-3 border relative cursor-pointer group"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      whileHover={{ scale: 1.05, y: -5 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={handleAdd}
+    >
+      {item.discount && (
+        <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full">
+          {item.discount}
+        </span>
+      )}
+      <div className="text-3xl mb-2 transition-transform group-hover:scale-110">{item.img}</div>
+      <p className="text-xs font-medium truncate">{item.name}</p>
+      <p className="text-xs text-primary font-bold">{item.price}</p>
+      
+      {/* Add to cart button overlay */}
+      <AnimatePresence>
+        {isHovered && !isAdded && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute inset-0 bg-primary/90 rounded-xl flex items-center justify-center"
+          >
+            <Plus className="w-6 h-6 text-primary-foreground" />
+          </motion.div>
+        )}
+        {isAdded && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute inset-0 bg-green-500 rounded-xl flex items-center justify-center"
+          >
+            <CheckCircle2 className="w-6 h-6 text-white" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+// App preview screens with interactivity
+const AppPreviewContent = ({ screenId, onInteraction }: { screenId: string; onInteraction: () => void }) => {
+  const [cartCount, setCartCount] = useState(0);
+  
+  const handleAddToCart = () => {
+    setCartCount(prev => prev + 1);
+    onInteraction();
+  };
+
+  if (screenId === "home") {
+    return (
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -56,13 +125,28 @@ const appScreens = [
           </div>
           <div className="flex gap-2">
             <Bell className="w-5 h-5 text-muted-foreground" />
-            <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+            <div className="relative">
+              <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+              {cartCount > 0 && (
+                <motion.span 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center"
+                >
+                  {cartCount}
+                </motion.span>
+              )}
+            </div>
           </div>
         </div>
-        <div className="bg-muted rounded-xl p-3 flex items-center gap-2">
+        <motion.div 
+          className="bg-muted rounded-xl p-3 flex items-center gap-2 cursor-pointer"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
           <Search className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Search fresh produce...</span>
-        </div>
+        </motion.div>
         <div className="grid grid-cols-2 gap-2">
           {[
             { name: "Avocados", price: "KSh 50", img: "🥑", discount: "-20%" },
@@ -70,31 +154,30 @@ const appScreens = [
             { name: "Spinach", price: "KSh 40", img: "🥬", discount: "-15%" },
             { name: "Mangoes", price: "KSh 80", img: "🥭", discount: null },
           ].map((item, i) => (
-            <motion.div 
+            <InteractiveProductCard 
               key={i} 
-              className="bg-card rounded-xl p-3 border relative"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-            >
-              {item.discount && (
-                <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full">
-                  {item.discount}
-                </span>
-              )}
-              <div className="text-3xl mb-2">{item.img}</div>
-              <p className="text-xs font-medium truncate">{item.name}</p>
-              <p className="text-xs text-primary font-bold">{item.price}</p>
-            </motion.div>
+              item={item} 
+              index={i} 
+              onAdd={handleAddToCart}
+            />
           ))}
         </div>
+        
+        {/* Tap hint */}
+        <motion.div 
+          className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <Hand className="w-3 h-3" />
+          Tap products to add to cart
+        </motion.div>
       </div>
-    ),
-  },
-  {
-    id: "cart",
-    title: "Easy Checkout",
-    content: (
+    );
+  }
+  
+  if (screenId === "cart") {
+    return (
       <div className="p-4 space-y-4">
         <h3 className="font-semibold">Your Cart</h3>
         <div className="space-y-3">
@@ -105,21 +188,25 @@ const appScreens = [
           ].map((item, i) => (
             <motion.div 
               key={i} 
-              className="flex items-center gap-3 bg-card rounded-xl p-3 border"
+              className="flex items-center gap-3 bg-card rounded-xl p-3 border cursor-pointer"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.15 }}
+              whileHover={{ scale: 1.02, x: 5 }}
             >
               <span className="text-2xl">{item.img}</span>
               <div className="flex-1">
                 <p className="text-xs font-medium">{item.name}</p>
                 <p className="text-xs text-primary font-bold">{item.price}</p>
               </div>
-              <div className="flex items-center gap-2 bg-muted rounded-full px-2 py-1">
-                <span className="text-xs">-</span>
+              <motion.div 
+                className="flex items-center gap-2 bg-muted rounded-full px-2 py-1"
+                whileHover={{ scale: 1.1 }}
+              >
+                <span className="text-xs cursor-pointer hover:text-primary">-</span>
                 <span className="text-xs font-medium">2</span>
-                <span className="text-xs">+</span>
-              </div>
+                <span className="text-xs cursor-pointer hover:text-primary">+</span>
+              </motion.div>
             </motion.div>
           ))}
         </div>
@@ -137,72 +224,88 @@ const appScreens = [
             <span className="text-primary">KSh 870</span>
           </div>
         </div>
-        <Button className="w-full text-xs h-10" size="sm">
-          Checkout Now →
-        </Button>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Button className="w-full text-xs h-10" size="sm" onClick={onInteraction}>
+            Checkout Now →
+          </Button>
+        </motion.div>
       </div>
-    ),
-  },
-  {
-    id: "tracking",
-    title: "Real-time Tracking",
-    content: (
-      <div className="p-4 space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-            <Truck className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold">Order #FBK-2847</p>
-            <p className="text-[10px] text-green-600">On the way!</p>
-          </div>
+    );
+  }
+  
+  // Tracking screen
+  return (
+    <div className="p-4 space-y-4">
+      <div className="flex items-center gap-2 mb-2">
+        <motion.div 
+          className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <Truck className="w-4 h-4 text-white" />
+        </motion.div>
+        <div>
+          <p className="text-xs font-semibold">Order #FBK-2847</p>
+          <p className="text-[10px] text-green-600">On the way!</p>
         </div>
-        <div className="bg-muted rounded-xl p-3 h-32 flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/20 dark:to-green-800/10" />
+      </div>
+      <div className="bg-muted rounded-xl p-3 h-32 flex items-center justify-center relative overflow-hidden cursor-pointer">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/20 dark:to-green-800/10" />
+        <motion.div 
+          className="relative z-10"
+          animate={{ x: [-20, 20, -20] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Truck className="w-10 h-10 text-primary" />
+        </motion.div>
+        <motion.div
+          className="absolute bottom-2 left-4 right-4 h-1 bg-muted-foreground/20 rounded-full"
+        >
           <motion.div 
-            className="relative z-10"
-            animate={{ x: [-20, 20, -20] }}
+            className="h-full bg-primary rounded-full"
+            animate={{ width: ["30%", "70%", "30%"] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Truck className="w-10 h-10 text-primary" />
-          </motion.div>
-          <motion.div
-            className="absolute bottom-2 left-4 right-4 h-1 bg-muted-foreground/20 rounded-full"
-          >
-            <motion.div 
-              className="h-full bg-primary rounded-full"
-              animate={{ width: ["30%", "70%", "30%"] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </motion.div>
-        </div>
-        <div className="space-y-3">
-          {[
-            { status: "Order Confirmed", time: "10:30 AM", done: true },
-            { status: "Being Prepared", time: "10:45 AM", done: true },
-            { status: "Out for Delivery", time: "11:15 AM", done: true },
-            { status: "Arriving Soon", time: "~5 mins", done: false },
-          ].map((step, i) => (
-            <motion.div 
-              key={i} 
-              className="flex items-center gap-3"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: i * 0.2 }}
-            >
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${step.done ? 'bg-green-500' : 'bg-muted border-2 border-primary'}`}>
-                {step.done && <CheckCircle2 className="w-3 h-3 text-white" />}
-              </div>
-              <div className="flex-1">
-                <p className={`text-xs ${step.done ? 'text-muted-foreground' : 'font-semibold'}`}>{step.status}</p>
-              </div>
-              <span className="text-[10px] text-muted-foreground">{step.time}</span>
-            </motion.div>
-          ))}
-        </div>
+          />
+        </motion.div>
       </div>
-    ),
-  },
+      <div className="space-y-3">
+        {[
+          { status: "Order Confirmed", time: "10:30 AM", done: true },
+          { status: "Being Prepared", time: "10:45 AM", done: true },
+          { status: "Out for Delivery", time: "11:15 AM", done: true },
+          { status: "Arriving Soon", time: "~5 mins", done: false },
+        ].map((step, i) => (
+          <motion.div 
+            key={i} 
+            className="flex items-center gap-3 cursor-pointer"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: i * 0.2 }}
+            whileHover={{ x: 5 }}
+          >
+            <motion.div 
+              className={`w-4 h-4 rounded-full flex items-center justify-center ${step.done ? 'bg-green-500' : 'bg-muted border-2 border-primary'}`}
+              animate={!step.done ? { scale: [1, 1.2, 1] } : {}}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              {step.done && <CheckCircle2 className="w-3 h-3 text-white" />}
+            </motion.div>
+            <div className="flex-1">
+              <p className={`text-xs ${step.done ? 'text-muted-foreground' : 'font-semibold'}`}>{step.status}</p>
+            </div>
+            <span className="text-[10px] text-muted-foreground">{step.time}</span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// App preview screens metadata
+const appScreens = [
+  { id: "home", title: "Browse Fresh Products" },
+  { id: "cart", title: "Easy Checkout" },
+  { id: "tracking", title: "Real-time Tracking" },
 ];
 
 const Waitlist = () => {
@@ -471,6 +574,18 @@ const Waitlist = () => {
                 {/* Glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-green-500/30 blur-3xl scale-150" />
                 
+                {/* Floating CTA Arrow pointing to button */}
+                <motion.div
+                  className="absolute -left-20 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-2"
+                  animate={{ x: [0, 10, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="bg-primary text-primary-foreground px-3 py-2 rounded-xl text-sm font-medium shadow-lg whitespace-nowrap">
+                    Try it out! 👆
+                  </div>
+                  <ArrowRight className="w-6 h-6 text-primary rotate-45" />
+                </motion.div>
+                
                 <PhoneScreen className="relative z-10 w-[280px] h-[560px] md:w-[320px] md:h-[640px]">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -481,13 +596,22 @@ const Waitlist = () => {
                       transition={{ duration: 0.3 }}
                       className="h-full"
                     >
-                      {appScreens[currentScreen].content}
+                      <AppPreviewContent 
+                        screenId={appScreens[currentScreen].id} 
+                        onInteraction={() => {}} 
+                      />
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/80 to-transparent">
                         <div className="flex justify-around">
                           {[Home, Search, ShoppingCart, Heart, User].map((Icon, i) => (
-                            <div key={i} className={`p-2 rounded-full ${i === 0 ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+                            <motion.div 
+                              key={i} 
+                              className={`p-2 rounded-full cursor-pointer ${i === 0 ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}
+                              whileHover={{ scale: 1.2 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setCurrentScreen(i % appScreens.length)}
+                            >
                               <Icon className="w-5 h-5" />
-                            </div>
+                            </motion.div>
                           ))}
                         </div>
                       </div>
@@ -495,21 +619,63 @@ const Waitlist = () => {
                   </AnimatePresence>
                 </PhoneScreen>
 
+                {/* Interactive hint badge */}
+                <motion.div
+                  className="absolute -right-4 top-8 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg flex items-center gap-1"
+                  animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Eye className="w-3 h-3" />
+                  Interactive
+                </motion.div>
+
                 {/* Screen indicators */}
                 <div className="flex gap-2 justify-center mt-6">
                   {appScreens.map((_, i) => (
-                    <button
+                    <motion.button
                       key={i}
                       onClick={() => setCurrentScreen(i)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        i === currentScreen ? 'w-6 bg-primary' : 'bg-muted-foreground/30'
+                      className={`h-2 rounded-full transition-all ${
+                        i === currentScreen ? 'w-6 bg-primary' : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
                       }`}
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
                     />
                   ))}
                 </div>
                 <p className="text-center text-sm text-muted-foreground mt-2">
                   {appScreens[currentScreen].title}
                 </p>
+                
+                {/* CTA below phone */}
+                <motion.div
+                  className="mt-6 text-center"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 }}
+                >
+                  <motion.p 
+                    className="text-sm text-muted-foreground mb-3 flex items-center justify-center gap-2"
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Love what you see?
+                    <Sparkles className="w-4 h-4 text-primary" />
+                  </motion.p>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button 
+                      onClick={() => setShowForm(true)}
+                      className="rounded-full px-6 shadow-lg shadow-primary/25"
+                    >
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                      Join Waitlist Now
+                    </Button>
+                  </motion.div>
+                </motion.div>
               </div>
             </motion.div>
           </div>
@@ -549,6 +715,14 @@ const Waitlist = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4"
+              animate={{ scale: [1, 1.02, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Eye className="w-4 h-4" />
+              Sneak Peek
+            </motion.div>
             <h2 className="text-3xl md:text-5xl font-bold mb-4">
               A sneak peek inside
             </h2>
@@ -561,20 +735,50 @@ const Waitlist = () => {
             {appScreens.map((screen, i) => (
               <motion.div
                 key={screen.id}
-                className="relative"
+                className="relative group"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2 }}
               >
                 <motion.div
-                  className="bg-card rounded-3xl p-6 shadow-xl border cursor-pointer"
-                  whileHover={{ y: -10, shadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+                  className="bg-card rounded-3xl p-6 shadow-xl border cursor-pointer relative overflow-hidden"
+                  whileHover={{ y: -10 }}
                 >
-                  <div className="aspect-[9/16] bg-muted rounded-2xl overflow-hidden mb-4">
+                  {/* Interactive overlay on hover */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-6 z-20"
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      className="text-center"
+                    >
+                      <p className="text-white font-semibold mb-3">Want to try this?</p>
+                      <Button 
+                        variant="secondary" 
+                        className="rounded-full"
+                        onClick={() => setShowForm(true)}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Join Waitlist
+                      </Button>
+                    </motion.div>
+                  </motion.div>
+                  
+                  <div className="aspect-[9/16] bg-muted rounded-2xl overflow-hidden mb-4 relative">
                     <div className="transform scale-90 origin-top">
-                      {screen.content}
+                      <AppPreviewContent screenId={screen.id} onInteraction={() => {}} />
                     </div>
+                    {/* Hover interaction hint */}
+                    <motion.div
+                      className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-foreground/80 text-background px-3 py-1 rounded-full text-xs flex items-center gap-1"
+                      animate={{ y: [0, -5, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <Hand className="w-3 h-3" />
+                      Hover to explore
+                    </motion.div>
                   </div>
                   <h3 className="font-semibold text-lg">{screen.title}</h3>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -586,6 +790,35 @@ const Waitlist = () => {
               </motion.div>
             ))}
           </div>
+          
+          {/* CTA after preview cards */}
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <motion.div
+              className="inline-flex flex-col items-center gap-4"
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <p className="text-lg text-muted-foreground">
+                Ready to experience fresh grocery shopping?
+              </p>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  size="lg" 
+                  className="rounded-full px-8 shadow-xl shadow-primary/25"
+                  onClick={() => setShowForm(true)}
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Get Early Access
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
