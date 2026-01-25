@@ -2245,6 +2245,7 @@ export type Database = {
           recommendation_score: number
         }[]
       }
+      has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
       increment_discount_code_usage: {
         Args: { code_id: string }
         Returns: undefined
