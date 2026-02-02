@@ -357,7 +357,8 @@ const Waitlist = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("waitlist").insert([
+      // Use upsert to allow re-registration (updates existing record if email exists)
+      const { error } = await supabase.from("waitlist").upsert(
         { 
           name, 
           email, 
@@ -368,7 +369,8 @@ const Waitlist = () => {
           wants_early_access: wantsEarlyAccess,
           wants_beta_testing: wantsBetaTesting,
         },
-      ]);
+        { onConflict: 'email' }
+      );
 
       if (error) throw error;
 
