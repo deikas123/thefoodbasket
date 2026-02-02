@@ -368,24 +368,13 @@ const Waitlist = () => {
         wants_beta_testing: wantsBetaTesting,
       };
 
-      // Avoid upsert here (it may require implicit reads that can trip RLS).
-      // Instead: try insert, and if the email already exists, update that row.
-      const { error: insertError } = await supabase.from("waitlist").insert(payload);
+      // Use upsert so re-registration doesn't produce a duplicate-key 409.
+      // (This relies on RLS allowing anon INSERT + UPDATE on waitlist.)
+      const { error } = await supabase
+        .from("waitlist")
+        .upsert(payload, { onConflict: "email" });
 
-      if (insertError) {
-        const isDuplicate =
-          insertError.code === "23505" ||
-          insertError.message?.toLowerCase().includes("duplicate");
-
-        if (!isDuplicate) throw insertError;
-
-        const { error: updateError } = await supabase
-          .from("waitlist")
-          .update({ ...payload, updated_at: new Date().toISOString() })
-          .eq("email", email);
-
-        if (updateError) throw updateError;
-      }
+      if (error) throw error;
 
       try {
         await supabase.functions.invoke('waitlist-notification', {
