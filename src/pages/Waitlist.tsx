@@ -357,22 +357,35 @@ const Waitlist = () => {
     setLoading(true);
 
     try {
-      // Use upsert to allow re-registration (updates existing record if email exists)
-      const { error } = await supabase.from("waitlist").upsert(
-        { 
-          name, 
-          email, 
-          phone: phone || null,
-          location: location || null,
-          referral_source: referralSource || null,
-          interests,
-          wants_early_access: wantsEarlyAccess,
-          wants_beta_testing: wantsBetaTesting,
-        },
-        { onConflict: 'email' }
-      );
+      const payload = {
+        name,
+        email,
+        phone: phone || null,
+        location: location || null,
+        referral_source: referralSource || null,
+        interests,
+        wants_early_access: wantsEarlyAccess,
+        wants_beta_testing: wantsBetaTesting,
+      };
 
-      if (error) throw error;
+      // Avoid upsert here (it may require implicit reads that can trip RLS).
+      // Instead: try insert, and if the email already exists, update that row.
+      const { error: insertError } = await supabase.from("waitlist").insert(payload);
+
+      if (insertError) {
+        const isDuplicate =
+          insertError.code === "23505" ||
+          insertError.message?.toLowerCase().includes("duplicate");
+
+        if (!isDuplicate) throw insertError;
+
+        const { error: updateError } = await supabase
+          .from("waitlist")
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq("email", email);
+
+        if (updateError) throw updateError;
+      }
 
       try {
         await supabase.functions.invoke('waitlist-notification', {
