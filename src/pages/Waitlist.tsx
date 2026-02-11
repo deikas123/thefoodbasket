@@ -308,11 +308,41 @@ const appScreens = [
   { id: "tracking", title: "Real-time Tracking" },
 ];
 
+const locationOptions = [
+  "Nairobi – Westlands",
+  "Nairobi – Kilimani",
+  "Nairobi – Kileleshwa",
+  "Nairobi – South B",
+  "Nairobi – South C",
+  "Nairobi – Lavington",
+  "Nairobi – Karen",
+  "Nairobi – Langata",
+  "Nairobi – Eastlands",
+  "Nairobi – CBD",
+  "Kiambu",
+  "Other",
+];
+
+const householdOptions = ["Just me", "2 people", "3–4 people", "5+"];
+const frequencyOptions = ["Every week", "Twice a month", "Once a month", "Daily top-ups"];
+const budgetOptions = ["Under KSh 2,000", "KSh 2,000–5,000", "KSh 5,000–10,000", "KSh 10,000+"];
+const basketOptions = ["Fresh vegetables only", "Fruits + vegetables", "Full family grocery basket", "Organic-only basket", "Customizable basket"];
+const painPointOptions = ["Traffic", "Long supermarket queues", "Poor quality produce", "High prices", "Inconsistent stock", "Time-consuming"];
+const deliveryTimeOptions = ["Morning (7–11AM)", "Afternoon (12–4PM)", "Evening (5–9PM)"];
+
 const Waitlist = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
+  const [customLocation, setCustomLocation] = useState("");
+  const [householdSize, setHouseholdSize] = useState("");
+  const [shoppingFrequency, setShoppingFrequency] = useState("");
+  const [budgetRange, setBudgetRange] = useState("");
+  const [preferredBasketType, setPreferredBasketType] = useState("");
+  const [painPoints, setPainPoints] = useState<string[]>([]);
+  const [preferredDeliveryTime, setPreferredDeliveryTime] = useState("");
+  const [suggestion, setSuggestion] = useState("");
   const [referralSource, setReferralSource] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [wantsEarlyAccess, setWantsEarlyAccess] = useState(true);
@@ -321,12 +351,13 @@ const Waitlist = () => {
   const [loading, setLoading] = useState(false);
   const [currentScreen, setCurrentScreen] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [formStep, setFormStep] = useState(0);
   
-  // Launch countdown - August 6, 2025
+  // Launch countdown - Saturday, March 7, 2026
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   
   useEffect(() => {
-    const launchDate = new Date('2025-08-06T00:00:00');
+    const launchDate = new Date('2026-03-07T00:00:00');
     
     const timer = setInterval(() => {
       const now = new Date().getTime();
@@ -356,15 +387,23 @@ const Waitlist = () => {
     setLoading(true);
 
     try {
+      const finalLocation = location === "Other" ? customLocation : location;
       const payload = {
         name,
         email,
         phone: phone || null,
-        location: location || null,
+        location: finalLocation || null,
         referral_source: referralSource || null,
         interests,
         wants_early_access: wantsEarlyAccess,
         wants_beta_testing: wantsBetaTesting,
+        household_size: householdSize || null,
+        shopping_frequency: shoppingFrequency || null,
+        budget_range: budgetRange || null,
+        preferred_basket_type: preferredBasketType || null,
+        pain_points: painPoints.length > 0 ? painPoints : null,
+        preferred_delivery_time: preferredDeliveryTime || null,
+        suggestion: suggestion || null,
       };
 
       // Use upsert so re-registration doesn't produce a duplicate-key 409.
@@ -855,129 +894,229 @@ const Waitlist = () => {
                     exit={{ opacity: 0 }}
                   >
                     <button 
-                      onClick={() => setShowForm(false)}
-                      className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+                      onClick={() => { setShowForm(false); setFormStep(0); }}
+                      className="absolute top-4 right-4 text-muted-foreground hover:text-foreground z-10"
                     >
                       ✕
                     </button>
                     
-                    <div className="text-center mb-6">
-                      <motion.div
-                        className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center"
-                        animate={{ rotate: [0, 5, -5, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                    {/* Incentive Banner */}
+                    <div className="bg-gradient-to-r from-primary/10 to-green-500/10 border border-primary/20 rounded-2xl p-4 mb-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Gift className="w-5 h-5 text-primary" />
+                        <span className="font-bold text-sm">🎁 Join & Get:</span>
+                      </div>
+                      <ul className="text-sm text-muted-foreground space-y-1 ml-7">
+                        <li>✅ 10% OFF your first order</li>
+                        <li>✅ Priority delivery slots</li>
+                        <li>✅ Early access before public launch</li>
+                      </ul>
+                      <motion.p 
+                        className="text-xs font-semibold text-destructive mt-2 ml-7"
+                        animate={{ opacity: [0.7, 1, 0.7] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
                       >
-                        <Gift className="w-8 h-8 text-primary" />
-                      </motion.div>
-                      <h2 className="text-2xl font-bold">Join the Waitlist</h2>
-                      <p className="text-muted-foreground mt-2">
-                        Get 10% off your first order + free delivery
-                      </p>
+                        🔥 Only 100 early access spots available!
+                      </motion.p>
+                    </div>
+
+                    {/* Step indicators */}
+                    <div className="flex items-center gap-2 mb-6">
+                      {[0, 1, 2].map((step) => (
+                        <div key={step} className="flex-1 flex items-center gap-2">
+                          <div className={`h-1.5 flex-1 rounded-full transition-all ${formStep >= step ? 'bg-primary' : 'bg-muted'}`} />
+                        </div>
+                      ))}
+                      <span className="text-xs text-muted-foreground ml-1">Step {formStep + 1}/3</span>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          placeholder="Your Name *"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          required
-                          className="col-span-2 px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all"
-                        />
-                        <input
-                          type="email"
-                          placeholder="Email Address *"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          className="col-span-2 px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all"
-                        />
-                        <input
-                          type="tel"
-                          placeholder="Phone (optional)"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all"
-                        />
-                        <input
-                          type="text"
-                          placeholder="City/Town"
-                          value={location}
-                          onChange={(e) => setLocation(e.target.value)}
-                          className="px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all"
-                        />
-                      </div>
+                      <AnimatePresence mode="wait">
+                        {formStep === 0 && (
+                          <motion.div key="step0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                            <h2 className="text-xl font-bold">👋 Tell us about you</h2>
+                            
+                            <input type="text" placeholder="Your Name *" value={name} onChange={(e) => setName(e.target.value)} required
+                              className="w-full px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all" />
+                            <input type="email" placeholder="Email Address *" value={email} onChange={(e) => setEmail(e.target.value)} required
+                              className="w-full px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all" />
+                            <input type="tel" placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)}
+                              className="w-full px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all" />
 
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">What excites you most?</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {["Fresh produce", "Fast delivery", "Local farms", "Great prices"].map((interest) => (
-                            <label
-                              key={interest}
-                              className={`flex items-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${
-                                interests.includes(interest) 
-                                  ? 'bg-primary/10 border-2 border-primary' 
-                                  : 'bg-muted border-2 border-transparent'
-                              }`}
-                            >
-                              <Checkbox
-                                checked={interests.includes(interest)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setInterests([...interests, interest]);
-                                  } else {
-                                    setInterests(interests.filter((i) => i !== interest));
-                                  }
-                                }}
-                                className="hidden"
-                              />
-                              <span className="text-sm">{interest}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">📍 Where are you located? *</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {locationOptions.map((loc) => (
+                                  <label key={loc} className={`flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all text-sm ${
+                                    location === loc ? 'bg-primary/10 border-2 border-primary' : 'bg-muted border-2 border-transparent'
+                                  }`}>
+                                    <input type="radio" name="location" value={loc} checked={location === loc} onChange={() => setLocation(loc)} className="hidden" />
+                                    {loc}
+                                  </label>
+                                ))}
+                              </div>
+                              {location === "Other" && (
+                                <input type="text" placeholder="Type your location" value={customLocation} onChange={(e) => setCustomLocation(e.target.value)}
+                                  className="w-full px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all mt-2" />
+                              )}
+                            </div>
 
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-3 p-3 bg-muted rounded-xl cursor-pointer">
-                          <Checkbox
-                            checked={wantsEarlyAccess}
-                            onCheckedChange={(checked) => setWantsEarlyAccess(checked as boolean)}
-                          />
-                          <span className="text-sm">I want early access to offers and discounts</span>
-                        </label>
-                        <label className="flex items-center gap-3 p-3 bg-muted rounded-xl cursor-pointer">
-                          <Checkbox
-                            checked={wantsBetaTesting}
-                            onCheckedChange={(checked) => setWantsBetaTesting(checked as boolean)}
-                          />
-                          <span className="text-sm">I'd like to be a beta tester</span>
-                        </label>
-                      </div>
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">👨‍👩‍👧 How many people are you shopping for?</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {householdOptions.map((opt) => (
+                                  <label key={opt} className={`flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all text-sm ${
+                                    householdSize === opt ? 'bg-primary/10 border-2 border-primary' : 'bg-muted border-2 border-transparent'
+                                  }`}>
+                                    <input type="radio" name="household" value={opt} checked={householdSize === opt} onChange={() => setHouseholdSize(opt)} className="hidden" />
+                                    {opt}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
 
-                      <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-12 rounded-xl text-lg font-semibold"
-                      >
-                        {loading ? (
-                          <motion.span
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          >
-                            ⏳
-                          </motion.span>
-                        ) : (
-                          <>
-                            <Sparkles className="w-5 h-5 mr-2" />
-                            Join the Waitlist
-                          </>
+                            <Button type="button" className="w-full h-12 rounded-xl" onClick={() => { if (name && email && location) setFormStep(1); else toast.error("Please fill name, email, and location"); }}>
+                              Continue <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </motion.div>
                         )}
-                      </Button>
 
-                      <p className="text-center text-xs text-muted-foreground">
-                        By joining, you agree to receive updates about The Food Basket. Unsubscribe anytime.
-                      </p>
+                        {formStep === 1 && (
+                          <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                            <h2 className="text-xl font-bold">🛒 Your shopping habits</h2>
+
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">How often do you buy groceries?</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {frequencyOptions.map((opt) => (
+                                  <label key={opt} className={`flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all text-sm ${
+                                    shoppingFrequency === opt ? 'bg-primary/10 border-2 border-primary' : 'bg-muted border-2 border-transparent'
+                                  }`}>
+                                    <input type="radio" name="frequency" value={opt} checked={shoppingFrequency === opt} onChange={() => setShoppingFrequency(opt)} className="hidden" />
+                                    {opt}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">💰 What do you usually spend per week?</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {budgetOptions.map((opt) => (
+                                  <label key={opt} className={`flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all text-sm ${
+                                    budgetRange === opt ? 'bg-primary/10 border-2 border-primary' : 'bg-muted border-2 border-transparent'
+                                  }`}>
+                                    <input type="radio" name="budget" value={opt} checked={budgetRange === opt} onChange={() => setBudgetRange(opt)} className="hidden" />
+                                    {opt}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">🧺 What type of basket would you love?</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {basketOptions.map((opt) => (
+                                  <label key={opt} className={`flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all text-sm ${
+                                    preferredBasketType === opt ? 'bg-primary/10 border-2 border-primary' : 'bg-muted border-2 border-transparent'
+                                  }`}>
+                                    <input type="radio" name="basket" value={opt} checked={preferredBasketType === opt} onChange={() => setPreferredBasketType(opt)} className="hidden" />
+                                    {opt}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                              <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => setFormStep(0)}>
+                                <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                              </Button>
+                              <Button type="button" className="flex-1 h-12 rounded-xl" onClick={() => setFormStep(2)}>
+                                Continue <ArrowRight className="w-4 h-4 ml-2" />
+                              </Button>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {formStep === 2 && (
+                          <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                            <h2 className="text-xl font-bold">😩 Almost done!</h2>
+
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">What frustrates you most about grocery shopping?</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {painPointOptions.map((opt) => (
+                                  <label key={opt} className={`flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all text-sm ${
+                                    painPoints.includes(opt) ? 'bg-primary/10 border-2 border-primary' : 'bg-muted border-2 border-transparent'
+                                  }`}>
+                                    <Checkbox checked={painPoints.includes(opt)} onCheckedChange={(checked) => {
+                                      if (checked) setPainPoints([...painPoints, opt]);
+                                      else setPainPoints(painPoints.filter(p => p !== opt));
+                                    }} className="hidden" />
+                                    {opt}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">⏰ Best delivery time?</Label>
+                              <div className="grid grid-cols-3 gap-2">
+                                {deliveryTimeOptions.map((opt) => (
+                                  <label key={opt} className={`flex items-center justify-center p-2.5 rounded-xl cursor-pointer transition-all text-xs text-center ${
+                                    preferredDeliveryTime === opt ? 'bg-primary/10 border-2 border-primary' : 'bg-muted border-2 border-transparent'
+                                  }`}>
+                                    <input type="radio" name="deliveryTime" value={opt} checked={preferredDeliveryTime === opt} onChange={() => setPreferredDeliveryTime(opt)} className="hidden" />
+                                    {opt}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">💬 Anything you'd love us to offer?</Label>
+                              <textarea
+                                placeholder="Product ideas, add-ons, suggestions..."
+                                value={suggestion}
+                                onChange={(e) => setSuggestion(e.target.value)}
+                                rows={3}
+                                className="w-full px-4 py-3 bg-muted rounded-xl border-0 focus:ring-2 focus:ring-primary transition-all resize-none text-sm"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="flex items-center gap-3 p-3 bg-muted rounded-xl cursor-pointer">
+                                <Checkbox checked={wantsEarlyAccess} onCheckedChange={(checked) => setWantsEarlyAccess(checked as boolean)} />
+                                <span className="text-sm">I want early access to offers and discounts</span>
+                              </label>
+                              <label className="flex items-center gap-3 p-3 bg-muted rounded-xl cursor-pointer">
+                                <Checkbox checked={wantsBetaTesting} onCheckedChange={(checked) => setWantsBetaTesting(checked as boolean)} />
+                                <span className="text-sm">I'd like to be a beta tester</span>
+                              </label>
+                            </div>
+
+                            <div className="flex gap-3">
+                              <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => setFormStep(1)}>
+                                <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                              </Button>
+                              <Button type="submit" disabled={loading} className="flex-1 h-12 rounded-xl text-lg font-semibold">
+                                {loading ? (
+                                  <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>⏳</motion.span>
+                                ) : (
+                                  <>
+                                    <Sparkles className="w-5 h-5 mr-2" />
+                                    Join Waitlist
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+
+                            <p className="text-center text-xs text-muted-foreground">
+                              By joining, you agree to receive updates about The Food Basket. Unsubscribe anytime.
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </form>
                   </motion.div>
                 ) : (
@@ -1003,7 +1142,7 @@ const Waitlist = () => {
                       <p className="text-sm text-muted-foreground mb-1">Your position:</p>
                       <p className="text-3xl font-bold text-primary">#2,848</p>
                     </div>
-                    <Button onClick={() => setShowForm(false)} className="w-full rounded-xl">
+                    <Button onClick={() => { setShowForm(false); setFormStep(0); }} className="w-full rounded-xl">
                       Close
                     </Button>
                   </motion.div>
@@ -1106,7 +1245,7 @@ const Waitlist = () => {
           
           <p className="text-sm text-muted-foreground mb-2">Follow us for updates & exclusive offers</p>
           <p className="text-sm text-muted-foreground">
-            © 2025 The Food Basket. All rights reserved.
+            © 2025 The Food Basket. All rights reserved. | Launching March 7, 2026
           </p>
         </div>
       </footer>
