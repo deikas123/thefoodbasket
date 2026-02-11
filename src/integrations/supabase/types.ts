@@ -2054,60 +2054,75 @@ export type Database = {
       }
       waitlist: {
         Row: {
+          budget_range: string | null
           created_at: string
           email: string
           email_sent: boolean | null
           email_sent_at: string | null
           grocery_challenges: string | null
+          household_size: string | null
           id: string
           interests: string[] | null
           location: string | null
           name: string
+          pain_points: string[] | null
           phone: string | null
+          preferred_basket_type: string | null
           preferred_delivery_time: string | null
           product_types: string[] | null
           referral_source: string | null
           shopping_frequency: string | null
+          suggestion: string | null
           updated_at: string
           value_proposition: string | null
           wants_beta_testing: boolean | null
           wants_early_access: boolean | null
         }
         Insert: {
+          budget_range?: string | null
           created_at?: string
           email: string
           email_sent?: boolean | null
           email_sent_at?: string | null
           grocery_challenges?: string | null
+          household_size?: string | null
           id?: string
           interests?: string[] | null
           location?: string | null
           name: string
+          pain_points?: string[] | null
           phone?: string | null
+          preferred_basket_type?: string | null
           preferred_delivery_time?: string | null
           product_types?: string[] | null
           referral_source?: string | null
           shopping_frequency?: string | null
+          suggestion?: string | null
           updated_at?: string
           value_proposition?: string | null
           wants_beta_testing?: boolean | null
           wants_early_access?: boolean | null
         }
         Update: {
+          budget_range?: string | null
           created_at?: string
           email?: string
           email_sent?: boolean | null
           email_sent_at?: string | null
           grocery_challenges?: string | null
+          household_size?: string | null
           id?: string
           interests?: string[] | null
           location?: string | null
           name?: string
+          pain_points?: string[] | null
           phone?: string | null
+          preferred_basket_type?: string | null
           preferred_delivery_time?: string | null
           product_types?: string[] | null
           referral_source?: string | null
           shopping_frequency?: string | null
+          suggestion?: string | null
           updated_at?: string
           value_proposition?: string | null
           wants_beta_testing?: boolean | null
