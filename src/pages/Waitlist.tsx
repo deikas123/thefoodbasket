@@ -322,12 +322,11 @@ const Waitlist = () => {
   const [currentScreen, setCurrentScreen] = useState(0);
   const [showForm, setShowForm] = useState(false);
   
-  // Launch countdown (set to 30 days from now for demo)
+  // Launch countdown - August 6, 2025
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   
   useEffect(() => {
-    const launchDate = new Date();
-    launchDate.setDate(launchDate.getDate() + 30);
+    const launchDate = new Date('2025-08-06T00:00:00');
     
     const timer = setInterval(() => {
       const now = new Date().getTime();
