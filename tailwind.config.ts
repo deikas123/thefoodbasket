@@ -102,7 +102,16 @@ export default {
 					700: '#388e3c',
 					800: '#2e7d32',
 					900: '#1b5e20'
-				}
+				},
+				// WRC Safari Rally Kenya colors
+				rally: {
+					red: 'hsl(4, 78%, 52%)',
+					amber: 'hsl(35, 80%, 55%)',
+					dust: 'hsl(35, 40%, 75%)',
+					savanna: 'hsl(85, 30%, 45%)',
+					navy: 'hsl(220, 40%, 18%)',
+					earth: 'hsl(25, 35%, 35%)',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
