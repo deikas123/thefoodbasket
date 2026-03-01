@@ -444,30 +444,37 @@ const Waitlist = () => {
     { icon: Gift, title: "VIP Rewards", desc: "Earn points on every order" },
   ];
 
+  // WRC Safari Rally Kenya 2026 - March 12-15, 2026
+  const rallyDate = new Date('2026-03-12T00:00:00');
+  const isRallySeason = true; // Rally season theming active
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background overflow-hidden">
-      {/* Animated Background */}
+    <div className="min-h-screen bg-gradient-to-b from-rally-navy via-background to-background overflow-hidden">
+      {/* Animated Background - Rally dust particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-primary/10"
+            className="absolute rounded-full"
             style={{
-              width: 100 + i * 80,
-              height: 100 + i * 80,
-              left: `${10 + i * 15}%`,
-              top: `${20 + (i % 3) * 30}%`,
+              width: 60 + i * 50,
+              height: 60 + i * 50,
+              left: `${5 + i * 12}%`,
+              top: `${10 + (i % 4) * 25}%`,
+              background: i % 2 === 0 
+                ? 'radial-gradient(circle, hsl(4 78% 52% / 0.08), transparent)' 
+                : 'radial-gradient(circle, hsl(35 80% 55% / 0.06), transparent)',
             }}
             animate={{
-              y: [0, -30, 0],
-              x: [0, 20, 0],
-              scale: [1, 1.1, 1],
+              y: [0, -40, 0],
+              x: [0, 30, 0],
+              scale: [1, 1.15, 1],
             }}
             transition={{
-              duration: 5 + i,
+              duration: 6 + i,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: i * 0.5,
+              delay: i * 0.4,
             }}
           />
         ))}
@@ -513,23 +520,23 @@ const Waitlist = () => {
               transition={{ duration: 0.6 }}
             >
               <motion.div
-                className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium"
+                className="inline-flex items-center gap-2 bg-primary/15 text-primary px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider"
                 animate={{ scale: [1, 1.02, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
                 <Timer className="w-4 h-4" />
-                Launching Soon
+                🏁 WRC Rally Season — Launching Soon
               </motion.div>
 
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1]">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-foreground leading-[1.05] uppercase tracking-tight">
                 Fresh groceries,
-                <span className="block bg-gradient-to-r from-primary via-green-500 to-emerald-500 bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                   delivered fast.
                 </span>
               </h1>
 
               <p className="text-xl text-muted-foreground max-w-lg">
-                From local farms to your doorstep in 30 minutes. Join the waitlist and be first to experience the future of grocery shopping in Kenya.
+                From local farms to your doorstep in 30 minutes. Join the waitlist and be first to experience the future of grocery shopping in Kenya. 🇰🇪
               </p>
 
               {/* Countdown Timer */}
@@ -614,7 +621,7 @@ const Waitlist = () => {
             >
               <div className="relative">
                 {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-green-500/30 blur-3xl scale-150" />
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-accent/30 blur-3xl scale-150" />
                 
                 {/* Floating CTA Arrow pointing to button */}
                 <motion.div
@@ -758,14 +765,14 @@ const Waitlist = () => {
             viewport={{ once: true }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4"
+              className="inline-flex items-center gap-2 bg-primary/15 text-primary px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider mb-4"
               animate={{ scale: [1, 1.02, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
               <Eye className="w-4 h-4" />
               Sneak Peek
             </motion.div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
+            <h2 className="text-3xl md:text-5xl font-black mb-4 uppercase tracking-tight">
               A sneak peek inside
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -901,7 +908,7 @@ const Waitlist = () => {
                     </button>
                     
                     {/* Incentive Banner */}
-                    <div className="bg-gradient-to-r from-primary/10 to-green-500/10 border border-primary/20 rounded-2xl p-4 mb-6">
+                    <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-2xl p-4 mb-6">
                       <div className="flex items-center gap-2 mb-2">
                         <Gift className="w-5 h-5 text-primary" />
                         <span className="font-bold text-sm">🎁 Join & Get:</span>
@@ -1164,11 +1171,30 @@ const Waitlist = () => {
         )}
       </AnimatePresence>
 
+      {/* WRC Safari Rally Kenya 2026 Banner */}
+      <section className="relative z-10 py-8 bg-rally-navy text-primary-foreground overflow-hidden">
+        <div className="container mx-auto px-4">
+          <motion.div
+            className="flex flex-col md:flex-row items-center justify-center gap-4 text-center md:text-left"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="text-4xl">🏁</div>
+            <div>
+              <p className="text-sm uppercase tracking-widest text-accent font-bold">WRC Safari Rally Kenya 2026</p>
+              <p className="text-lg font-black uppercase">12th – 15th March 2026 • The Great Kenyan Experience</p>
+            </div>
+            <div className="text-4xl">🇰🇪</div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Footer CTA */}
-      <section className="relative z-10 py-20 bg-gradient-to-r from-primary to-green-600">
+      <section className="relative z-10 py-20 bg-gradient-to-r from-primary to-accent">
         <div className="container mx-auto px-4 text-center">
           <motion.h2
-            className="text-3xl md:text-5xl font-bold text-white mb-4"
+            className="text-3xl md:text-5xl font-black text-primary-foreground mb-4 uppercase tracking-tight"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -1176,7 +1202,7 @@ const Waitlist = () => {
             Don't miss the launch
           </motion.h2>
           <motion.p
-            className="text-xl text-white/80 mb-8 max-w-2xl mx-auto"
+            className="text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -1194,7 +1220,7 @@ const Waitlist = () => {
           >
             <Button
               size="lg"
-              className="bg-white text-primary hover:bg-white/90 rounded-full px-10 h-14 text-lg font-semibold shadow-xl"
+              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 rounded-full px-10 h-14 text-lg font-bold shadow-xl uppercase tracking-wide"
               onClick={() => setShowForm(true)}
             >
               <Sparkles className="w-5 h-5 mr-2" />
@@ -1279,7 +1305,7 @@ const Waitlist = () => {
           </motion.a>
           <p className="text-sm text-muted-foreground mb-2">Follow us for updates & exclusive offers</p>
           <p className="text-sm text-muted-foreground">
-            © 2025 The Food Basket. All rights reserved. | Launching March 7, 2026
+            © 2026 The Food Basket. All rights reserved. | Launching March 7, 2026 | 🏁 WRC Safari Rally Kenya
           </p>
         </div>
       </footer>
