@@ -353,11 +353,11 @@ const Waitlist = () => {
   const [showForm, setShowForm] = useState(false);
   const [formStep, setFormStep] = useState(0);
   
-  // Launch countdown - Saturday, March 7, 2026
+  // Launch countdown - Thursday, March 26, 2026
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   
   useEffect(() => {
-    const launchDate = new Date('2026-03-07T00:00:00');
+    const launchDate = new Date('2026-03-26T00:00:00');
     
     const timer = setInterval(() => {
       const now = new Date().getTime();
@@ -1305,7 +1305,7 @@ const Waitlist = () => {
           </motion.a>
           <p className="text-sm text-muted-foreground mb-2">Follow us for updates & exclusive offers</p>
           <p className="text-sm text-muted-foreground">
-            © 2026 The Food Basket. All rights reserved. | Launching March 7, 2026 | 🏁 WRC Safari Rally Kenya
+            © 2026 The Food Basket. All rights reserved. | Launching March 26, 2026 | 🏁 WRC Safari Rally Kenya
           </p>
         </div>
       </footer>
