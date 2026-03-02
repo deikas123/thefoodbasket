@@ -226,6 +226,56 @@ export type Database = {
           },
         ]
       }
+      batch_assignments: {
+        Row: {
+          actual_cost: number | null
+          actual_delivery_time: string | null
+          actual_distance_km: number | null
+          actual_pickup_time: string | null
+          assigned_at: string | null
+          batch_id: string | null
+          id: string
+          notes: string | null
+          rider_id: string
+          rider_name: string | null
+          status: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          actual_delivery_time?: string | null
+          actual_distance_km?: number | null
+          actual_pickup_time?: string | null
+          assigned_at?: string | null
+          batch_id?: string | null
+          id?: string
+          notes?: string | null
+          rider_id: string
+          rider_name?: string | null
+          status?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          actual_delivery_time?: string | null
+          actual_distance_km?: number | null
+          actual_pickup_time?: string | null
+          assigned_at?: string | null
+          batch_id?: string | null
+          id?: string
+          notes?: string | null
+          rider_id?: string
+          rider_name?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_assignments_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bnpl_installments: {
         Row: {
           amount: number
@@ -569,6 +619,56 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_batches: {
+        Row: {
+          batch_number: number
+          created_at: string | null
+          created_by: string | null
+          dispatch_time: string
+          id: string
+          status: string | null
+          total_distance_km: number | null
+          total_estimated_minutes: number | null
+          total_orders: number | null
+          updated_at: string | null
+          zone_id: string | null
+        }
+        Insert: {
+          batch_number: number
+          created_at?: string | null
+          created_by?: string | null
+          dispatch_time: string
+          id?: string
+          status?: string | null
+          total_distance_km?: number | null
+          total_estimated_minutes?: number | null
+          total_orders?: number | null
+          updated_at?: string | null
+          zone_id?: string | null
+        }
+        Update: {
+          batch_number?: number
+          created_at?: string | null
+          created_by?: string | null
+          dispatch_time?: string
+          id?: string
+          status?: string | null
+          total_distance_km?: number | null
+          total_estimated_minutes?: number | null
+          total_orders?: number | null
+          updated_at?: string | null
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_batches_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "location_zones"
             referencedColumns: ["id"]
           },
         ]
@@ -1044,6 +1144,48 @@ export type Database = {
         }
         Relationships: []
       }
+      location_zones: {
+        Row: {
+          center_latitude: number
+          center_longitude: number
+          city: string
+          country: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          radius_km: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          center_latitude: number
+          center_longitude: number
+          city: string
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          radius_km?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          center_latitude?: number
+          center_longitude?: number
+          city?: string
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          radius_km?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       loyalty_redemptions: {
         Row: {
           created_at: string
@@ -1244,6 +1386,48 @@ export type Database = {
         }
         Relationships: []
       }
+      optimization_logs: {
+        Row: {
+          batches_created: number | null
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          optimization_type: string
+          orders_processed: number | null
+          riders_assigned: number | null
+          started_at: string | null
+          status: string
+          total_savings: number | null
+        }
+        Insert: {
+          batches_created?: number | null
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          optimization_type: string
+          orders_processed?: number | null
+          riders_assigned?: number | null
+          started_at?: string | null
+          status: string
+          total_savings?: number | null
+        }
+        Update: {
+          batches_created?: number | null
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          optimization_type?: string
+          orders_processed?: number | null
+          riders_assigned?: number | null
+          started_at?: string | null
+          status?: string
+          total_savings?: number | null
+        }
+        Relationships: []
+      }
       order_tracking_events: {
         Row: {
           created_at: string
@@ -1285,9 +1469,42 @@ export type Database = {
           },
         ]
       }
+      order_zone_assignments: {
+        Row: {
+          assigned_at: string | null
+          confidence_score: number | null
+          id: string
+          order_id: string
+          zone_id: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          confidence_score?: number | null
+          id?: string
+          order_id: string
+          zone_id?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          confidence_score?: number | null
+          id?: string
+          order_id?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_zone_assignments_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "location_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           assigned_to: string | null
+          batch_id: string | null
           created_at: string
           customer_latitude: number | null
           customer_longitude: number | null
@@ -1303,6 +1520,7 @@ export type Database = {
           loyalty_points_earned: number | null
           loyalty_points_used: number | null
           notes: string | null
+          optimization_score: number | null
           payment_method: Json
           promo_code: string | null
           route_sequence: number | null
@@ -1314,9 +1532,11 @@ export type Database = {
           tracking: Json | null
           updated_at: string
           user_id: string
+          zone_id: string | null
         }
         Insert: {
           assigned_to?: string | null
+          batch_id?: string | null
           created_at?: string
           customer_latitude?: number | null
           customer_longitude?: number | null
@@ -1332,6 +1552,7 @@ export type Database = {
           loyalty_points_earned?: number | null
           loyalty_points_used?: number | null
           notes?: string | null
+          optimization_score?: number | null
           payment_method: Json
           promo_code?: string | null
           route_sequence?: number | null
@@ -1343,9 +1564,11 @@ export type Database = {
           tracking?: Json | null
           updated_at?: string
           user_id: string
+          zone_id?: string | null
         }
         Update: {
           assigned_to?: string | null
+          batch_id?: string | null
           created_at?: string
           customer_latitude?: number | null
           customer_longitude?: number | null
@@ -1361,6 +1584,7 @@ export type Database = {
           loyalty_points_earned?: number | null
           loyalty_points_used?: number | null
           notes?: string | null
+          optimization_score?: number | null
           payment_method?: Json
           promo_code?: string | null
           route_sequence?: number | null
@@ -1372,8 +1596,16 @@ export type Database = {
           tracking?: Json | null
           updated_at?: string
           user_id?: string
+          zone_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_delivery_route_id_fkey"
             columns: ["delivery_route_id"]
@@ -1386,6 +1618,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "location_zones"
             referencedColumns: ["id"]
           },
         ]
@@ -1921,6 +2160,74 @@ export type Database = {
           },
         ]
       }
+      rider_metrics: {
+        Row: {
+          base_cost: number | null
+          capacity_kg: number | null
+          cost_per_km: number | null
+          created_at: string | null
+          current_latitude: number | null
+          current_longitude: number | null
+          id: string
+          is_available: boolean | null
+          last_location_update: string | null
+          on_time_percentage: number | null
+          phone: string | null
+          rating: number | null
+          rider_id: string
+          rider_name: string
+          total_deliveries: number | null
+          updated_at: string | null
+          zone_id: string | null
+        }
+        Insert: {
+          base_cost?: number | null
+          capacity_kg?: number | null
+          cost_per_km?: number | null
+          created_at?: string | null
+          current_latitude?: number | null
+          current_longitude?: number | null
+          id?: string
+          is_available?: boolean | null
+          last_location_update?: string | null
+          on_time_percentage?: number | null
+          phone?: string | null
+          rating?: number | null
+          rider_id: string
+          rider_name: string
+          total_deliveries?: number | null
+          updated_at?: string | null
+          zone_id?: string | null
+        }
+        Update: {
+          base_cost?: number | null
+          capacity_kg?: number | null
+          cost_per_km?: number | null
+          created_at?: string | null
+          current_latitude?: number | null
+          current_longitude?: number | null
+          id?: string
+          is_available?: boolean | null
+          last_location_update?: string | null
+          on_time_percentage?: number | null
+          phone?: string | null
+          rating?: number | null
+          rider_id?: string
+          rider_name?: string
+          total_deliveries?: number | null
+          updated_at?: string | null
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rider_metrics_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "location_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_definitions: {
         Row: {
           active: boolean | null
@@ -2236,6 +2543,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_order_to_zone: { Args: { order_uuid: string }; Returns: string }
       deduct_product_stock: {
         Args: { product_id: string; quantity_to_deduct: number }
         Returns: undefined
@@ -2276,6 +2584,7 @@ export type Database = {
         Args: { p_ksh_value: number; p_points: number; p_user_id: string }
         Returns: string
       }
+      run_delivery_optimization: { Args: never; Returns: Json }
       upsert_delivery_settings: { Args: { settings_data: Json }; Returns: Json }
     }
     Enums: {

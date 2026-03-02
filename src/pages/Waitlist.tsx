@@ -9,7 +9,7 @@ import {
   CheckCircle2, Leaf, ShoppingBasket, Truck, Gift, Sparkles, Users, Star, 
   ArrowDown, Play, ChevronLeft, ChevronRight, Smartphone, Clock, MapPin, CreditCard,
   Heart, Bell, Search, Home, User, ShoppingCart, Zap, Shield, Timer, MousePointer2,
-  Hand, ArrowRight, Eye, Plus
+  Hand, ArrowRight, Eye, Plus, Flag, Trophy, Mountain
 } from "lucide-react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 
@@ -450,17 +450,24 @@ const Waitlist = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rally-navy via-background to-background overflow-hidden">
+      {/* Checkered Flag Top Strip */}
+      <div className="h-2 w-full flex">
+        {[...Array(40)].map((_, i) => (
+          <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-foreground' : 'bg-background'}`} />
+        ))}
+      </div>
+
       {/* Animated Background - Rally dust particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(8)].map((_, i) => (
+        {[...Array(6)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute rounded-full"
             style={{
-              width: 60 + i * 50,
-              height: 60 + i * 50,
-              left: `${5 + i * 12}%`,
-              top: `${10 + (i % 4) * 25}%`,
+              width: 80 + i * 60,
+              height: 80 + i * 60,
+              left: `${5 + i * 15}%`,
+              top: `${10 + (i % 3) * 30}%`,
               background: i % 2 === 0 
                 ? 'radial-gradient(circle, hsl(4 78% 52% / 0.08), transparent)' 
                 : 'radial-gradient(circle, hsl(35 80% 55% / 0.06), transparent)',
@@ -471,13 +478,43 @@ const Waitlist = () => {
               scale: [1, 1.15, 1],
             }}
             transition={{
-              duration: 6 + i,
+              duration: 8 + i * 2,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: i * 0.4,
+              delay: i * 0.6,
             }}
           />
         ))}
+
+        {/* Rally car silhouette racing across */}
+        <motion.div
+          className="absolute top-[18%] text-primary/10"
+          animate={{ x: ['-10%', '110%'] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "linear", repeatDelay: 5 }}
+        >
+          <svg width="120" height="50" viewBox="0 0 120 50" fill="currentColor">
+            <path d="M10 35 L25 35 L30 25 L50 20 L75 20 L85 25 L95 25 L100 30 L110 30 L110 35 L100 35 C100 40 95 45 90 45 C85 45 80 40 80 35 L40 35 C40 40 35 45 30 45 C25 45 20 40 20 35 Z" />
+            <circle cx="30" cy="37" r="6" fill="currentColor" opacity="0.5" />
+            <circle cx="90" cy="37" r="6" fill="currentColor" opacity="0.5" />
+          </svg>
+        </motion.div>
+
+        {/* Dust trail behind car */}
+        <motion.div
+          className="absolute top-[20%] opacity-5"
+          animate={{ x: ['-15%', '105%'] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "linear", repeatDelay: 5, delay: 0.3 }}
+        >
+          {[...Array(5)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full bg-accent"
+              style={{ width: 8 + i * 4, height: 8 + i * 4, left: -i * 15, top: i * 3 - 6 }}
+              animate={{ opacity: [0.3, 0], scale: [1, 2] }}
+              transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
+            />
+          ))}
+        </motion.div>
       </div>
 
       {/* Header */}
@@ -530,7 +567,8 @@ const Waitlist = () => {
 
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-foreground leading-[1.05] uppercase tracking-tight">
                 Fresh groceries,
-                <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent drop-shadow-sm">
+                  delivered fast. 🏎️
                   delivered fast.
                 </span>
               </h1>
@@ -1172,21 +1210,74 @@ const Waitlist = () => {
       </AnimatePresence>
 
       {/* WRC Safari Rally Kenya 2026 Banner */}
-      <section className="relative z-10 py-8 bg-rally-navy text-primary-foreground overflow-hidden">
+      <section className="relative z-10 py-12 bg-rally-navy text-primary-foreground overflow-hidden">
+        {/* Checkered flag accent */}
+        <div className="absolute top-0 left-0 right-0 h-1 flex">
+          {[...Array(60)].map((_, i) => (
+            <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-primary-foreground' : 'bg-transparent'}`} />
+          ))}
+        </div>
         <div className="container mx-auto px-4">
           <motion.div
-            className="flex flex-col md:flex-row items-center justify-center gap-4 text-center md:text-left"
+            className="flex flex-col md:flex-row items-center justify-center gap-6 text-center md:text-left"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="text-4xl">🏁</div>
+            <motion.div 
+              className="text-5xl"
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+            >
+              🏁
+            </motion.div>
             <div>
-              <p className="text-sm uppercase tracking-widest text-accent font-bold">WRC Safari Rally Kenya 2026</p>
-              <p className="text-lg font-black uppercase">12th – 15th March 2026 • The Great Kenyan Experience</p>
+              <p className="text-sm uppercase tracking-[0.3em] text-accent font-bold mb-1">Official Partner</p>
+              <p className="text-2xl md:text-3xl font-black uppercase tracking-tight">WRC Safari Rally Kenya 2026</p>
+              <p className="text-sm text-primary-foreground/70 mt-1">12th – 15th March 2026 • Naivasha, Kenya • The Great African Adventure</p>
             </div>
-            <div className="text-4xl">🇰🇪</div>
+            <div className="flex items-center gap-3">
+              <motion.div
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="text-5xl"
+              >
+                🇰🇪
+              </motion.div>
+              <motion.div
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
+                className="text-4xl"
+              >
+                🏆
+              </motion.div>
+            </div>
           </motion.div>
+          
+          {/* Rally stats */}
+          <motion.div
+            className="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            {[
+              { value: "19", label: "Stages" },
+              { value: "350+", label: "KMs" },
+              { value: "50+", label: "Crews" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <p className="text-2xl font-black text-accent">{stat.value}</p>
+                <p className="text-xs text-primary-foreground/60 uppercase tracking-wider">{stat.label}</p>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 flex">
+          {[...Array(60)].map((_, i) => (
+            <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-primary-foreground' : 'bg-transparent'}`} />
+          ))}
         </div>
       </section>
 
@@ -1309,6 +1400,13 @@ const Waitlist = () => {
           </p>
         </div>
       </footer>
+      
+      {/* Checkered Flag Bottom Strip */}
+      <div className="h-2 w-full flex relative z-10">
+        {[...Array(40)].map((_, i) => (
+          <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-foreground' : 'bg-background'}`} />
+        ))}
+      </div>
     </div>
   );
 };
