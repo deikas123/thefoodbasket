@@ -86,8 +86,8 @@ const HeroBanner = () => {
             {/* Content */}
             <div className="relative z-10 p-6 md:p-8 h-full flex flex-col justify-between">
               <div>
-                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-4">
-                  Weekend Sale!
+                <span className="inline-block px-3 py-1 bg-primary/20 backdrop-blur-sm rounded-full text-primary-foreground text-sm font-medium mb-4">
+                  🏁 Rally Season Sale!
                 </span>
                 <div className="mb-4">
                   <span className="block text-5xl md:text-6xl font-black text-white leading-none">
@@ -111,14 +111,16 @@ const HeroBanner = () => {
           </div>
         </div>
 
-        {/* Promotional Strip */}
-        <div className="mt-4 bg-yellow-400 dark:bg-yellow-500 rounded-2xl py-3 px-6 flex items-center justify-center">
-          <p className="text-yellow-900 font-medium text-sm md:text-base text-center">
-            🌿 Don't miss the discount on these Garden products — 
-            <Link to="/shop" className="underline font-semibold ml-1 hover:text-yellow-800">
-              Shop fresh picks now!
+        {/* WRC Rally Promotional Strip */}
+        <div className="mt-4 bg-gradient-to-r from-rally-navy via-rally-navy to-rally-navy rounded-2xl py-3 px-6 flex items-center justify-center gap-3 border border-accent/20">
+          <span className="text-lg">🏁</span>
+          <p className="text-primary-foreground font-medium text-sm md:text-base text-center">
+            🇰🇪 WRC Safari Rally Kenya 2026 — Fresh groceries delivered rally-fast! 
+            <Link to="/shop" className="underline font-semibold ml-1 text-accent hover:text-accent/80">
+              Shop now →
             </Link>
           </p>
+          <span className="text-lg">🏎️</span>
         </div>
       </div>
     </section>
