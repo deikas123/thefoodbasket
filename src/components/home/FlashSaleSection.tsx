@@ -28,24 +28,21 @@ const FlashSaleSection = memo(() => {
     retry: 2,
   });
   
-  // Select the first active flash sale
+  // Select the first active flash sale - use JSON key to prevent infinite loops
+  const flashSalesKey = JSON.stringify(flashSales.map(s => s.id));
   useEffect(() => {
     if (flashSales.length > 0) {
       const sale = flashSales[0];
       setCurrentSale(sale);
-      hasRefetchedRef.current = false; // Reset refetch flag for new sale
+      hasRefetchedRef.current = false;
       
-      // Map products with discount applied
       const mapped = sale.products
         .filter(p => p.product)
         .map(saleProduct => {
           if (!saleProduct.product) return null;
-          
-          // Calculate final price
           const originalPrice = saleProduct.product.price;
           const discountedPrice = saleProduct.sale_price || 
             originalPrice * (1 - sale.discount_percentage / 100);
-          
           return {
             ...saleProduct.product,
             discount_percentage: sale.discount_percentage,
@@ -60,7 +57,8 @@ const FlashSaleSection = memo(() => {
       setCurrentSale(null);
       setProductsWithDiscount([]);
     }
-  }, [flashSales]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flashSalesKey]);
   
   // Calculate time left - stable function
   const calculateTimeLeft = useCallback((endDate: string): TimeLeft => {
