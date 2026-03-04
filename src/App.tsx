@@ -6,11 +6,11 @@ import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { ComparisonProvider } from "@/context/ComparisonContext";
 import { RecentlyViewedProvider } from "@/context/RecentlyViewedContext";
-import { useEffect, lazy, Suspense, memo } from "react";
+import { lazy, Suspense, memo } from "react";
 import ScrollToTop from "@/components/ScrollToTop";
 import AppRoutes from "@/components/routing/AppRoutes";
 import { useIsMobile } from "@/types";
-import { queryClient, prefetchCriticalData } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
 // Lazy load non-critical components for faster initial load
 const Cart = lazy(() => import("@/components/Cart"));
@@ -19,9 +19,6 @@ const BottomNavigation = lazy(() => import("@/components/mobile/BottomNavigation
 const InitialSetup = lazy(() => import("@/components/setup/InitialSetup"));
 
 function App() {
-  useEffect(() => {
-    prefetchCriticalData();
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

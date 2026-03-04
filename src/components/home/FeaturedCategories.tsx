@@ -1,79 +1,41 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCategories } from '@/services/product/categoryService';
-import { useRef, useState } from 'react';
+import { Apple, Carrot, Milk, Beef, Cookie, Coffee, ShoppingBasket, Wheat } from 'lucide-react';
 
-const categoryImages: Record<string, string> = {
-  'fruits': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=150&h=150&fit=crop',
-  'vegetables': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=150&h=150&fit=crop',
-  'dairy': 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=150&h=150&fit=crop',
-  'bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&h=150&fit=crop',
-  'meat': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=150&h=150&fit=crop',
-  'snacks': 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=150&h=150&fit=crop',
-  'beverages': 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=150&h=150&fit=crop',
-  'default': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=150&h=150&fit=crop',
+const categoryIconMap: Record<string, { icon: any; bg: string; fg: string }> = {
+  'fruit': { icon: Apple, bg: 'bg-green-100 dark:bg-green-900/30', fg: 'text-green-600 dark:text-green-400' },
+  'vegetable': { icon: Carrot, bg: 'bg-orange-100 dark:bg-orange-900/30', fg: 'text-orange-600 dark:text-orange-400' },
+  'dairy': { icon: Milk, bg: 'bg-blue-100 dark:bg-blue-900/30', fg: 'text-blue-600 dark:text-blue-400' },
+  'meat': { icon: Beef, bg: 'bg-red-100 dark:bg-red-900/30', fg: 'text-red-600 dark:text-red-400' },
+  'snack': { icon: Cookie, bg: 'bg-yellow-100 dark:bg-yellow-900/30', fg: 'text-yellow-600 dark:text-yellow-400' },
+  'beverage': { icon: Coffee, bg: 'bg-purple-100 dark:bg-purple-900/30', fg: 'text-purple-600 dark:text-purple-400' },
+  'bakery': { icon: Wheat, bg: 'bg-amber-100 dark:bg-amber-900/30', fg: 'text-amber-600 dark:text-amber-400' },
 };
 
-const getCategoryImage = (name: string, image?: string | null) => {
-  if (image) return image;
-  const lowercaseName = name.toLowerCase();
-  for (const [key, url] of Object.entries(categoryImages)) {
-    if (lowercaseName.includes(key)) return url;
+const getCategoryStyle = (name: string) => {
+  const lower = name.toLowerCase();
+  for (const [key, val] of Object.entries(categoryIconMap)) {
+    if (lower.includes(key)) return val;
   }
-  return categoryImages.default;
+  return { icon: ShoppingBasket, bg: 'bg-muted', fg: 'text-muted-foreground' };
 };
-
-const categoryColors = [
-  'bg-green-500',
-  'bg-yellow-500',
-  'bg-orange-500',
-  'bg-pink-500',
-  'bg-blue-500',
-  'bg-purple-500',
-  'bg-red-500',
-  'bg-teal-500',
-];
 
 const FeaturedCategories = () => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: getCategories
+    queryFn: getCategories,
+    staleTime: 1000 * 60 * 10,
   });
-
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = 300;
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-      setTimeout(checkScroll, 300);
-    }
-  };
 
   if (isLoading) {
     return (
-      <section className="py-6 md:py-8">
+      <section className="py-4 md:py-6">
         <div className="container mx-auto px-4">
-          <Skeleton className="h-8 w-48 mb-6" />
-          <div className="flex gap-4 overflow-hidden">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="flex-shrink-0 w-28 h-36 rounded-2xl" />
+          <div className="flex gap-3 overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="flex-shrink-0 w-20 h-24 rounded-2xl" />
             ))}
           </div>
         </div>
@@ -84,76 +46,33 @@ const FeaturedCategories = () => {
   if (categories.length === 0) return null;
 
   return (
-    <section className="py-6 md:py-8">
+    <section className="py-4 md:py-6">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4 flex-wrap">
-            <h2 className="text-xl md:text-2xl font-bold text-foreground">Featured Categories</h2>
-            <div className="hidden md:flex items-center gap-3 text-sm">
-              {categories.slice(0, 4).map((cat) => (
-                <Link 
-                  key={cat.id} 
-                  to={`/shop?category=${cat.id}`}
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {cat.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={() => scroll('left')}
-              disabled={!canScrollLeft}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={() => scroll('right')}
-              disabled={!canScrollRight}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg md:text-xl font-bold text-foreground">Categories</h2>
+          <Link to="/shop" className="text-sm text-primary font-medium hover:underline">
+            See All
+          </Link>
         </div>
 
-        {/* Categories Scroll - Overlapping Style */}
-        <div
-          ref={scrollRef}
-          onScroll={checkScroll}
-          className="flex -space-x-2 overflow-x-auto scrollbar-hide pb-2 pl-2"
-        >
-          {categories.map((category, index) => (
-            <Link
-              key={category.id}
-              to={`/shop?category=${category.id}`}
-              className="relative flex-shrink-0 group"
-              style={{ zIndex: categories.length - index }}
-            >
-              {/* Category Image Circle */}
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-background shadow-lg hover:scale-105 transition-transform duration-300">
-                <img
-                  src={getCategoryImage(category.name, category.image)}
-                  alt={category.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              
-              {/* Category Label Badge */}
-              <div 
-                className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-white text-xs font-medium whitespace-nowrap shadow-md ${categoryColors[index % categoryColors.length]}`}
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+          {categories.map((category) => {
+            const { icon: Icon, bg, fg } = getCategoryStyle(category.name);
+            return (
+              <Link
+                key={category.id}
+                to={`/shop?category=${category.id}`}
+                className="flex-shrink-0 flex flex-col items-center gap-2 group"
               >
-                {category.name}
-              </div>
-            </Link>
-          ))}
+                <div className={`w-16 h-16 md:w-18 md:h-18 rounded-2xl ${bg} flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-sm`}>
+                  <Icon className={`h-7 w-7 ${fg}`} />
+                </div>
+                <span className="text-[11px] md:text-xs font-medium text-center text-foreground line-clamp-1 max-w-[72px]">
+                  {category.name.replace(/[^\w\s]/g, '').trim()}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
