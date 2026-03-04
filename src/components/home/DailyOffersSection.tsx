@@ -28,6 +28,9 @@ const DailyOffersSection = memo(() => {
     retry: 2,
   });
   
+  // Stabilize dependency to prevent infinite re-renders
+  const offersKey = JSON.stringify(dailyOffers.map(o => o.id));
+  
   useEffect(() => {
     if (dailyOffers.length > 0) {
       const mapped = dailyOffers
@@ -45,7 +48,7 @@ const DailyOffersSection = memo(() => {
     } else {
       setProductsWithDiscount([]);
     }
-  }, [dailyOffers]);
+  }, [offersKey]);
   
   // Stable time calculation function
   const calculateTimeLeft = useCallback((): TimeLeft => {

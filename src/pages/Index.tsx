@@ -15,12 +15,10 @@ import { getHomepageMode, HomepageMode } from "@/services/contentService";
 import HeroBanner from "@/components/home/HeroBanner";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
 import TopStores from "@/components/home/TopStores";
-import PromoBanners from "@/components/home/PromoBanners";
 import PopularProducts from "@/components/home/PopularProducts";
 import DailyOffersSection from "@/components/home/DailyOffersSection";
 import FlashSaleSection from "@/components/home/FlashSaleSection";
 import BenefitsStrip from "@/components/home/BenefitsStrip";
-import AboutSection from "@/components/home/AboutSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import WhyChooseUsSection from "@/components/home/WhyChooseUsSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
@@ -46,75 +44,38 @@ const Index = () => {
     );
   }
 
-  // Render based on homepage mode
-  if (homepageMode === 'waitlist') {
-    return <Waitlist />;
-  }
+  if (homepageMode === 'waitlist') return <Waitlist />;
+  if (homepageMode === 'maintenance') return <MaintenancePage />;
+  if (homepageMode === 'promo') return <PromoPage />;
 
-  if (homepageMode === 'maintenance') {
-    return <MaintenancePage />;
-  }
-
-  if (homepageMode === 'promo') {
-    return <PromoPage />;
-  }
-
-  // Normal homepage
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       <Header />
       <main className="flex-grow">
-        {/* Hero Banner with subscription */}
         <HeroBanner />
-        
-        {/* Featured Categories carousel */}
         <FeaturedCategories />
+        <FlashSaleSection />
+        <PopularProducts />
         
-        {/* Shop by Store */}
-        <TopStores />
-        
-        {/* Three Promotional Banners */}
-        <PromoBanners />
-        
-        {/* Admin Promotional Banner */}
-        <section className="py-4">
+        <section className="py-2">
           <div className="container mx-auto px-4">
             <AdminBanner />
           </div>
         </section>
         
-        {/* Flash Sale */}
-        <FlashSaleSection />
-        
-        {/* Daily Offers */}
         <DailyOffersSection />
-
-        {/* Popular Products with category tabs */}
-        <PopularProducts />
+        <TopStores />
         
-        {/* Recently Viewed */}
         <section className="py-4 md:py-6">
           <div className="container mx-auto px-4">
             <RecentlyViewedProducts />
           </div>
         </section>
         
-        {/* How It Works - SEO Content */}
         <HowItWorksSection />
-        
-        {/* Why Choose Us - SEO Content */}
         <WhyChooseUsSection />
-        
-        {/* Testimonials - Social Proof */}
         <TestimonialsSection />
-        
-        {/* About Section - Trust & SEO */}
-        <AboutSection />
-        
-        {/* Contact Strip with WhatsApp */}
         <ContactStrip />
-        
-        {/* Benefits/Trust Strip */}
         <BenefitsStrip />
       </main>
       
