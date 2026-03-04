@@ -13,6 +13,8 @@ import { getProductById } from "@/services/productService";
 import { toast } from "@/hooks/use-toast";
 import { Product } from "@/types";
 import { convertToProduct } from "@/utils/typeConverters";
+import { motion } from "framer-motion";
+import { ShoppingBasket } from "lucide-react";
 
 const FoodBaskets = () => {
   const { addItem } = useCart();
@@ -146,7 +148,6 @@ const FoodBaskets = () => {
           description: "The AI-generated basket has been saved to your personalized collection.",
         });
         userBasketsQuery.refetch();
-        // Switch to personalized tab to show the saved basket
         setActiveTab("personalized");
       }
     } catch (error) {
@@ -164,17 +165,32 @@ const FoodBaskets = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background">
       <Header />
       
-      <main className="flex-grow pt-16 sm:pt-20 pb-8 sm:pb-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Smart Food Baskets</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">
-              AI-powered meal planning, curated collections, and your personal kitchen assistant
-            </p>
-          </div>
+      <main className="flex-grow pt-16 sm:pt-20 pb-20 md:pb-8">
+        <div className="container mx-auto px-3 sm:px-4">
+          {/* Hero Header */}
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden rounded-2xl bg-[hsl(var(--rally-navy))] text-white p-5 sm:p-8 mb-6 sm:mb-8"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 bg-[hsl(var(--rally-red)/0.15)] rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-36 sm:h-36 bg-[hsl(var(--rally-amber)/0.1)] rounded-full translate-y-1/2 -translate-x-1/2" />
+            <div className="relative z-10 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <ShoppingBasket className="h-5 w-5 sm:h-6 sm:w-6 text-[hsl(var(--rally-amber))]" />
+                  <span className="text-xs sm:text-sm font-medium text-[hsl(var(--rally-amber))]">Smart Baskets</span>
+                </div>
+                <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Food Baskets</h1>
+                <p className="text-white/70 text-xs sm:text-sm max-w-md">
+                  AI-powered meal planning, curated collections & your personal kitchen assistant
+                </p>
+              </div>
+            </div>
+          </motion.div>
           
           <FoodBasketTabs
             activeTab={activeTab}

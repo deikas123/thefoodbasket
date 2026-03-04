@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Sparkles, ShoppingCart, ArrowRight } from "lucide-react";
+import { Sparkles, ShoppingBasket, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface EmptyStateProps {
   activeTab: string;
@@ -10,80 +11,63 @@ interface EmptyStateProps {
 }
 
 const EmptyState = ({ activeTab, onGenerateAIBaskets, onSwitchTab, isGenerating }: EmptyStateProps) => {
-  const getEmptyStateContent = () => {
+  const getContent = () => {
     switch (activeTab) {
       case "all":
         return {
-          icon: <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />,
-          title: "No Food Baskets Available",
-          description: "There are currently no pre-made food baskets available. Try generating AI baskets or check back later.",
+          title: "No Baskets Yet",
+          description: "No pre-made food baskets available. Try our AI-generated ones!",
           action: (
-            <Button onClick={() => onSwitchTab("ai-generated")} className="mt-4">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Try AI Generated Baskets
+            <Button onClick={() => onSwitchTab("ai-generated")} className="rounded-full bg-[hsl(var(--rally-navy))] hover:bg-[hsl(var(--rally-navy)/0.9)]">
+              <Sparkles className="mr-2 h-4 w-4" /> Try AI Baskets
             </Button>
           )
         };
-      
       case "personalized":
         return {
-          icon: <Sparkles className="h-16 w-16 text-gray-400 mx-auto mb-4" />,
-          title: "No Personalized Baskets Yet",
-          description: "We're working on creating personalized baskets based on your preferences. Try our AI-generated baskets in the meantime.",
+          title: "No Saved Baskets",
+          description: "Save AI-generated baskets to see them here.",
           action: (
-            <Button onClick={() => onSwitchTab("ai-generated")} className="mt-4">
-              <ArrowRight className="mr-2 h-4 w-4" />
-              Try AI Generated
+            <Button onClick={() => onSwitchTab("ai-generated")} className="rounded-full bg-[hsl(var(--rally-navy))] hover:bg-[hsl(var(--rally-navy)/0.9)]">
+              <ArrowRight className="mr-2 h-4 w-4" /> Browse AI Baskets
             </Button>
           )
         };
-      
       case "ai-generated":
         return {
-          icon: <Sparkles className="h-16 w-16 text-gray-400 mx-auto mb-4" />,
-          title: "No AI baskets generated yet",
-          description: "Click the 'Generate AI Baskets' button to create smart food baskets based on available products and intelligent meal planning.",
+          title: "Generate Smart Baskets",
+          description: "Our AI creates balanced meal baskets using only in-stock products.",
           action: (
             <Button 
               onClick={onGenerateAIBaskets} 
               disabled={isGenerating}
-              className="mt-4 bg-green-600 hover:bg-green-700"
+              className="rounded-full bg-[hsl(var(--rally-navy))] hover:bg-[hsl(var(--rally-navy)/0.9)]"
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              {isGenerating ? "Generating..." : "Generate Smart Baskets"}
+              {isGenerating ? "Generating..." : "Generate Baskets"}
             </Button>
           )
         };
-      
       default:
-        return {
-          icon: <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />,
-          title: "No Items Found",
-          description: "No items available in this category at the moment.",
-          action: null
-        };
+        return { title: "Nothing Here", description: "Check back later.", action: null };
     }
   };
 
-  const content = getEmptyStateContent();
+  const content = getContent();
 
   return (
-    <div className="text-center py-12">
-      {content.icon}
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{content.title}</h3>
-      <p className="text-gray-600 mb-6 max-w-md mx-auto">
-        {content.description}
-      </p>
-      {activeTab === "ai-generated" && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-md mx-auto mb-4">
-          <p className="text-sm text-green-800">
-            <strong>Smart Generation:</strong> Our AI only uses products currently in stock, 
-            ensuring you can order everything in your basket right away!
-          </p>
-        </div>
-      )}
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="text-center py-16 sm:py-20"
+    >
+      <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
+        <ShoppingBasket className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/50" />
+      </div>
+      <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-1">{content.title}</h3>
+      <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">{content.description}</p>
       {content.action}
-    </div>
+    </motion.div>
   );
 };
 

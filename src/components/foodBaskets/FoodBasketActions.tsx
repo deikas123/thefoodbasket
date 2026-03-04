@@ -17,31 +17,26 @@ const FoodBasketActions = ({
   onToggleSort,
   onGenerateAIBaskets
 }: FoodBasketActionsProps) => {
-  if (!["all", "personalized", "ai-generated"].includes(activeTab)) {
-    return null;
-  }
-
   return (
-    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+    <div className="flex gap-2">
       {activeTab === "ai-generated" && (
         <Button 
           onClick={onGenerateAIBaskets} 
           disabled={isGeneratingBaskets}
-          className="flex items-center gap-2 text-xs sm:text-sm"
           size="sm"
+          className="rounded-full text-xs bg-[hsl(var(--rally-navy))] hover:bg-[hsl(var(--rally-navy)/0.9)]"
         >
           {isGeneratingBaskets ? (
-            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
           ) : (
-            <Wand2 className="h-3 w-3 sm:h-4 sm:w-4" />
+            <Wand2 className="h-3.5 w-3.5 mr-1.5" />
           )}
-          {isGeneratingBaskets ? "Generating..." : "Generate AI Baskets"}
+          {isGeneratingBaskets ? "Generating..." : "Generate"}
         </Button>
       )}
-      <Button variant="outline" size="sm" onClick={onToggleSort} className="text-xs sm:text-sm">
-        <ArrowUpDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-        <span className="hidden sm:inline">Price: {sort === "price_asc" ? "Low to High" : "High to Low"}</span>
-        <span className="sm:hidden">{sort === "price_asc" ? "↑" : "↓"}</span>
+      <Button variant="outline" size="sm" onClick={onToggleSort} className="rounded-full text-xs">
+        <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+        {sort === "price_asc" ? "Low → High" : "High → Low"}
       </Button>
     </div>
   );
