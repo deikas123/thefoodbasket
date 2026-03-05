@@ -13,7 +13,8 @@ export const getProducts = async (
   maxPrice?: number,
   inStockOnly?: boolean,
   limit: number = DEFAULT_LIMIT,
-  offset: number = 0
+  offset: number = 0,
+  storeId?: string
 ): Promise<ProductType[]> => {
   try {
     // Simpler query without nested joins for better performance
@@ -57,6 +58,11 @@ export const getProducts = async (
     
     if (inStockOnly) {
       query = query.gt('stock', 0);
+    }
+
+    // Apply store filter
+    if (storeId && storeId.trim()) {
+      query = query.eq('store_id', storeId);
     }
     
     // Add pagination and ordering

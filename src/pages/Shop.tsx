@@ -75,7 +75,8 @@ const Shop = () => {
         undefined,
         false,
         PRODUCTS_PER_PAGE,
-        pageParam
+        pageParam,
+        selectedStore || undefined
       );
       return {
         products,

@@ -38,13 +38,30 @@ const Waitlist = () => {
   const { data: waitlistData, isLoading } = useQuery({
     queryKey: ["admin-waitlist"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("waitlist")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Fetch all waitlist entries (bypassing 1000 row default limit)
+      let allData: WaitlistEntry[] = [];
+      let offset = 0;
+      const batchSize = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
-      return data as WaitlistEntry[];
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("waitlist")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(offset, offset + batchSize - 1);
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allData = [...allData, ...(data as WaitlistEntry[])];
+          offset += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allData;
     },
   });
 
