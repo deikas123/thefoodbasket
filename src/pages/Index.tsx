@@ -26,23 +26,12 @@ import ContactStrip from "@/components/home/ContactStrip";
 
 const Index = () => {
   const cartContext = useCart();
-  const [homepageMode, setHomepageMode] = useState<HomepageMode | null>(null);
+  // Default to 'normal' so we render immediately, then check async
+  const [homepageMode, setHomepageMode] = useState<HomepageMode>('home');
   
   useEffect(() => {
-    const checkHomepageMode = async () => {
-      const mode = await getHomepageMode();
-      setHomepageMode(mode);
-    };
-    checkHomepageMode();
+    getHomepageMode().then(setHomepageMode).catch(() => {});
   }, []);
-  
-  if (!cartContext || homepageMode === null) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
 
   if (homepageMode === 'waitlist') return <Waitlist />;
   if (homepageMode === 'maintenance') return <MaintenancePage />;

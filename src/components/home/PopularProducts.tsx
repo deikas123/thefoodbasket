@@ -5,15 +5,42 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/ProductCard';
-import { getProducts } from '@/services/productService';
+import { supabase } from '@/integrations/supabase/client';
 import { getCategories } from '@/services/product/categoryService';
+import { ProductType } from '@/types/supabase';
 
 const PopularProducts = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  // Fetch only 12 products directly instead of ALL products
   const { data: products = [], isLoading: productsLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: () => getProducts(),
+    queryKey: ['popular-products'],
+    queryFn: async (): Promise<ProductType[]> => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('featured', { ascending: false })
+        .order('rating', { ascending: false })
+        .limit(12);
+      
+      if (error) throw error;
+      return (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image,
+        category: item.category_id || '',
+        stock: item.stock,
+        featured: item.featured,
+        rating: item.rating,
+        num_reviews: item.num_reviews,
+        numReviews: item.num_reviews,
+        discountPercentage: item.discount_percentage,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
+    },
     staleTime: 1000 * 60 * 5,
   });
 
@@ -24,10 +51,8 @@ const PopularProducts = () => {
   });
 
   const filteredProducts = useMemo(() => {
-    const source = selectedCategory === 'all'
-      ? products
-      : products.filter(p => p.category === selectedCategory);
-    return source.slice(0, 10);
+    if (selectedCategory === 'all') return products.slice(0, 10);
+    return products.filter(p => p.category === selectedCategory).slice(0, 10);
   }, [products, selectedCategory]);
 
   const displayCategories = categories.slice(0, 5);
@@ -43,7 +68,7 @@ const PopularProducts = () => {
             ))}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            {Array.from({ length: 10 }).map((_, i) => (
+            {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-64 rounded-2xl" />
             ))}
           </div>

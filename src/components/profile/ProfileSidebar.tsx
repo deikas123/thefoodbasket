@@ -11,78 +11,51 @@ const ProfileSidebar = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full md:w-64 space-y-4">
-      <Card>
-        <CardContent className="p-4 md:p-6">
-          <div className="flex items-center gap-4 md:flex-col md:items-center md:text-center mb-4 md:mb-6">
-            <Avatar className="h-16 w-16 md:h-24 md:w-24 md:mb-4 shrink-0">
-              <AvatarFallback className="text-xl md:text-2xl">
+    <div className="w-full md:w-64 space-y-3 md:space-y-4">
+      <Card className="rounded-2xl">
+        <CardContent className="p-4">
+          {/* Compact mobile header */}
+          <div className="flex items-center gap-3 md:flex-col md:items-center md:text-center mb-3 md:mb-6">
+            <Avatar className="h-12 w-12 md:h-20 md:w-20 shrink-0">
+              <AvatarFallback className="text-lg md:text-2xl bg-primary/10 text-primary">
                 {user?.email?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
               {user?.photoURL && <AvatarImage src={user.photoURL} />}
             </Avatar>
             
             <div className="min-w-0">
-              <h2 className="text-lg md:text-xl font-bold truncate">
+              <h2 className="text-sm md:text-lg font-bold truncate">
                 {user?.firstName
                   ? `${user.firstName} ${user.lastName}`
                   : user?.email}
               </h2>
-              <p className="text-sm text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate">
                 {user?.email}
               </p>
             </div>
           </div>
           
-          <nav className="grid grid-cols-3 gap-2 md:grid-cols-1 md:space-y-0">
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center gap-1 h-auto py-3 md:flex-row md:justify-start md:py-2"
-              onClick={() => navigate("/profile")}
-            >
-              <User className="h-5 w-5 md:mr-2 md:h-4 md:w-4" />
-              <span className="text-xs md:text-sm">Profile</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center gap-1 h-auto py-3 md:flex-row md:justify-start md:py-2"
-              onClick={() => navigate("/orders")}
-            >
-              <ShoppingBag className="h-5 w-5 md:mr-2 md:h-4 md:w-4" />
-              <span className="text-xs md:text-sm">Orders</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center gap-1 h-auto py-3 md:flex-row md:justify-start md:py-2"
-              onClick={() => navigate("/wishlist")}
-            >
-              <Heart className="h-5 w-5 md:mr-2 md:h-4 md:w-4" />
-              <span className="text-xs md:text-sm">Wishlist</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center gap-1 h-auto py-3 md:flex-row md:justify-start md:py-2"
-              onClick={() => navigate("/wallet")}
-            >
-              <Wallet className="h-5 w-5 md:mr-2 md:h-4 md:w-4" />
-              <span className="text-xs md:text-sm">Wallet</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center gap-1 h-auto py-3 md:flex-row md:justify-start md:py-2"
-              onClick={() => navigate("/pay-later")}
-            >
-              <Clock className="h-5 w-5 md:mr-2 md:h-4 md:w-4" />
-              <span className="text-xs md:text-sm">Pay Later</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center gap-1 h-auto py-3 md:flex-row md:justify-start md:py-2"
-              onClick={() => navigate("/auto-replenish")}
-            >
-              <CalendarClock className="h-5 w-5 md:mr-2 md:h-4 md:w-4" />
-              <span className="text-xs md:text-sm">Auto Replenish</span>
-            </Button>
+          {/* Mobile: horizontal scrollable pills, Desktop: vertical list */}
+          <nav className="flex gap-2 overflow-x-auto scrollbar-hide md:flex-col md:gap-1 pb-1 md:pb-0">
+            {[
+              { icon: User, label: "Profile", path: "/profile" },
+              { icon: ShoppingBag, label: "Orders", path: "/orders" },
+              { icon: Heart, label: "Wishlist", path: "/wishlist" },
+              { icon: Wallet, label: "Wallet", path: "/wallet" },
+              { icon: Clock, label: "Pay Later", path: "/pay-later" },
+              { icon: CalendarClock, label: "Auto Replenish", path: "/auto-replenish" },
+            ].map(({ icon: Icon, label, path }) => (
+              <Button
+                key={path}
+                variant="ghost"
+                size="sm"
+                className="shrink-0 h-8 px-3 rounded-full text-xs md:w-full md:justify-start md:rounded-lg md:h-9 md:px-3"
+                onClick={() => navigate(path)}
+              >
+                <Icon className="h-3.5 w-3.5 mr-1.5 md:mr-2" />
+                {label}
+              </Button>
+            ))}
           </nav>
         </CardContent>
       </Card>
