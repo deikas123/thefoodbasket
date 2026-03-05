@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight } from "lucide-react";
@@ -52,7 +52,8 @@ const TopGroceryStores = () => {
         
         <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
           {stores.map((store) => (
-            <div
+            <Link
+              to={`/shop?store=${store.id}`}
               key={store.id}
               className="flex flex-col items-center p-3 rounded-xl bg-card border hover:shadow-md transition-all duration-200 cursor-pointer group"
             >
@@ -72,7 +73,7 @@ const TopGroceryStores = () => {
               <p className="text-xs font-medium text-center line-clamp-2">
                 {store.name}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
