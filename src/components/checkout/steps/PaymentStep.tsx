@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CreditCard } from "lucide-react";
+import { CreditCard, ArrowLeft, ShieldCheck } from "lucide-react";
 import PaymentMethods from "@/components/checkout/PaymentMethods";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import { MpesaPaymentForm } from "../MpesaPaymentForm";
@@ -50,14 +50,27 @@ const PaymentStep = ({
     }
   };
 
+  const isMpesa = selectedPayment?.type === 'mpesa' || selectedPayment?.id === 'mpesa';
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-      <div className="lg:col-span-2">
-        <Card>
-          <CardContent className="pt-4 sm:pt-6">
-            <h2 className="text-lg sm:text-xl font-semibold flex items-center mb-4">
-              <CreditCard className="mr-2 h-5 w-5 text-primary" />
-              Payment Method
+    <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-8 lg:space-y-0">
+      {/* Order Summary - shown first on mobile, last on desktop */}
+      <div className="order-first lg:order-last">
+        <OrderSummary 
+          items={items}
+          subtotal={total}
+          selectedDelivery={selectedDelivery}
+          deliveryAddress={deliveryAddress}
+        />
+      </div>
+
+      {/* Payment Methods */}
+      <div className="lg:col-span-2 space-y-4">
+        <Card className="border-0 shadow-sm sm:border sm:shadow">
+          <CardContent className="p-4 sm:pt-6">
+            <h2 className="text-base sm:text-xl font-semibold flex items-center mb-4">
+              <CreditCard className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              Select Payment Method
             </h2>
             
             <PaymentMethods
@@ -66,46 +79,53 @@ const PaymentStep = ({
               orderTotal={total}
             />
 
-            {/* Show M-Pesa form if M-Pesa is selected */}
-            {showMpesaForm && (selectedPayment?.type === 'mpesa' || selectedPayment?.id === 'mpesa') && (
-              <MpesaPaymentForm
-                onSubmit={handleMpesaPayment}
-                isProcessing={isProcessing}
-              />
+            {/* M-Pesa form inline */}
+            {showMpesaForm && isMpesa && (
+              <div className="mt-4 p-4 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                <MpesaPaymentForm
+                  onSubmit={handleMpesaPayment}
+                  isProcessing={isProcessing}
+                />
+              </div>
             )}
           </CardContent>
         </Card>
-      </div>
-      
-      <div className="order-first lg:order-last">
-        <OrderSummary 
-          items={items}
-          subtotal={total}
-          selectedDelivery={selectedDelivery}
-          deliveryAddress={deliveryAddress}
-        >
-          <div className="space-y-3">
-            {!showMpesaForm && (
-              <Button 
-                className="w-full" 
-                size="lg" 
-                onClick={handlePlaceOrder}
-                disabled={!selectedPayment || isProcessing}
-              >
-                {isProcessing ? "Processing..." : (selectedPayment?.type === 'mpesa' || selectedPayment?.id === 'mpesa') ? "Continue to Payment" : "Place Order"}
-              </Button>
-            )}
-            
+
+        {/* Security badge - mobile */}
+        <div className="flex items-center text-xs sm:text-sm text-muted-foreground p-3 rounded-lg bg-muted/50">
+          <ShieldCheck className="h-4 w-4 mr-2 text-primary shrink-0" />
+          <p>All payments are encrypted and securely processed</p>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-3 sm:flex-row-reverse sm:gap-4">
+          {!showMpesaForm && (
             <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={onPrev}
-              disabled={isProcessing}
+              className="w-full sm:flex-1" 
+              size="lg" 
+              onClick={handlePlaceOrder}
+              disabled={!selectedPayment || isProcessing}
             >
-              Back to Delivery
+              {isProcessing 
+                ? "Processing..." 
+                : isMpesa 
+                  ? "Continue to M-Pesa" 
+                  : "Place Order"
+              }
             </Button>
-          </div>
-        </OrderSummary>
+          )}
+          
+          <Button 
+            variant="outline" 
+            className="w-full sm:w-auto" 
+            onClick={onPrev}
+            disabled={isProcessing}
+            size="lg"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -107,9 +107,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const estimatedDelivery = new Date();
-      estimatedDelivery.setDate(estimatedDelivery.getDate() + 2);
+      const deliveryDays = parseInt(deliveryMethod.estimatedDelivery) || 2;
+      estimatedDelivery.setDate(estimatedDelivery.getDate() + deliveryDays);
 
-      const loyaltyPointsEarned = Math.floor(total);
+      // Use the actual delivery fee from the selected delivery option
+      const actualDeliveryFee = deliveryMethod.price || 0;
+      
+      // Calculate subtotal considering product discounts
+      const subtotal = items.reduce((sum, item) => {
+        const itemPrice = item.product.discountPercentage 
+          ? item.product.price * (1 - item.product.discountPercentage / 100)
+          : item.product.price;
+        return sum + itemPrice * item.quantity;
+      }, 0);
+      
+      const orderTotal = subtotal + actualDeliveryFee;
+      const loyaltyPointsEarned = Math.floor(orderTotal);
       const currentTime = new Date().toISOString();
       
       const order: Order = {
@@ -118,13 +131,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         items: items.map(item => ({
           productId: item.product.id,
           name: item.product.name,
-          price: item.product.price,
+          price: item.product.discountPercentage 
+            ? item.product.price * (1 - item.product.discountPercentage / 100)
+            : item.product.price,
           quantity: item.quantity,
           image: item.product.image
         })),
-        subtotal: total,
-        deliveryFee: 5.00,
-        total: total + 5.00,
+        subtotal,
+        deliveryFee: actualDeliveryFee,
+        total: orderTotal,
         status: "pending",
         deliveryAddress,
         deliveryMethod,
